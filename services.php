@@ -101,7 +101,7 @@ include 'includes/header.php';
                         <span class="spatial-service-number"><?php echo $numStr; ?></span>
 
                         <div class="spatial-service-icon-box">
-                            <?php if (!empty($srv['icon']) && mb_strlen($srv['icon']) <= 4): ?>
+                            <?php if (!empty($srv['icon']) && strpos($srv['icon'], '?') === false && mb_strlen($srv['icon']) <= 4): ?>
                                 <span><?php echo $srv['icon']; ?></span>
                             <?php else: ?>
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

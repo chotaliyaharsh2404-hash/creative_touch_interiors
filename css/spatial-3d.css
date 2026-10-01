@@ -2715,5 +2715,40 @@ textarea:focus {
     background: radial-gradient(circle, rgba(37, 99, 235, 0.12) 0%, rgba(240, 247, 255, 0) 70%);
 }
 
+/* Multi-Room Dimension Calculator Responsive & Interaction Styles */
+.calculator-room-row {
+    animation: fadeInRoom 0.25s ease-out;
+}
+
+@keyframes fadeInRoom {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#add_room_btn:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+    transform: translateY(-1px);
+}
+
+#add_room_btn_footer:hover {
+    background: #eff6ff !important;
+    border-color: #2563eb !important;
+    color: #1d4ed8 !important;
+}
+
+.remove-room-btn:hover {
+    background: #fee2e2 !important;
+    border-color: #fca5a5 !important;
+    color: #b91c1c !important;
+}
+
+@media (max-width: 640px) {
+    .room-fields-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.85rem !important;
+    }
+}
+
 
 

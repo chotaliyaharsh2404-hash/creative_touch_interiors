@@ -670,34 +670,196 @@
             });
         });
 
-        // Room Area Live Calculator
-        const roomLengthInput = wizard.querySelector('#room_length');
-        const roomWidthInput = wizard.querySelector('#room_width');
+        // =====================================================================
+        // Multi-Room Dimension Calculator Live Engine
+        // =====================================================================
+        const roomsContainer = wizard.querySelector('#rooms_container');
         const calculatedAreaDisplay = wizard.querySelector('#calc_area_display');
         const applyRoomAreaBtn = wizard.querySelector('#apply_room_area_btn');
+        const addRoomBtn = wizard.querySelector('#add_room_btn');
+        const addRoomBtnFooter = wizard.querySelector('#add_room_btn_footer');
+        const totalAreaInput = wizard.querySelector('#approx_area');
 
-        function updateRoomArea() {
-            if (!roomLengthInput || !roomWidthInput || !calculatedAreaDisplay) return;
-            const l = parseFloat(roomLengthInput.value) || 0;
-            const w = parseFloat(roomWidthInput.value) || 0;
-            const area = (l * w).toFixed(2);
-            calculatedAreaDisplay.textContent = area + ' sq.ft';
+        // Safe dimension parser: ensures positive numbers only and avoids NaN
+        function parseDimension(val) {
+            if (val === null || val === undefined) return 0;
+            const trimmed = String(val).trim();
+            if (trimmed === '') return 0;
+            const num = parseFloat(trimmed);
+            if (isNaN(num) || !isFinite(num) || num <= 0) return 0;
+            return num;
         }
 
-        if (roomLengthInput && roomWidthInput) {
-            roomLengthInput.addEventListener('input', updateRoomArea);
-            roomWidthInput.addEventListener('input', updateRoomArea);
-            updateRoomArea(); // Initialize immediately on load
+        // Suggested sequential room identifiers
+        const defaultRoomNames = ['Bedroom', 'Kitchen', 'Dining Room', 'Master Suite', 'Guest Bedroom', 'Home Office', 'Kids Room', 'Pooja Room', 'Balcony / Terrace'];
+
+        // Recalculates each room independently and updates total sum
+        function recalculateAllRooms(autoUpdateTotalInput = true) {
+            if (!roomsContainer) return 0;
+
+            const roomRows = roomsContainer.querySelectorAll('.calculator-room-row');
+            let grandTotalArea = 0;
+
+            roomRows.forEach((row, idx) => {
+                // Keep room number label updated
+                const numberTag = row.querySelector('.room-number-tag');
+                if (numberTag) {
+                    numberTag.textContent = 'Room ' + (idx + 1);
+                }
+
+                // Update input name attributes for PHP post array
+                const nameInput = row.querySelector('.room-name');
+                const lenInput = row.querySelector('.room-length');
+                const widInput = row.querySelector('.room-width');
+
+                if (nameInput) nameInput.name = `rooms[${idx}][name]`;
+                if (lenInput) lenInput.name = `rooms[${idx}][length]`;
+                if (widInput) widInput.name = `rooms[${idx}][width]`;
+
+                // Calculate independent room area (Length x Width)
+                const l = parseDimension(lenInput ? lenInput.value : 0);
+                const w = parseDimension(widInput ? widInput.value : 0);
+                let roomArea = 0;
+
+                if (l > 0 && w > 0) {
+                    roomArea = l * w;
+                }
+
+                // Update individual room area badge (prevents NaN, shows 0.00 sq.ft when empty)
+                const areaBadge = row.querySelector('.room-individual-area');
+                if (areaBadge) {
+                    areaBadge.textContent = roomArea > 0 ? roomArea.toFixed(2) + ' sq.ft' : '0.00 sq.ft';
+                }
+
+                grandTotalArea += roomArea;
+            });
+
+            // Update top total area display badge
+            if (calculatedAreaDisplay) {
+                calculatedAreaDisplay.textContent = grandTotalArea > 0 ? grandTotalArea.toFixed(2) + ' sq.ft' : '0.00 sq.ft';
+            }
+
+            // Automatically update existing "Total Approximate Carpet Area (SQ.FT)" field
+            if (totalAreaInput && autoUpdateTotalInput) {
+                totalAreaInput.value = grandTotalArea > 0 ? Math.round(grandTotalArea) : (grandTotalArea === 0 ? 0 : totalAreaInput.value);
+                totalAreaInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
+            return grandTotalArea;
         }
 
+        // Attach input listeners and remove handler to a room row
+        function attachRoomListeners(row) {
+            const lenInput = row.querySelector('.room-length');
+            const widInput = row.querySelector('.room-width');
+            const removeBtn = row.querySelector('.remove-room-btn');
+
+            if (lenInput) {
+                lenInput.addEventListener('input', () => recalculateAllRooms(true));
+            }
+            if (widInput) {
+                widInput.addEventListener('input', () => recalculateAllRooms(true));
+            }
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    row.remove();
+                    recalculateAllRooms(true);
+                });
+            }
+        }
+
+        // Dynamic Add Room Creator
+        function addNewRoom() {
+            if (!roomsContainer) return;
+
+            const existingRows = roomsContainer.querySelectorAll('.calculator-room-row');
+            const newIndex = existingRows.length;
+            const displayNum = newIndex + 1;
+            const suggestedName = defaultRoomNames[(newIndex - 1) % defaultRoomNames.length] || ('Room ' + displayNum);
+
+            const newRow = document.createElement('div');
+            newRow.className = 'calculator-room-row';
+            newRow.setAttribute('data-room-index', newIndex);
+            newRow.style.cssText = 'background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.15rem 1.25rem; transition: all 0.2s;';
+
+            newRow.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="room-number-tag" style="font-size: 0.75rem; font-weight: 700; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 0.2rem 0.55rem; border-radius: 6px; text-transform: uppercase;">Room ${displayNum}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.65rem;">
+                        <div style="font-size: 0.82rem; font-weight: 700; color: #0f172a; background: #f8fafc; border: 1px solid #cbd5e1; padding: 0.25rem 0.65rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
+                            <span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">Area:</span>
+                            <span class="room-individual-area">0.00 sq.ft</span>
+                        </div>
+                        <button type="button" class="remove-room-btn" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 6px; padding: 0.3rem 0.65rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.3rem;" title="Remove Room">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            <span>Remove</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="room-fields-grid" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1.25rem;">
+                    <div class="spatial-form-group" style="margin-bottom:0;">
+                        <label class="spatial-form-label" style="color: #334155; font-weight: 600;">Room Identifier</label>
+                        <input type="text" name="rooms[${newIndex}][name]" class="spatial-form-control room-name" value="${suggestedName}" placeholder="e.g. Master Bedroom" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;">
+                    </div>
+                    <div class="spatial-form-group" style="margin-bottom:0;">
+                        <label class="spatial-form-label" style="color: #334155; font-weight: 600;">Length (ft)</label>
+                        <input type="number" step="0.1" min="0.1" name="rooms[${newIndex}][length]" class="spatial-form-control room-length" value="" placeholder="e.g. 12" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;">
+                    </div>
+                    <div class="spatial-form-group" style="margin-bottom:0;">
+                        <label class="spatial-form-label" style="color: #334155; font-weight: 600;">Width (ft)</label>
+                        <input type="number" step="0.1" min="0.1" name="rooms[${newIndex}][width]" class="spatial-form-control room-width" value="" placeholder="e.g. 10" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;">
+                    </div>
+                </div>
+            `;
+
+            roomsContainer.appendChild(newRow);
+            attachRoomListeners(newRow);
+
+            const newLenInput = newRow.querySelector('.room-length');
+            if (newLenInput) {
+                newLenInput.focus();
+            }
+
+            recalculateAllRooms(true);
+        }
+
+        // Initialize listeners on pre-rendered room(s)
+        if (roomsContainer) {
+            const initialRows = roomsContainer.querySelectorAll('.calculator-room-row');
+            initialRows.forEach(row => attachRoomListeners(row));
+            // Calculate initial state without forcibly overwriting pre-populated approx_area unless needed
+            const initTotal = recalculateAllRooms(false);
+            if (totalAreaInput && (!totalAreaInput.value || totalAreaInput.value === '0') && initTotal > 0) {
+                totalAreaInput.value = Math.round(initTotal);
+                totalAreaInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+
+        // Add Room Button triggers
+        if (addRoomBtn) {
+            addRoomBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                addNewRoom();
+            });
+        }
+        if (addRoomBtnFooter) {
+            addRoomBtnFooter.addEventListener('click', function(e) {
+                e.preventDefault();
+                addNewRoom();
+            });
+        }
+
+        // Apply Room Area Button (uses total calculated area across all rooms)
         if (applyRoomAreaBtn) {
             applyRoomAreaBtn.addEventListener('click', function(e) {
                 e.preventDefault();
-                const l = parseFloat(roomLengthInput ? roomLengthInput.value : 0) || 0;
-                const w = parseFloat(roomWidthInput ? roomWidthInput.value : 0) || 0;
-                const totalAreaInput = wizard.querySelector('#approx_area');
-                if (totalAreaInput && l > 0 && w > 0) {
-                    totalAreaInput.value = Math.round(l * w);
+                const grandTotal = recalculateAllRooms(false);
+                if (totalAreaInput && grandTotal > 0) {
+                    totalAreaInput.value = Math.round(grandTotal);
                     totalAreaInput.dispatchEvent(new Event('input', { bubbles: true }));
                     applyRoomAreaBtn.innerHTML = '<span>&#10003; Applied!</span>';
                     applyRoomAreaBtn.style.background = '#16a34a';

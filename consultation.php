@@ -596,6 +596,10 @@ include 'includes/header.php';
                                         </div>
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                        <button type="button" id="add_room_btn" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 9999px; padding: 0.4rem 0.85rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.35rem;" title="Add another room">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                            <span>+ ADD ROOM</span>
+                                        </button>
                                         <div style="font-size: 0.9rem; color: #1d4ed8; font-weight: 700; background: #dbeafe; padding: 0.4rem 1rem; border-radius: 9999px; border: 1px solid #bfdbfe; display: inline-flex; align-items: center; gap: 0.35rem;" id="calc_area_display">
                                             300.00 sq.ft
                                         </div>
@@ -605,19 +609,61 @@ include 'includes/header.php';
                                     </div>
                                 </div>
 
-                                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1.25rem;">
-                                    <div class="spatial-form-group" style="margin-bottom:0;">
-                                        <label class="spatial-form-label" style="color: #334155; font-weight: 600;">Room Identifier</label>
-                                        <input type="text" name="rooms[0][name]" class="spatial-form-control" value="Living Room" placeholder="e.g. Master Suite" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;">
-                                    </div>
-                                    <div class="spatial-form-group" style="margin-bottom:0;">
-                                        <label class="spatial-form-label" style="color: #334155; font-weight: 600;">Length (ft)</label>
-                                        <input type="number" step="0.1" id="room_length" name="rooms[0][length]" class="spatial-form-control" value="20" placeholder="20" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;">
-                                    </div>
-                                    <div class="spatial-form-group" style="margin-bottom:0;">
-                                        <label class="spatial-form-label" style="color: #334155; font-weight: 600;">Width (ft)</label>
-                                        <input type="number" step="0.1" id="room_width" name="rooms[0][width]" class="spatial-form-control" value="15" placeholder="15" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;">
-                                    </div>
+                                <?php
+                                $renderedRooms = !empty($_POST['rooms']) && is_array($_POST['rooms']) ? array_values($_POST['rooms']) : [
+                                    ['name' => 'Living Room', 'length' => 20, 'width' => 15]
+                                ];
+                                ?>
+                                <div id="rooms_container" style="display: flex; flex-direction: column; gap: 1rem;">
+                                    <?php foreach ($renderedRooms as $idx => $rItem): 
+                                        $displayNum = $idx + 1;
+                                        $rLen = isset($rItem['length']) && $rItem['length'] !== '' ? (float)$rItem['length'] : 0;
+                                        $rWid = isset($rItem['width']) && $rItem['width'] !== '' ? (float)$rItem['width'] : 0;
+                                        $rArea = ($rLen > 0 && $rWid > 0) ? ($rLen * $rWid) : 0;
+                                        $rAreaText = ($rArea > 0) ? number_format($rArea, 2, '.', '') . ' sq.ft' : '0.00 sq.ft';
+                                    ?>
+                                        <div class="calculator-room-row" data-room-index="<?php echo $idx; ?>" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.15rem 1.25rem; transition: all 0.2s;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                    <span class="room-number-tag" style="font-size: 0.75rem; font-weight: 700; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 0.2rem 0.55rem; border-radius: 6px; text-transform: uppercase;">Room <?php echo $displayNum; ?></span>
+                                                </div>
+                                                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                                                    <div style="font-size: 0.82rem; font-weight: 700; color: #0f172a; background: #f8fafc; border: 1px solid #cbd5e1; padding: 0.25rem 0.65rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
+                                                        <span style="font-size: 0.72rem; color: #64748b; font-weight: 600;">Area:</span>
+                                                        <span class="room-individual-area"><?php echo $rAreaText; ?></span>
+                                                    </div>
+                                                    <?php if ($idx > 0): ?>
+                                                        <button type="button" class="remove-room-btn" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 6px; padding: 0.3rem 0.65rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.3rem;" title="Remove Room">
+                                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                                            <span>Remove</span>
+                                                        </button>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+
+                                            <div class="room-fields-grid" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1.25rem;">
+                                                <div class="spatial-form-group" style="margin-bottom:0;">
+                                                    <label class="spatial-form-label" style="color: #334155; font-weight: 600;">Room Identifier</label>
+                                                    <input type="text" name="rooms[<?php echo $idx; ?>][name]" class="spatial-form-control room-name" value="<?php echo htmlspecialchars($rItem['name'] ?? 'Room ' . $displayNum); ?>" placeholder="e.g. Master Suite" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;">
+                                                </div>
+                                                <div class="spatial-form-group" style="margin-bottom:0;">
+                                                    <label class="spatial-form-label" style="color: #334155; font-weight: 600;">Length (ft)</label>
+                                                    <input type="number" step="0.1" min="0.1" <?php if ($idx === 0) echo 'id="room_length"'; ?> name="rooms[<?php echo $idx; ?>][length]" class="spatial-form-control room-length" value="<?php echo htmlspecialchars($rItem['length'] ?? ''); ?>" placeholder="<?php echo $idx === 0 ? '20' : 'e.g. 12'; ?>" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;">
+                                                </div>
+                                                <div class="spatial-form-group" style="margin-bottom:0;">
+                                                    <label class="spatial-form-label" style="color: #334155; font-weight: 600;">Width (ft)</label>
+                                                    <input type="number" step="0.1" min="0.1" <?php if ($idx === 0) echo 'id="room_width"'; ?> name="rooms[<?php echo $idx; ?>][width]" class="spatial-form-control room-width" value="<?php echo htmlspecialchars($rItem['width'] ?? ''); ?>" placeholder="<?php echo $idx === 0 ? '15' : 'e.g. 10'; ?>" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+
+                                <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
+                                    <button type="button" id="add_room_btn_footer" style="background: #ffffff; color: #2563eb; border: 1px dashed #93c5fd; border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; width: 100%; justify-content: center;">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                        <span>+ ADD ANOTHER ROOM</span>
+                                    </button>
                                 </div>
                             </div>
 

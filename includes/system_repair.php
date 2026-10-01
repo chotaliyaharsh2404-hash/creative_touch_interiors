@@ -226,6 +226,41 @@ function runSystemRepairs($conn) {
         $log[] = "Verified & created 'password_resets' table for client authentication.";
     }
 
+    // 7. Auto-heal UTF-8 encoding corruptions (e.g. ? in icons or price_range)
+    $corruptCheck = $conn->query("SELECT id FROM services WHERE icon LIKE '%?%' OR price_range LIKE '%?%' LIMIT 1");
+    if ($corruptCheck && $corruptCheck->num_rows > 0) {
+        $servicesData = [
+            8 => ['title' => 'Complete Home Interior Design', 'slug' => 'complete-home-interior-design', 'icon' => '🏠', 'price_range' => '₹8L – ₹25L'],
+            9 => ['title' => 'Living Room Styling', 'slug' => 'living-room-styling', 'icon' => '🛋️', 'price_range' => '₹1.2L – ₹4.5L'],
+            10 => ['title' => 'Master Bedroom Planning', 'slug' => 'master-bedroom-planning', 'icon' => '🛏️', 'price_range' => '₹1.4L – ₹5L'],
+            11 => ['title' => 'Modular Kitchen Installation', 'slug' => 'modular-kitchen-installation', 'icon' => '🍳', 'price_range' => '₹2L – ₹7L'],
+            12 => ['title' => 'Bathroom Makeover', 'slug' => 'bathroom-makeover', 'icon' => '🛁', 'price_range' => '₹90K – ₹3.5L'],
+            13 => ['title' => 'Luxury Villa Interiors', 'slug' => 'luxury-villa-interiors', 'icon' => '🏡', 'price_range' => '₹18L – ₹45L'],
+            14 => ['title' => 'Apartment Space Optimization', 'slug' => 'apartment-space-optimization', 'icon' => '📐', 'price_range' => '₹4L – ₹14L'],
+            15 => ['title' => 'Kids Room Design', 'slug' => 'kids-room-design', 'icon' => '🧸', 'price_range' => '₹1L – ₹3.8L'],
+            16 => ['title' => 'Executive Office Design', 'slug' => 'executive-office-design', 'icon' => '💼', 'price_range' => '₹6L – ₹24L'],
+            17 => ['title' => 'Open Workspace Planning', 'slug' => 'open-workspace-planning', 'icon' => '🖥️', 'price_range' => '₹7L – ₹28L'],
+            18 => ['title' => 'Conference Room Interiors', 'slug' => 'conference-room-interiors', 'icon' => '📊', 'price_range' => '₹2L – ₹8L'],
+            19 => ['title' => 'Reception & Waiting Area', 'slug' => 'reception-&-waiting-area', 'icon' => '🪑', 'price_range' => '₹1.8L – ₹6.5L'],
+            20 => ['title' => 'Retail Store Fit-Out', 'slug' => 'retail-store-fit-out', 'icon' => '🛍️', 'price_range' => '₹6L – ₹22L'],
+            21 => ['title' => 'Fashion Boutique Design', 'slug' => 'fashion-boutique-design', 'icon' => '👗', 'price_range' => '₹4.5L – ₹16L'],
+            22 => ['title' => 'Electronics Showroom Planning', 'slug' => 'electronics-showroom-planning', 'icon' => '📱', 'price_range' => '₹7L – ₹26L'],
+            23 => ['title' => 'Jewellery Store Interiors', 'slug' => 'jewellery-store-interiors', 'icon' => '💎', 'price_range' => '₹10L – ₹35L'],
+            24 => ['title' => 'Café Interior Design', 'slug' => 'cafe-interior-design', 'icon' => '☕', 'price_range' => '₹5L – ₹18L'],
+            25 => ['title' => 'Restaurant Interior Planning', 'slug' => 'restaurant-interior-planning', 'icon' => '🍽️', 'price_range' => '₹8L – ₹30L'],
+            26 => ['title' => 'Salon & Beauty Studio Design', 'slug' => 'salon-&-beauty-studio-design', 'icon' => '💇', 'price_range' => '₹4L – ₹15L'],
+            27 => ['title' => '3D Interior Visualization', 'slug' => '3d-interior-visualization', 'icon' => '🎨', 'price_range' => '₹20K – ₹90K']
+        ];
+        $uSvc = $conn->prepare("UPDATE services SET title = ?, slug = ?, icon = ?, price_range = ? WHERE id = ?");
+        foreach ($servicesData as $id => $s) {
+            $uSvc->bind_param("ssssi", $s['title'], $s['slug'], $s['icon'], $s['price_range'], $id);
+            $uSvc->execute();
+        }
+        $conn->query("UPDATE testimonials SET testimonial = 'The executive floorplan designed by the CTI team perfectly mirrors our company ethos — clean, authoritative, and tranquil. Outstanding craftsmanship throughout.' WHERE id = 3");
+        $conn->query("UPDATE projects SET title = 'Central Square Café', slug = 'central-square-cafe', description = 'A welcoming commercial café interior with comfortable seating, feature lighting, practical service areas and contemporary finishes.' WHERE id = 29");
+        $log[] = "Repaired character encoding and icons for services, testimonials, and projects.";
+    }
+
     return $log;
 }
 
