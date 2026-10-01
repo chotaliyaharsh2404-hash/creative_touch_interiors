@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/includes/config.php';
 
-$baseUrl = 'http://localhost/project/Creative%20Touch%20Interiors/admin/';
+$baseUrl = BASE_URL . 'admin/';
 $adminCookie = __DIR__ . '/admin_cookies.txt';
 if (file_exists($adminCookie)) unlink($adminCookie);
 

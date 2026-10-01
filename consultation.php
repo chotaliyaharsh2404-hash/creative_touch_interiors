@@ -57,10 +57,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // 2. Project Information
         $project_type = sanitize($_POST['project_type'] ?? 'Residential');
-        $property_type = sanitize($_POST['property_type'] ?? 'Apartment');
+        $property_type = sanitize($_POST['property_type'] ?? '');
+        if (empty($property_type) || $property_type === 'Select Property Layout') {
+            $property_type = ($project_type === 'Commercial') ? 'Retail Showroom' : (($project_type === 'Office') ? 'Corporate Office Floor' : 'Villa / Independent House');
+        }
         $project_location = sanitize($_POST['project_location'] ?? $city);
         $measurement_status = (isset($_POST['unknown_measurements']) && $_POST['unknown_measurements'] == '1') ? 'unknown' : 'known';
-        $floors_count = max(1, (int)($_POST['floors_count'] ?? 1));
+
+        $raw_floors = trim($_POST['floors_count'] ?? '');
+        if (is_numeric($raw_floors)) {
+            $floors_count = max(1, (int)$raw_floors);
+        } elseif (stripos($raw_floors, 'Ground + 2') !== false || preg_match('/\b3\+?/', $raw_floors)) {
+            $floors_count = 3;
+        } elseif (stripos($raw_floors, 'Ground + 1') !== false || preg_match('/\b2\b/', $raw_floors)) {
+            $floors_count = 2;
+        } else {
+            $floors_count = 1;
+        }
         $expected_start_date = !empty($_POST['expected_start_date']) ? sanitize($_POST['expected_start_date']) : null;
         $expected_completion_date = !empty($_POST['expected_completion_date']) ? sanitize($_POST['expected_completion_date']) : null;
 
@@ -509,21 +522,24 @@ include 'includes/header.php';
                                 Select the architectural category and structural property layout.
                             </p>
 
+                            <?php
+                            $selected_proj_type = $_POST['project_type'] ?? 'Residential';
+                            ?>
                             <div class="spatial-choice-grid" style="margin-bottom: 2rem;">
-                                <div class="spatial-choice-card selected" data-choice-group="proj_type">
-                                    <input type="radio" name="project_type" value="Residential" checked style="display:none;">
+                                <div class="spatial-choice-card <?php echo ($selected_proj_type === 'Residential') ? 'selected' : ''; ?>" data-choice-group="proj_type" data-typology="residential">
+                                    <input type="radio" name="project_type" value="Residential" data-typology="residential" <?php echo ($selected_proj_type === 'Residential') ? 'checked' : ''; ?> style="display:none;">
                                     <div style="font-size: 2rem; margin-bottom: 0.5rem;">🏠</div>
                                     <h4 style="color:#0f172a; margin-bottom:0.25rem; font-weight: 700;">Residential Estate</h4>
                                     <p style="font-size:0.8rem; color:#64748b;">Private villas, bungalows &amp; apartments</p>
                                 </div>
-                                <div class="spatial-choice-card" data-choice-group="proj_type">
-                                    <input type="radio" name="project_type" value="Commercial" style="display:none;">
+                                <div class="spatial-choice-card <?php echo ($selected_proj_type === 'Commercial') ? 'selected' : ''; ?>" data-choice-group="proj_type" data-typology="commercial">
+                                    <input type="radio" name="project_type" value="Commercial" data-typology="commercial" <?php echo ($selected_proj_type === 'Commercial') ? 'checked' : ''; ?> style="display:none;">
                                     <div style="font-size: 2rem; margin-bottom: 0.5rem;">🏢</div>
                                     <h4 style="color:#0f172a; margin-bottom:0.25rem; font-weight: 700;">Commercial / Retail</h4>
                                     <p style="font-size:0.8rem; color:#64748b;">Boutiques, cafes &amp; hospitality</p>
                                 </div>
-                                <div class="spatial-choice-card" data-choice-group="proj_type">
-                                    <input type="radio" name="project_type" value="Office" style="display:none;">
+                                <div class="spatial-choice-card <?php echo ($selected_proj_type === 'Office') ? 'selected' : ''; ?>" data-choice-group="proj_type" data-typology="executive">
+                                    <input type="radio" name="project_type" value="Office" data-typology="executive" <?php echo ($selected_proj_type === 'Office') ? 'checked' : ''; ?> style="display:none;">
                                     <div style="font-size: 2rem; margin-bottom: 0.5rem;">💼</div>
                                     <h4 style="color:#0f172a; margin-bottom:0.25rem; font-weight: 700;">Executive Office</h4>
                                     <p style="font-size:0.8rem; color:#64748b;">Corporate suites &amp; co-working hubs</p>
@@ -534,19 +550,19 @@ include 'includes/header.php';
                                 <div class="spatial-form-group">
                                     <label class="spatial-form-label" for="property_type">Specific Property Layout</label>
                                     <select id="property_type" name="property_type" class="spatial-form-control">
+                                        <option value="">Select Property Layout</option>
                                         <option value="Villa / Independent House">Villa / Independent House</option>
-                                        <option value="3BHK / 4BHK Apartment">3BHK / 4BHK Luxury Apartment</option>
+                                        <option value="3BHK / 4BHK Luxury Apartment">3BHK / 4BHK Luxury Apartment</option>
                                         <option value="Penthouse Sanctuary">Penthouse Sanctuary</option>
-                                        <option value="Corporate Office Floor">Corporate Office Floor</option>
-                                        <option value="Retail Showroom">Retail Showroom</option>
                                     </select>
                                 </div>
                                 <div class="spatial-form-group">
                                     <label class="spatial-form-label" for="floors_count">Number of Floors</label>
                                     <select id="floors_count" name="floors_count" class="spatial-form-control">
-                                        <option value="1">1 Floor (Single Level)</option>
-                                        <option value="2">2 Floors (Duplex)</option>
-                                        <option value="3">3+ Floors (Multi-Level Estate)</option>
+                                        <option value="">Select Number of Floors</option>
+                                        <option value="1 Floor (Single Level)">1 Floor (Single Level)</option>
+                                        <option value="2 Floors (Duplex)">2 Floors (Duplex)</option>
+                                        <option value="3+ Floors (Multi-Level Estate)">3+ Floors (Multi-Level Estate)</option>
                                     </select>
                                 </div>
                             </div>
@@ -750,6 +766,144 @@ include 'includes/header.php';
     </section>
 
     <script>
+    // Centralized Project Typology Configuration
+    const projectTypologyOptions = {
+        residential: {
+            layouts: [
+                "Villa / Independent House",
+                "3BHK / 4BHK Luxury Apartment",
+                "Penthouse Sanctuary"
+            ],
+            floors: [
+                "1 Floor (Single Level)",
+                "2 Floors (Duplex)",
+                "3+ Floors (Multi-Level Estate)"
+            ]
+        },
+        commercial: {
+            layouts: [
+                "Retail Showroom",
+                "Boutique",
+                "Cafe / Restaurant",
+                "Commercial Complex"
+            ],
+            floors: [
+                "Ground Floor",
+                "Ground + 1 Floor",
+                "Ground + 2 Floors",
+                "3+ Floors"
+            ]
+        },
+        executive: {
+            layouts: [
+                "Corporate Office Floor",
+                "Executive Suite",
+                "Co-working Space",
+                "Corporate Headquarters"
+            ],
+            floors: [
+                "1 Floor",
+                "2 Floors",
+                "3+ Floors"
+            ]
+        }
+    };
+    window.projectTypologyOptions = projectTypologyOptions;
+
+    function initProjectTypologyController() {
+        if (window.__projectTypologyControllerInitialized) return;
+        window.__projectTypologyControllerInitialized = true;
+
+        const propertySelect = document.getElementById('property_type');
+        const floorsSelect = document.getElementById('floors_count');
+        if (!propertySelect || !floorsSelect) return;
+
+        let currentTypology = null;
+
+        function getSelectedTypologyKey() {
+            const checkedRadio = document.querySelector('input[name="project_type"]:checked');
+            if (checkedRadio) {
+                const rawVal = (checkedRadio.getAttribute('data-typology') || checkedRadio.value || '').toLowerCase();
+                if (rawVal.includes('residen')) return 'residential';
+                if (rawVal.includes('commerc')) return 'commercial';
+                if (rawVal.includes('office') || rawVal.includes('execut')) return 'executive';
+            }
+
+            const selectedCard = document.querySelector('.spatial-choice-card.selected[data-choice-group="proj_type"]');
+            if (selectedCard) {
+                const rawCard = (selectedCard.getAttribute('data-typology') || selectedCard.textContent || '').toLowerCase();
+                if (rawCard.includes('residen')) return 'residential';
+                if (rawCard.includes('commerc')) return 'commercial';
+                if (rawCard.includes('office') || rawCard.includes('execut')) return 'executive';
+            }
+
+            return 'residential';
+        }
+
+        function rebuildDropdown(selectEl, items, placeholderText) {
+            if (!selectEl) return;
+            selectEl.innerHTML = '';
+
+            const placeholderOpt = document.createElement('option');
+            placeholderOpt.value = '';
+            placeholderOpt.textContent = placeholderText;
+            selectEl.appendChild(placeholderOpt);
+
+            items.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item;
+                opt.textContent = item;
+                selectEl.appendChild(opt);
+            });
+
+            selectEl.value = '';
+        }
+
+        function updateDropdownsForTypology(typologyKey, force = false) {
+            if (!projectTypologyOptions[typologyKey]) return;
+            if (!force && currentTypology === typologyKey) return;
+
+            currentTypology = typologyKey;
+            const config = projectTypologyOptions[typologyKey];
+
+            rebuildDropdown(propertySelect, config.layouts, 'Select Property Layout');
+            rebuildDropdown(floorsSelect, config.floors, 'Select Number of Floors');
+        }
+
+        // Set initial options on page load/reload
+        const initialTypology = getSelectedTypologyKey();
+        updateDropdownsForTypology(initialTypology, true);
+
+        // Event listener on project_type radio change
+        const radios = document.querySelectorAll('input[name="project_type"]');
+        radios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                const typology = getSelectedTypologyKey();
+                updateDropdownsForTypology(typology);
+            });
+        });
+
+        // Also attach to choice cards so update is instantaneous on card click
+        const choiceCards = document.querySelectorAll('.spatial-choice-card[data-choice-group="proj_type"]');
+        choiceCards.forEach(card => {
+            card.addEventListener('click', function() {
+                const raw = (card.getAttribute('data-typology') || card.textContent || '').toLowerCase();
+                let targetTypology = 'residential';
+                if (raw.includes('commerc')) targetTypology = 'commercial';
+                else if (raw.includes('office') || raw.includes('execut')) targetTypology = 'executive';
+
+                updateDropdownsForTypology(targetTypology);
+            });
+        });
+    }
+    window.initProjectTypologyController = initProjectTypologyController;
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initProjectTypologyController);
+    } else {
+        initProjectTypologyController();
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const wizard = document.querySelector('.spatial-wizard-wrapper');
         if (!wizard) return;
@@ -773,7 +927,9 @@ include 'includes/header.php';
                     document.getElementById('rev_area').textContent = (areaInp.value || '0') + ' sq.ft';
                 }
                 if (projTypeInp && document.getElementById('rev_type')) {
-                    document.getElementById('rev_type').textContent = projTypeInp.value;
+                    const propTypeSelect = document.getElementById('property_type');
+                    const propVal = propTypeSelect ? propTypeSelect.value : '';
+                    document.getElementById('rev_type').textContent = projTypeInp.value + (propVal ? ' (' + propVal + ')' : '');
                 }
             });
         });

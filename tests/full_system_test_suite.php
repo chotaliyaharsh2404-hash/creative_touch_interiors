@@ -7,7 +7,15 @@
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
-define('BASE_URL', 'http://localhost/project/Creative%20Touch%20Interiors');
+$detectedBase = 'http://localhost/project/creative_touch_interiors';
+$chTest = curl_init($detectedBase . '/index.php');
+curl_setopt($chTest, CURLOPT_RETURNTRANSFER, true);
+curl_exec($chTest);
+if (curl_getinfo($chTest, CURLINFO_HTTP_CODE) !== 200) {
+    $detectedBase = 'http://localhost/project/Creative%20Touch%20Interiors';
+}
+curl_close($chTest);
+define('BASE_URL', $detectedBase);
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
@@ -143,7 +151,7 @@ foreach ($iter as $file) {
 }
 $syntaxErrors = 0;
 foreach ($phpFiles as $file) {
-    $cmd = "php -l " . escapeshellarg($file);
+    $cmd = escapeshellarg(PHP_BINARY) . " -l " . escapeshellarg($file);
     exec($cmd, $out, $ret);
     if ($ret !== 0) {
         $syntaxErrors++;

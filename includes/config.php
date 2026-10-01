@@ -23,7 +23,7 @@ if (strpos($scriptDir, '/admin') !== false) {
     $scriptDir = dirname($scriptDir);
 }
 $basePath = rtrim($scriptDir, '/') . '/';
-define('BASE_URL', (isset($_SERVER['HTTP_HOST']) ? ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://") . $_SERVER['HTTP_HOST'] . $basePath : 'http://localhost/project/Creative%20Touch%20Interiors/'));
+define('BASE_URL', (isset($_SERVER['HTTP_HOST']) ? ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://") . $_SERVER['HTTP_HOST'] . $basePath : 'http://localhost/project/creative_touch_interiors/'));
 
 // Site Configuration
 define('SITE_NAME', 'Creative Touch Interiors');
