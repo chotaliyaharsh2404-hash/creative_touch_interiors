@@ -1,8 +1,8 @@
 <?php
 require_once '../includes/config.php';
 
-// Enforce admin login and disable caching
-requireAdminLogin('login.php');
+// Enforce super admin login and disable caching
+requireSuperAdmin('dashboard.php');
 
 $current_page = 'blog';
 $error = '';

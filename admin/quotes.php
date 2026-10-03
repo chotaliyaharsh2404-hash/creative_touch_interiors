@@ -38,26 +38,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // 2. Delete Quote
         if ($_POST['action'] === 'delete') {
-            $quote_id = (int)$_POST['id'];
-            
-            // Delete attachment file if exists
-            $attStmt = $conn->prepare("SELECT attachment_path FROM quote_requests WHERE id = ?");
-            $attStmt->bind_param("i", $quote_id);
-            $attStmt->execute();
-            $attRow = $attStmt->get_result()->fetch_assoc();
-            if (!empty($attRow['attachment_path'])) {
-                $fPath = dirname(__DIR__) . '/' . ltrim(str_replace('\\', '/', $attRow['attachment_path']), '/');
-                if (file_exists($fPath)) {
-                    @unlink($fPath);
-                }
-            }
-
-            $delStmt = $conn->prepare("DELETE FROM quote_requests WHERE id = ?");
-            $delStmt->bind_param("i", $quote_id);
-            if ($delStmt->execute()) {
-                $success = "Quote request deleted successfully!";
+            if (isReceptionist()) {
+                $error = "Access denied: Receptionists cannot delete quote requests.";
             } else {
-                $error = "Failed to delete quote.";
+                $quote_id = (int)$_POST['id'];
+                
+                // Delete attachment file if exists
+                $attStmt = $conn->prepare("SELECT attachment_path FROM quote_requests WHERE id = ?");
+                $attStmt->bind_param("i", $quote_id);
+                $attStmt->execute();
+                $attRow = $attStmt->get_result()->fetch_assoc();
+                if (!empty($attRow['attachment_path'])) {
+                    $fPath = dirname(__DIR__) . '/' . ltrim(str_replace('\\', '/', $attRow['attachment_path']), '/');
+                    if (file_exists($fPath)) {
+                        @unlink($fPath);
+                    }
+                }
+
+                $delStmt = $conn->prepare("DELETE FROM quote_requests WHERE id = ?");
+                $delStmt->bind_param("i", $quote_id);
+                if ($delStmt->execute()) {
+                    $success = "Quote request deleted successfully!";
+                } else {
+                    $error = "Failed to delete quote.";
+                }
             }
         }
     }
@@ -418,6 +422,7 @@ if ($quotes_res) {
                                                 </a>
 
                                                 <!-- Delete Quote -->
+                                                <?php if (!isReceptionist()): ?>
                                                 <form method="POST" style="display: inline; margin: 0;" onsubmit="return confirm('Are you sure you want to permanently delete quote request <?php echo $q['quote_number']; ?>?');">
                                                     <?php echo csrf_field(); ?>
                                                     <input type="hidden" name="action" value="delete">
@@ -426,6 +431,7 @@ if ($quotes_res) {
                                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                                     </button>
                                                 </form>
+                                                <?php endif; ?>
 
                                             </div>
                                         </td>

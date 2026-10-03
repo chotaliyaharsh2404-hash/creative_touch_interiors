@@ -57,9 +57,50 @@ function isAdminLoggedIn() {
     return isset($_SESSION['admin_id']) && isset($_SESSION['admin_username']);
 }
 
+// Helper function to get current admin role
+function getAdminRole() {
+    return $_SESSION['admin_role'] ?? '';
+}
+
+// Helper function to get human-readable admin role label
+function getAdminRoleLabel($role = null) {
+    $r = $role ?? getAdminRole();
+    switch ($r) {
+        case 'super_admin':
+            return 'Super Admin';
+        case 'admin':
+            return 'Admin';
+        case 'receptionist':
+            return 'Receptionist';
+        default:
+            return !empty($r) ? ucfirst(str_replace('_', ' ', $r)) : 'Administrator';
+    }
+}
+
 // Helper function to check if current user is Super Admin
 function isSuperAdmin() {
-    return isAdminLoggedIn() && isset($_SESSION['admin_role']) && $_SESSION['admin_role'] === 'super_admin';
+    return isAdminLoggedIn() && getAdminRole() === 'super_admin';
+}
+
+// Helper function to check if current user is Admin
+function isAdminRole() {
+    return isAdminLoggedIn() && getAdminRole() === 'admin';
+}
+
+// Helper function to check if current user is Receptionist
+function isReceptionist() {
+    return isAdminLoggedIn() && getAdminRole() === 'receptionist';
+}
+
+// Helper function to check if current admin has one of the allowed roles
+function hasRole($allowedRoles) {
+    if (!isAdminLoggedIn()) {
+        return false;
+    }
+    if (!is_array($allowedRoles)) {
+        $allowedRoles = [$allowedRoles];
+    }
+    return in_array(getAdminRole(), $allowedRoles, true);
 }
 
 // Helper function to prevent browser caching on protected pages
@@ -88,15 +129,20 @@ function requireAdminLogin($redirectUrl = 'login.php') {
     }
 }
 
-// Helper function to enforce Super Admin role on restricted management pages
-function requireSuperAdmin($redirectUrl = 'dashboard.php') {
+// Helper function to enforce specific roles on restricted pages
+function requireRoles($allowedRoles, $redirectUrl = 'dashboard.php') {
     preventPageCaching();
     if (!isAdminLoggedIn()) {
         redirect('login.php');
     }
-    if (!isSuperAdmin()) {
-        redirect($redirectUrl . '?error=' . urlencode('Access restricted: Super Admin privileges are required to manage this section.'));
+    if (!hasRole($allowedRoles)) {
+        redirect($redirectUrl . (strpos($redirectUrl, '?') === false ? '?' : '&') . 'error=' . urlencode('Access restricted: You do not have permission to access this section.'));
     }
+}
+
+// Helper function to enforce Super Admin role on restricted management pages
+function requireSuperAdmin($redirectUrl = 'dashboard.php') {
+    requireRoles(['super_admin'], $redirectUrl);
 }
 
 // Helper function to completely destroy user session

@@ -56,13 +56,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         
         // 3. DELETE LEAD
         if ($_POST['action'] == 'delete') {
-            $id = (int)$_POST['id'];
-            $stmt = $conn->prepare("DELETE FROM leads WHERE id = ?");
-            $stmt->bind_param("i", $id);
-            if ($stmt->execute()) {
-                $success = "Lead deleted successfully!";
+            if (isReceptionist()) {
+                $error = "Access denied: Receptionists cannot delete leads.";
             } else {
-                $error = "Failed to delete lead.";
+                $id = (int)$_POST['id'];
+                $stmt = $conn->prepare("DELETE FROM leads WHERE id = ?");
+                $stmt->bind_param("i", $id);
+                if ($stmt->execute()) {
+                    $success = "Lead deleted successfully!";
+                } else {
+                    $error = "Failed to delete lead.";
+                }
             }
         }
     }
@@ -479,6 +483,7 @@ if ($leads_res) {
                                                 </button>
 
                                                 <!-- Delete Lead -->
+                                                <?php if (!isReceptionist()): ?>
                                                 <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this lead?');">
                                                     <?php echo csrf_field(); ?>
                                                     <input type="hidden" name="action" value="delete">
@@ -487,10 +492,7 @@ if ($leads_res) {
                                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                                     </button>
                                                 </form>
-                                            </div>
-                                        </td>
-                                                    </button>
-                                                </form>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
 

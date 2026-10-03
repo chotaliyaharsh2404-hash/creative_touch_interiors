@@ -88,52 +88,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // 3. SAVE COST ESTIMATION BREAKDOWN
         if ($_POST['action'] === 'save_estimation') {
-            $base_rate = max(0, (float)($_POST['base_rate_per_sqft'] ?? 0));
-            $material_cost = max(0, (float)($_POST['material_cost'] ?? 0));
-            $service_cost = max(0, (float)($_POST['service_cost'] ?? 0));
-            $additional_cost = max(0, (float)($_POST['additional_cost'] ?? 0));
-            $package_type = sanitize($_POST['package_type'] ?? 'standard');
-            $pkgMultiplier = getPackageMultiplier($package_type);
-            $discount_type = sanitize($_POST['discount_type'] ?? 'flat');
-            $discount_val = max(0, (float)($_POST['discount_amount'] ?? 0));
-            $tax_percent = max(0, (float)($_POST['tax_percentage'] ?? 18.0));
-            $estimation_notes = sanitize($_POST['estimation_notes'] ?? '');
-            $set_status_prepared = isset($_POST['mark_estimation_prepared']) ? true : false;
-
-            // Fetch approx area for base cost calc
-            $areaStmt = $conn->prepare("SELECT approx_area, measurement_status FROM quote_requests WHERE id = ?");
-            $areaStmt->bind_param("i", $quote_id);
-            $areaStmt->execute();
-            $areaRow = $areaStmt->get_result()->fetch_assoc();
-            $approx_area = (float)($areaRow['approx_area'] ?? 0);
-
-            // Compute authoritative calculation via quote_engine
-            $base_cost = round($approx_area * $base_rate, 2);
-            $gross_subtotal = round(($base_cost + $service_cost + $material_cost) * $pkgMultiplier, 2);
-            $calc = calculateQuoteGrandTotal($gross_subtotal, $additional_cost, $discount_type, $discount_val, $tax_percent);
-
-            $discount_amount = $calc['discount_amount'];
-            $tax_amount = $calc['tax_amount'];
-            $estimated_total = $calc['grand_total'];
-
-            $new_status_clause = $set_status_prepared ? ", status = 'estimation_prepared'" : "";
-
-            $estStmt = $conn->prepare("UPDATE quote_requests SET 
-                base_rate_per_sqft = ?, base_cost = ?, service_cost = ?, material_cost = ?, additional_cost = ?,
-                package_type = ?, package_multiplier = ?, discount_type = ?, discount_value = ?, discount_amount = ?,
-                tax_percentage = ?, tax_amount = ?, estimated_total = ?, estimation_notes = ? {$new_status_clause}
-                WHERE id = ?");
-            $estStmt->bind_param("dddddsdsdddddsi", 
-                $base_rate, $base_cost, $service_cost, $material_cost, $additional_cost,
-                $package_type, $pkgMultiplier, $discount_type, $discount_val, $discount_amount,
-                $tax_percent, $tax_amount, $estimated_total, $estimation_notes, $quote_id);
-
-            if ($estStmt->execute()) {
-                $histComment = "Estimation calculated via engine ({$package_type} tier, discount: ₹" . number_format($discount_amount, 2) . "). Total: ₹" . number_format($estimated_total, 2) . ($set_status_prepared ? " (Status updated to Estimation Prepared)" : "");
-                recordQuoteStatusHistory($conn, $quote_id, null, $set_status_prepared ? 'estimation_prepared' : 'under_review', 'admin', $_SESSION['admin_name'] ?? 'Admin', $histComment);
-                $success = "Quotation & Estimation calculation saved successfully! Grand Total: " . formatIndianCurrency($estimated_total);
+            if (isReceptionist()) {
+                $error = "Access denied: Receptionists cannot modify estimation and pricing breakdowns.";
             } else {
-                $error = "Failed to save estimation: " . $conn->error;
+                $base_rate = max(0, (float)($_POST['base_rate_per_sqft'] ?? 0));
+                $material_cost = max(0, (float)($_POST['material_cost'] ?? 0));
+                $service_cost = max(0, (float)($_POST['service_cost'] ?? 0));
+                $additional_cost = max(0, (float)($_POST['additional_cost'] ?? 0));
+                $package_type = sanitize($_POST['package_type'] ?? 'standard');
+                $pkgMultiplier = getPackageMultiplier($package_type);
+                $discount_type = sanitize($_POST['discount_type'] ?? 'flat');
+                $discount_val = max(0, (float)($_POST['discount_amount'] ?? 0));
+                $tax_percent = max(0, (float)($_POST['tax_percentage'] ?? 18.0));
+                $estimation_notes = sanitize($_POST['estimation_notes'] ?? '');
+                $set_status_prepared = isset($_POST['mark_estimation_prepared']) ? true : false;
+
+                // Fetch approx area for base cost calc
+                $areaStmt = $conn->prepare("SELECT approx_area, measurement_status FROM quote_requests WHERE id = ?");
+                $areaStmt->bind_param("i", $quote_id);
+                $areaStmt->execute();
+                $areaRow = $areaStmt->get_result()->fetch_assoc();
+                $approx_area = (float)($areaRow['approx_area'] ?? 0);
+
+                // Compute authoritative calculation via quote_engine
+                $base_cost = round($approx_area * $base_rate, 2);
+                $gross_subtotal = round(($base_cost + $service_cost + $material_cost) * $pkgMultiplier, 2);
+                $calc = calculateQuoteGrandTotal($gross_subtotal, $additional_cost, $discount_type, $discount_val, $tax_percent);
+
+                $discount_amount = $calc['discount_amount'];
+                $tax_amount = $calc['tax_amount'];
+                $estimated_total = $calc['grand_total'];
+
+                $new_status_clause = $set_status_prepared ? ", status = 'estimation_prepared'" : "";
+
+                $estStmt = $conn->prepare("UPDATE quote_requests SET 
+                    base_rate_per_sqft = ?, base_cost = ?, service_cost = ?, material_cost = ?, additional_cost = ?,
+                    package_type = ?, package_multiplier = ?, discount_type = ?, discount_value = ?, discount_amount = ?,
+                    tax_percentage = ?, tax_amount = ?, estimated_total = ?, estimation_notes = ? {$new_status_clause}
+                    WHERE id = ?");
+                $estStmt->bind_param("dddddsdsdddddsi", 
+                    $base_rate, $base_cost, $service_cost, $material_cost, $additional_cost,
+                    $package_type, $pkgMultiplier, $discount_type, $discount_val, $discount_amount,
+                    $tax_percent, $tax_amount, $estimated_total, $estimation_notes, $quote_id);
+
+                if ($estStmt->execute()) {
+                    $histComment = "Estimation calculated via engine ({$package_type} tier, discount: ₹" . number_format($discount_amount, 2) . "). Total: ₹" . number_format($estimated_total, 2) . ($set_status_prepared ? " (Status updated to Estimation Prepared)" : "");
+                    recordQuoteStatusHistory($conn, $quote_id, null, $set_status_prepared ? 'estimation_prepared' : 'under_review', 'admin', $_SESSION['admin_name'] ?? 'Admin', $histComment);
+                    $success = "Quotation & Estimation calculation saved successfully! Grand Total: " . formatIndianCurrency($estimated_total);
+                } else {
+                    $error = "Failed to save estimation: " . $conn->error;
+                }
             }
         }
 
@@ -712,6 +716,7 @@ $statusInfo = getQuoteStatusInfo($quote['status']);
                                 </div>
                             </div>
 
+                            <?php if (!isReceptionist()): ?>
                             <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.5rem;">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
@@ -720,6 +725,12 @@ $statusInfo = getQuoteStatusInfo($quote['status']);
                                 </svg>
                                 <span>Save & Calculate Quotation Estimate</span>
                             </button>
+                            <?php else: ?>
+                            <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 0.85rem 1.25rem; border-radius: var(--radius-md); font-size: 0.85rem; color: #64748b; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #94a3b8;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                <span>View-Only Mode: Receptionists cannot modify estimation and pricing breakdowns.</span>
+                            </div>
+                            <?php endif; ?>
                         </form>
                     </div>
 

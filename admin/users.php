@@ -113,7 +113,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
             }
         }
 
-        // 5. CREATE NEW ADMIN (Super Admin Only)
+        $allowed_admin_roles = ['super_admin', 'admin', 'receptionist'];
+
+        // 5. CREATE NEW ADMIN / RECEPTIONIST (Super Admin Only)
         if ($action == 'add_admin') {
             $active_tab = 'admins';
             if (!$is_super) {
@@ -125,7 +127,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
                 $role = sanitize($_POST['role'] ?? 'admin');
                 $password = $_POST['password'] ?? '';
 
-                if (empty($username) || empty($password)) {
+                if (!in_array($role, $allowed_admin_roles, true)) {
+                    $error = 'Invalid role specified. Allowed roles are: Super Admin, Admin, Receptionist.';
+                } elseif (empty($username) || empty($password)) {
                     $error = 'Username and password are required.';
                 } elseif (strlen($password) < 6) {
                     $error = 'Password must be at least 6 characters.';
@@ -140,10 +144,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
                         $stmt = $conn->prepare("INSERT INTO admin_users (username, password, email, name, role) VALUES (?, ?, ?, ?, ?)");
                         $stmt->bind_param("sssss", $username, $hashed, $email, $full_name, $role);
                         if ($stmt->execute()) {
-                            $success = "Administrator account '$username' created successfully!";
+                            $success = "Staff account '$username' (" . getAdminRoleLabel($role) . ") created successfully!";
                         } else {
                             $error = 'Failed to create administrator account: ' . $conn->error;
                         }
+                    }
+                }
+            }
+        }
+
+        // 5b. EDIT ADMIN / RECEPTIONIST (Super Admin Only)
+        if ($action == 'edit_admin') {
+            $active_tab = 'admins';
+            if (!$is_super) {
+                $error = 'Only Super Administrators can edit administrative accounts.';
+            } else {
+                $target_id = (int)($_POST['admin_id'] ?? 0);
+                $full_name = sanitize($_POST['full_name'] ?? '');
+                $email = sanitize($_POST['email'] ?? '');
+                $new_role = sanitize($_POST['role'] ?? 'admin');
+
+                if (!in_array($new_role, $allowed_admin_roles, true)) {
+                    $error = 'Invalid role selected. Allowed roles are: Super Admin, Admin, Receptionist.';
+                } elseif (empty($full_name)) {
+                    $error = 'Full name is required.';
+                } else {
+                    // Prevent logged-in super admin from changing own role
+                    if ($target_id === (int)$_SESSION['admin_id']) {
+                        $new_role = 'super_admin';
+                    }
+                    $stmt = $conn->prepare("UPDATE admin_users SET name = ?, email = ?, role = ? WHERE id = ?");
+                    $stmt->bind_param("sssi", $full_name, $email, $new_role, $target_id);
+                    if ($stmt->execute()) {
+                        $success = 'Staff account details updated successfully.';
+                    } else {
+                        $error = 'Failed to update staff account: ' . $conn->error;
                     }
                 }
             }
@@ -158,13 +193,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
                 $target_id = (int)$_POST['admin_id'];
                 $new_role = sanitize($_POST['role'] ?? 'admin');
 
-                if ($target_id === (int)$_SESSION['admin_id']) {
+                if (!in_array($new_role, $allowed_admin_roles, true)) {
+                    $error = 'Invalid role selected. Allowed roles are: Super Admin, Admin, Receptionist.';
+                } elseif ($target_id === (int)$_SESSION['admin_id']) {
                     $error = 'You cannot change your own role.';
                 } else {
                     $stmt = $conn->prepare("UPDATE admin_users SET role = ? WHERE id = ?");
                     $stmt->bind_param("si", $new_role, $target_id);
                     if ($stmt->execute()) {
-                        $success = 'Administrator role updated.';
+                        $success = 'Staff role updated to ' . getAdminRoleLabel($new_role) . '.';
                     } else {
                         $error = 'Failed to update role: ' . $conn->error;
                     }
@@ -271,9 +308,14 @@ foreach ($admins as $a) {
             border: 1px solid #bfdbfe;
         }
         .role-pill.admin {
-            background: #f0fdf4;
-            color: #15803d;
-            border: 1px solid #bbf7d0;
+            background: #eff6ff;
+            color: #2563eb;
+            border: 1px solid #bfdbfe;
+        }
+        .role-pill.receptionist {
+            background: #ecfdf5;
+            color: #059669;
+            border: 1px solid #a7f3d0;
         }
         .role-pill.client {
             background: #f8fafc;
@@ -610,11 +652,16 @@ foreach ($admins as $a) {
                                                         <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"></path>
                                                     </svg>
                                                     <span>Super Admin</span>
+                                                <?php elseif (($adm['role'] ?? '') == 'receptionist'): ?>
+                                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                                    </svg>
+                                                    <span>Receptionist</span>
                                                 <?php else: ?>
                                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                                                         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                                                     </svg>
-                                                    <span>Standard Admin</span>
+                                                    <span>Admin</span>
                                                 <?php endif; ?>
                                             </span>
                                         </td>
@@ -628,19 +675,11 @@ foreach ($admins as $a) {
                                             <?php if ($is_super): ?>
                                                 <div style="display: inline-flex; gap: 0.35rem; align-items: center;">
                                                     
-                                                    <!-- Role Toggle Form -->
-                                                    <?php if ((int)$adm['id'] !== (int)($_SESSION['admin_id'] ?? 0)): ?>
-                                                        <form method="POST" style="display: inline;" onsubmit="return confirm('Change role for <?php echo addslashes(htmlspecialchars($adm['username'])); ?> to <?php echo ($adm['role'] ?? '') == 'super_admin' ? 'Standard Admin' : 'Super Admin'; ?>?');">
-                                                            <?php echo csrf_field(); ?>
-                                                            <input type="hidden" name="action" value="change_admin_role">
-                                                            <input type="hidden" name="admin_id" value="<?php echo $adm['id']; ?>">
-                                                            <input type="hidden" name="role" value="<?php echo ($adm['role'] ?? '') == 'super_admin' ? 'admin' : 'super_admin'; ?>">
-                                                            <button type="submit" class="btn btn-outline" style="font-size: 0.75rem; padding: 0.3rem 0.6rem; color: #4f46e5; border-color: #c7d2fe; display: inline-flex; align-items: center; gap: 0.25rem;">
-                                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                                                                <span><?php echo ($adm['role'] ?? '') == 'super_admin' ? 'Demote to Admin' : 'Make Super Admin'; ?></span>
-                                                            </button>
-                                                        </form>
-                                                    <?php endif; ?>
+                                                    <!-- Edit Staff Button -->
+                                                    <button type="button" onclick="openEditAdminModal(<?php echo $adm['id']; ?>, '<?php echo addslashes(htmlspecialchars($adm['username'])); ?>', '<?php echo addslashes(htmlspecialchars($adm['name'] ?? '')); ?>', '<?php echo addslashes(htmlspecialchars($adm['email'] ?? '')); ?>', '<?php echo $adm['role'] ?? 'admin'; ?>', <?php echo (int)$adm['id'] === (int)($_SESSION['admin_id'] ?? 0) ? 'true' : 'false'; ?>)" class="btn btn-outline" style="font-size: 0.75rem; padding: 0.3rem 0.6rem; color: #4f46e5; border-color: #c7d2fe; display: inline-flex; align-items: center; gap: 0.25rem;">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                                        <span>Edit</span>
+                                                    </button>
 
                                                     <!-- Reset Admin Pass -->
                                                     <button type="button" onclick="openResetAdminPassModal(<?php echo $adm['id']; ?>, '<?php echo addslashes(htmlspecialchars($adm['username'])); ?>')" class="btn btn-outline" style="font-size: 0.75rem; padding: 0.3rem 0.6rem; color: #d97706; border-color: #fde68a; display: inline-flex; align-items: center; gap: 0.25rem;">
@@ -648,9 +687,9 @@ foreach ($admins as $a) {
                                                         <span>Reset Pass</span>
                                                     </button>
 
-                                                    <!-- Delete Admin Form -->
+                                                    <!-- Delete Admin Form (Cannot delete self) -->
                                                     <?php if ((int)$adm['id'] !== (int)($_SESSION['admin_id'] ?? 0)): ?>
-                                                        <form method="POST" onsubmit="return confirm('Revoke all administrator access for <?php echo addslashes(htmlspecialchars($adm['username'])); ?>?');" style="display: inline;">
+                                                        <form method="POST" onsubmit="return confirm('Revoke all access for <?php echo addslashes(htmlspecialchars($adm['username'])); ?>?');" style="display: inline;">
                                                             <?php echo csrf_field(); ?>
                                                             <input type="hidden" name="action" value="delete_admin">
                                                             <input type="hidden" name="admin_id" value="<?php echo $adm['id']; ?>">
@@ -765,10 +804,11 @@ foreach ($admins as $a) {
                     <input type="email" name="email" class="form-control" placeholder="admin@creativetouch.com">
                 </div>
                 <div class="form-group" style="margin-bottom: 1rem;">
-                    <label class="form-label">Administrator Role *</label>
+                    <label class="form-label">Administrator / Staff Role *</label>
                     <select name="role" class="form-control" required>
-                        <option value="admin">Standard Admin (Manage Content & Leads)</option>
-                        <option value="super_admin">Super Admin (Full Access & User Roles)</option>
+                        <option value="receptionist">Receptionist (Front-Desk: Inquiries, Leads, Consultations & Quotes)</option>
+                        <option value="admin">Admin (Business Manager: Projects, Services, Quotes, Testimonials)</option>
+                        <option value="super_admin">Super Admin (Full Access: System, Users, Settings, Blog & Team)</option>
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom: 1.5rem;">
@@ -778,7 +818,57 @@ foreach ($admins as $a) {
                 
                 <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
                     <button type="button" onclick="closeModal('modalAddAdmin')" class="btn-modal-cancel">Cancel</button>
-                    <button type="submit" class="btn-modal-submit">Create Administrator</button>
+                    <button type="submit" class="btn-modal-submit">Create Staff Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3B: EDIT ADMIN / STAFF (Super Admin Only) -->
+    <div id="modalEditAdmin" class="modal">
+        <div class="modal-content">
+            <div style="padding: 1.5rem 1.75rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="font-size: 1.2rem; font-weight: 700; margin: 0; font-family: var(--font-heading); display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-accent);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    Edit Staff Account: <span id="edit_admin_username_label" style="color: #2563eb;"></span>
+                </h3>
+                <button type="button" onclick="closeModal('modalEditAdmin')" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--color-text-muted);">&times;</button>
+            </div>
+            <form method="POST" style="padding: 1.5rem 1.75rem;">
+                <?php echo csrf_field(); ?>
+                <input type="hidden" name="action" value="edit_admin">
+                <input type="hidden" name="admin_id" id="edit_admin_id">
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label class="form-label">Username</label>
+                    <input type="text" id="edit_admin_username" class="form-control" disabled style="background: #f1f5f9; cursor: not-allowed;">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label class="form-label">Full Name *</label>
+                    <input type="text" name="full_name" id="edit_admin_name" class="form-control" required placeholder="Staff Full Name">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" name="email" id="edit_admin_email" class="form-control" placeholder="staff@creativetouch.com">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label class="form-label">Assigned Role *</label>
+                    <select name="role" id="edit_admin_role" class="form-control" required>
+                        <option value="super_admin">Super Admin (Full Access: System, Users, Settings, Blog & Team)</option>
+                        <option value="admin">Admin (Business Manager: Projects, Services, Quotes, Testimonials)</option>
+                        <option value="receptionist">Receptionist (Front-Desk: Inquiries, Leads, Consultations & Quotes)</option>
+                    </select>
+                    <small id="edit_admin_self_notice" style="color: #64748b; font-size: 0.75rem; display: none; margin-top: 0.35rem;">
+                        Note: You cannot change your own Super Administrator role.
+                    </small>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                    <button type="button" onclick="closeModal('modalEditAdmin')" class="btn-modal-cancel">Cancel</button>
+                    <button type="submit" class="btn-modal-submit">Save Staff Changes</button>
                 </div>
             </form>
         </div>
@@ -846,6 +936,25 @@ foreach ($admins as $a) {
 
         function openAddAdminModal() {
             openModal('modalAddAdmin');
+        }
+
+        function openEditAdminModal(id, username, name, email, role, isSelf) {
+            document.getElementById('edit_admin_id').value = id;
+            document.getElementById('edit_admin_username_label').textContent = username;
+            document.getElementById('edit_admin_username').value = username;
+            document.getElementById('edit_admin_name').value = name;
+            document.getElementById('edit_admin_email').value = email;
+            const roleSelect = document.getElementById('edit_admin_role');
+            roleSelect.value = role;
+            const selfNotice = document.getElementById('edit_admin_self_notice');
+            if (isSelf) {
+                roleSelect.disabled = true;
+                if (selfNotice) selfNotice.style.display = 'block';
+            } else {
+                roleSelect.disabled = false;
+                if (selfNotice) selfNotice.style.display = 'none';
+            }
+            openModal('modalEditAdmin');
         }
 
         function openResetAdminPassModal(id, username) {

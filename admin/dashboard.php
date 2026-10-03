@@ -4,9 +4,11 @@ require_once '../includes/config.php';
 // Enforce admin authentication and prevent caching
 requireAdminLogin('login.php');
 
-// Run automatic system self-healing check (seeds empty tables, syncs site visits)
-require_once '../includes/system_repair.php';
-runSystemRepairs($conn);
+// Run automatic system self-healing check (seeds empty tables, syncs site visits) — Super Admin only
+if (isSuperAdmin()) {
+    require_once '../includes/system_repair.php';
+    runSystemRepairs($conn);
+}
 
 // Check for Welcome Popup flash flag
 $show_welcome = false;
@@ -689,7 +691,7 @@ if (empty($cat_distribution)) {
                 Welcome, <?php echo htmlspecialchars($_SESSION['admin_name'] ?? 'Admin'); ?>!
             </div>
             <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.2rem;">
-                Authenticated as <strong><?php echo ($_SESSION['admin_role'] ?? 'admin') === 'super_admin' ? 'Super Admin' : 'Admin'; ?></strong>
+                Authenticated as <strong><?php echo getAdminRoleLabel(); ?></strong>
             </div>
         </div>
         <button type="button" onclick="closeWelcomeToast()" style="background: none; border: none; font-size: 1.25rem; color: var(--text-muted); cursor: pointer; padding: 0.2rem; line-height: 1;" title="Dismiss">&times;</button>

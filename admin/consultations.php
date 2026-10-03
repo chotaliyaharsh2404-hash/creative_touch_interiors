@@ -79,13 +79,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         
         // 4. DELETE CONSULTATION
         if ($_POST['action'] == 'delete') {
-            $id = (int)$_POST['id'];
-            $stmt = $conn->prepare("DELETE FROM consultations WHERE id = ?");
-            $stmt->bind_param("i", $id);
-            if ($stmt->execute()) {
-                $success = "Consultation record deleted successfully!";
+            if (isReceptionist()) {
+                $error = "Access denied: Receptionists cannot delete consultations.";
             } else {
-                $error = "Failed to delete consultation.";
+                $id = (int)$_POST['id'];
+                $stmt = $conn->prepare("DELETE FROM consultations WHERE id = ?");
+                $stmt->bind_param("i", $id);
+                if ($stmt->execute()) {
+                    $success = "Consultation record deleted successfully!";
+                } else {
+                    $error = "Failed to delete consultation.";
+                }
             }
         }
     }
@@ -633,6 +637,7 @@ if ($consultations_res) {
                                                         <circle cx="12" cy="12" r="3"></circle>
                                                     </svg>
                                                 </button>
+                                                <?php if (!isReceptionist()): ?>
                                                 <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this consultation record?');">
                                                     <?php echo csrf_field(); ?>
                                                     <input type="hidden" name="action" value="delete">
@@ -646,6 +651,7 @@ if ($consultations_res) {
                                                         </svg>
                                                     </button>
                                                 </form>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
 

@@ -1,8 +1,8 @@
 <?php
 require_once '../includes/config.php';
 
-// Enforce super admin authentication and prevent caching
-requireSuperAdmin('dashboard.php');
+// Enforce super_admin or admin role and prevent caching (Receptionist blocked)
+requireRoles(['super_admin', 'admin'], 'dashboard.php');
 
 $error = '';
 $success = '';

@@ -9,7 +9,9 @@ $success = '';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (!validate_csrf()) {
+    if (isReceptionist()) {
+        $error = "Access denied: Receptionists have view-only access to the gallery.";
+    } else if (!validate_csrf()) {
         $error = "Security token expired. Please try again.";
     } else if (isset($_POST['action'])) {
         
@@ -420,6 +422,7 @@ if ($pRes) {
                 </div>
                 
                 <div>
+                    <?php if (!isReceptionist()): ?>
                     <!-- Add New Visual Button -->
                     <button type="button" onclick="openAddModal()" class="btn-add-visual" style="display: inline-flex; align-items: center; gap: 0.5rem;">
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -428,6 +431,7 @@ if ($pRes) {
                         </svg>
                         <span>Add New Visual</span>
                     </button>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -552,6 +556,7 @@ if ($pRes) {
                                     </div>
 
                                     <!-- Featured Star Floating Top Right -->
+                                    <?php if (!isReceptionist()): ?>
                                     <form method="POST" style="position: absolute; top: 0.65rem; right: 0.65rem;">
                                         <?php echo csrf_field(); ?>
                                         <input type="hidden" name="action" value="toggle_featured">
@@ -563,6 +568,13 @@ if ($pRes) {
                                             </svg>
                                         </button>
                                     </form>
+                                    <?php elseif ($is_feat): ?>
+                                    <div style="position: absolute; top: 0.65rem; right: 0.65rem; background: rgba(255, 255, 255, 0.95); border: 1px solid #cbd5e1; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: #2563eb; box-shadow: var(--shadow-sm);" title="Featured">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                        </svg>
+                                    </div>
+                                    <?php endif; ?>
                                 </div>
 
                                 <div style="padding: 1rem 1.15rem; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex: 1;">
@@ -570,6 +582,7 @@ if ($pRes) {
                                         <?php echo htmlspecialchars($item['title']); ?>
                                     </div>
                                     
+                                    <?php if (!isReceptionist()): ?>
                                     <div style="display: flex; gap: 0.35rem; flex-shrink: 0;">
                                         <!-- Edit Modal Trigger -->
                                         <button type="button" onclick="openEditModal(<?php echo htmlspecialchars(json_encode($item)); ?>)" class="action-icon-btn" title="Edit Visual Title & Category" style="color: #2563eb;">
@@ -594,6 +607,9 @@ if ($pRes) {
                                             </button>
                                         </form>
                                     </div>
+                                    <?php else: ?>
+                                        <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 500;">View Only</span>
+                                    <?php endif; ?>
                                 </div>
 
                             </div>
@@ -613,6 +629,7 @@ if ($pRes) {
         </div>
     </div>
 
+    <?php if (!isReceptionist()): ?>
     <!-- ADD VISUAL MODAL -->
     <div id="addModal" class="modal-overlay">
         <div class="modal-box">
@@ -769,6 +786,7 @@ if ($pRes) {
             </form>
         </div>
     </div>
+    <?php endif; ?>
 
     <script>
         let currentFilter = 'all';

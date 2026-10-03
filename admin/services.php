@@ -9,7 +9,9 @@ $success = '';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (!validate_csrf()) {
+    if (isReceptionist()) {
+        $error = "Access denied: Receptionists have view-only access to services.";
+    } else if (!validate_csrf()) {
         $error = "Security token expired. Please try again.";
     } else if (isset($_POST['action'])) {
         
@@ -334,14 +336,20 @@ if ($services_res) {
                 </div>
                 
                 <div>
-                    <!-- Add New Service Button -->
-                    <button type="button" onclick="openAddModal()" class="btn-add-service" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                        <span>Add New Service</span>
-                    </button>
+                    <?php if (!isReceptionist()): ?>
+                        <!-- Add New Service Button -->
+                        <button type="button" onclick="openAddModal()" class="btn-add-service" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            <span>Add New Service</span>
+                        </button>
+                    <?php else: ?>
+                        <span class="badge" style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; padding: 0.5rem 1rem; font-size: 0.8rem; font-weight: 600;">
+                            View-Only Mode
+                        </span>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -497,56 +505,78 @@ if ($services_res) {
 
                                         <!-- Status Toggle Button -->
                                         <td style="padding: 1rem; text-align: center;">
-                                            <form method="POST" style="display: inline-block;">
-                                                <?php echo csrf_field(); ?>
-                                                <input type="hidden" name="action" value="toggle_status">
-                                                <input type="hidden" name="id" value="<?php echo $service['id']; ?>">
-                                                <input type="hidden" name="status" value="<?php echo $status_clean; ?>">
-                                                <button type="submit" title="Click to toggle Active/Inactive" style="background: none; border: none; cursor: pointer; padding: 0;">
-                                                    <?php if ($status_clean === 'active'): ?>
-                                                        <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700;">
-                                                            ✓ Active
-                                                        </span>
-                                                    <?php else: ?>
-                                                        <span style="background: rgba(255, 255, 255, 0.05); color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.1); padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">
-                                                            Inactive
-                                                        </span>
-                                                    <?php endif; ?>
-                                                </button>
-                                            </form>
+                                            <?php if (!isReceptionist()): ?>
+                                                <form method="POST" style="display: inline-block;">
+                                                    <?php echo csrf_field(); ?>
+                                                    <input type="hidden" name="action" value="toggle_status">
+                                                    <input type="hidden" name="id" value="<?php echo $service['id']; ?>">
+                                                    <input type="hidden" name="status" value="<?php echo $status_clean; ?>">
+                                                    <button type="submit" title="Click to toggle Active/Inactive" style="background: none; border: none; cursor: pointer; padding: 0;">
+                                                        <?php if ($status_clean === 'active'): ?>
+                                                            <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700;">
+                                                                ✓ Active
+                                                            </span>
+                                                        <?php else: ?>
+                                                            <span style="background: rgba(255, 255, 255, 0.05); color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.1); padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">
+                                                                Inactive
+                                                            </span>
+                                                        <?php endif; ?>
+                                                    </button>
+                                                </form>
+                                            <?php else: ?>
+                                                <?php if ($status_clean === 'active'): ?>
+                                                    <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700;">
+                                                        ✓ Active
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span style="background: rgba(255, 255, 255, 0.05); color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.1); padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600;">
+                                                        Inactive
+                                                    </span>
+                                                <?php endif; ?>
+                                            <?php endif; ?>
                                         </td>
 
                                         <!-- Featured Switch -->
                                         <td style="padding: 1rem; text-align: center;">
-                                            <form method="POST" style="display: inline-block;">
-                                                <?php echo csrf_field(); ?>
-                                                <input type="hidden" name="action" value="toggle_featured">
-                                                <input type="hidden" name="id" value="<?php echo $service['id']; ?>">
-                                                <input type="hidden" name="featured" value="<?php echo $is_feat; ?>">
-                                                <button type="submit" title="Click to toggle featured" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                                            <?php if (!isReceptionist()): ?>
+                                                <form method="POST" style="display: inline-block;">
+                                                    <?php echo csrf_field(); ?>
+                                                    <input type="hidden" name="action" value="toggle_featured">
+                                                    <input type="hidden" name="id" value="<?php echo $service['id']; ?>">
+                                                    <input type="hidden" name="featured" value="<?php echo $is_feat; ?>">
+                                                    <button type="submit" title="Click to toggle featured" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                                                        <?php echo $is_feat ? '⭐' : '☆'; ?>
+                                                    </button>
+                                                </form>
+                                            <?php else: ?>
+                                                <span style="font-size: 1.2rem;">
                                                     <?php echo $is_feat ? '⭐' : '☆'; ?>
-                                                </button>
-                                            </form>
+                                                </span>
+                                            <?php endif; ?>
                                         </td>
 
                                         <!-- Actions -->
                                         <td style="padding: 1rem; text-align: right;">
-                                            <div style="display: inline-flex; gap: 0.4rem;">
-                                                <!-- Edit Service Modal Trigger -->
-                                                <button type="button" onclick="openEditModal(<?php echo htmlspecialchars(json_encode($service)); ?>)" class="action-icon-btn" title="Edit Service Details">
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                                                </button>
-
-                                                <!-- Delete Service -->
-                                                <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to permanently delete this service offering?');">
-                                                    <?php echo csrf_field(); ?>
-                                                    <input type="hidden" name="action" value="delete">
-                                                    <input type="hidden" name="id" value="<?php echo $service['id']; ?>">
-                                                    <button type="submit" class="action-icon-btn" title="Delete Service" style="color: #ef4444;">
-                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                            <?php if (!isReceptionist()): ?>
+                                                <div style="display: inline-flex; gap: 0.4rem;">
+                                                    <!-- Edit Service Modal Trigger -->
+                                                    <button type="button" onclick="openEditModal(<?php echo htmlspecialchars(json_encode($service)); ?>)" class="action-icon-btn" title="Edit Service Details">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                                                     </button>
-                                                </form>
-                                            </div>
+
+                                                    <!-- Delete Service -->
+                                                    <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to permanently delete this service offering?');">
+                                                        <?php echo csrf_field(); ?>
+                                                        <input type="hidden" name="action" value="delete">
+                                                        <input type="hidden" name="id" value="<?php echo $service['id']; ?>">
+                                                        <button type="submit" class="action-icon-btn" title="Delete Service" style="color: #ef4444;">
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            <?php else: ?>
+                                                <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 500;">View Only</span>
+                                            <?php endif; ?>
                                         </td>
 
                                     </tr>
@@ -570,6 +600,7 @@ if ($services_res) {
         </div>
     </div>
 
+    <?php if (!isReceptionist()): ?>
     <!-- ADD SERVICE MODAL -->
     <div id="addModal" class="modal-overlay">
         <div class="modal-box">
@@ -739,6 +770,7 @@ if ($services_res) {
             </form>
         </div>
     </div>
+    <?php endif; ?>
 
     <script>
         let currentFilter = 'all';

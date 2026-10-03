@@ -63,13 +63,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
         // 4. DELETE INQUIRY
         if ($_POST['action'] == 'delete') {
-            $id = (int)$_POST['id'];
-            $stmt = $conn->prepare("DELETE FROM contact_inquiries WHERE id = ?");
-            $stmt->bind_param("i", $id);
-            if ($stmt->execute()) {
-                $success = "Inquiry message deleted successfully!";
+            if (isReceptionist()) {
+                $error = "Access denied: Receptionists cannot delete contact inquiries.";
             } else {
-                $error = "Failed to delete message.";
+                $id = (int)$_POST['id'];
+                $stmt = $conn->prepare("DELETE FROM contact_inquiries WHERE id = ?");
+                $stmt->bind_param("i", $id);
+                if ($stmt->execute()) {
+                    $success = "Inquiry message deleted successfully!";
+                } else {
+                    $error = "Failed to delete message.";
+                }
             }
         }
     }
@@ -556,6 +560,7 @@ if ($inquiries_res) {
                                                 </button>
 
                                                 <!-- Delete -->
+                                                <?php if (!isReceptionist()): ?>
                                                 <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this contact message?');">
                                                     <?php echo csrf_field(); ?>
                                                     <input type="hidden" name="action" value="delete">
@@ -569,6 +574,7 @@ if ($inquiries_res) {
                                                         </svg>
                                                     </button>
                                                 </form>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
 

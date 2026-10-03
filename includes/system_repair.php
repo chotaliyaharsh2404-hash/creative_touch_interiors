@@ -261,6 +261,16 @@ function runSystemRepairs($conn) {
         $log[] = "Repaired character encoding and icons for services, testimonials, and projects.";
     }
 
+    // 8. Ensure admin_users role enum supports 'receptionist'
+    $admRoleCol = $conn->query("SHOW COLUMNS FROM admin_users LIKE 'role'");
+    if ($admRoleCol && $admRoleCol->num_rows > 0) {
+        $colData = $admRoleCol->fetch_assoc();
+        if (strpos($colData['Type'] ?? '', "'receptionist'") === false) {
+            $conn->query("ALTER TABLE admin_users MODIFY COLUMN role ENUM('admin', 'super_admin', 'receptionist') NOT NULL DEFAULT 'admin'");
+            $log[] = "Extended admin_users role ENUM to include 'receptionist'.";
+        }
+    }
+
     return $log;
 }
 

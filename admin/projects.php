@@ -9,7 +9,9 @@ $success = '';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (!validate_csrf()) {
+    if (isReceptionist()) {
+        $error = "Access denied: Receptionists have view-only access to projects.";
+    } else if (!validate_csrf()) {
         $error = "Security token expired. Please try again.";
     } else if (isset($_POST['action'])) {
         
@@ -404,14 +406,20 @@ if ($projects_res) {
                 </div>
                 
                 <div>
-                    <!-- Add New Project Button -->
-                    <button type="button" onclick="openAddModal()" class="btn-add-project" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                        <span>Add New Project</span>
-                    </button>
+                    <?php if (!isReceptionist()): ?>
+                        <!-- Add New Project Button -->
+                        <button type="button" onclick="openAddModal()" class="btn-add-project" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            <span>Add New Project</span>
+                        </button>
+                    <?php else: ?>
+                        <span class="badge" style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; padding: 0.5rem 1rem; font-size: 0.8rem; font-weight: 600;">
+                            View-Only Mode
+                        </span>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -570,50 +578,66 @@ if ($projects_res) {
 
                                         <!-- Status with Inline Switcher -->
                                         <td style="padding: 1rem;">
-                                            <form method="POST" style="display: inline-block;">
-                                                 <?php echo csrf_field(); ?>
-                                                 <input type="hidden" name="action" value="update_status">
-                                                 <input type="hidden" name="id" value="<?php echo $project['id']; ?>">
-                                                 
-                                                 <select name="status" onchange="this.form.submit()" style="padding: 0.35rem 0.65rem; font-size: 0.8rem; font-weight: 600; border-radius: var(--radius-md); border: 1px solid #cbd5e1; background: <?php echo $status == 'completed' ? '#ecfdf5' : ($status == 'in_progress' ? '#fffbeb' : '#f8fafc'); ?>; color: <?php echo $status == 'completed' ? '#059669' : ($status == 'in_progress' ? '#d97706' : '#475569'); ?>; cursor: pointer;">
-                                                     <option value="completed" <?php echo $status == 'completed' ? 'selected' : ''; ?>>Completed</option>
-                                                     <option value="in_progress" <?php echo $status == 'in_progress' ? 'selected' : ''; ?>>In Progress</option>
-                                                     <option value="planned" <?php echo $status == 'planned' ? 'selected' : ''; ?>>Planned</option>
-                                                 </select>
-                                             </form>
-                                         </td>
-
-                                         <!-- Featured Switch -->
-                                         <td style="padding: 1rem; text-align: center;">
-                                             <form method="POST" style="display: inline-block;">
-                                                 <?php echo csrf_field(); ?>
-                                                 <input type="hidden" name="action" value="toggle_featured">
-                                                 <input type="hidden" name="id" value="<?php echo $project['id']; ?>">
-                                                 <input type="hidden" name="featured" value="<?php echo $is_feat; ?>">
-                                                 <button type="submit" title="Click to toggle featured" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; transition: transform 0.2s; color: <?php echo $is_feat ? '#2563eb' : '#cbd5e1'; ?>;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
-                                                     ★
-                                                 </button>
-                                             </form>
-                                         </td>
-
-                                         <!-- Action Buttons -->
-                                         <td style="padding: 1rem; text-align: right;">
-                                             <div style="display: inline-flex; gap: 0.4rem;">
-                                                 <!-- Edit Project Modal Trigger -->
-                                                 <button type="button" onclick="openEditModal(<?php echo htmlspecialchars(json_encode($project)); ?>)" class="action-icon-btn" title="Edit Project Details">
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                                                </button>
-
-                                                <!-- Delete Project -->
-                                                <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to permanently delete this project?');">
+                                            <?php if (!isReceptionist()): ?>
+                                                <form method="POST" style="display: inline-block;">
                                                     <?php echo csrf_field(); ?>
-                                                    <input type="hidden" name="action" value="delete">
+                                                    <input type="hidden" name="action" value="update_status">
                                                     <input type="hidden" name="id" value="<?php echo $project['id']; ?>">
-                                                    <button type="submit" class="action-icon-btn" title="Delete Project" style="color: #ef4444;">
-                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                                    
+                                                    <select name="status" onchange="this.form.submit()" style="padding: 0.35rem 0.65rem; font-size: 0.8rem; font-weight: 600; border-radius: var(--radius-md); border: 1px solid #cbd5e1; background: <?php echo $status == 'completed' ? '#ecfdf5' : ($status == 'in_progress' ? '#fffbeb' : '#f8fafc'); ?>; color: <?php echo $status == 'completed' ? '#059669' : ($status == 'in_progress' ? '#d97706' : '#475569'); ?>; cursor: pointer;">
+                                                        <option value="completed" <?php echo $status == 'completed' ? 'selected' : ''; ?>>Completed</option>
+                                                        <option value="in_progress" <?php echo $status == 'in_progress' ? 'selected' : ''; ?>>In Progress</option>
+                                                        <option value="planned" <?php echo $status == 'planned' ? 'selected' : ''; ?>>Planned</option>
+                                                    </select>
+                                                </form>
+                                            <?php else: ?>
+                                                <span style="padding: 0.35rem 0.65rem; font-size: 0.8rem; font-weight: 600; border-radius: var(--radius-md); background: <?php echo $status == 'completed' ? '#ecfdf5' : ($status == 'in_progress' ? '#fffbeb' : '#f8fafc'); ?>; color: <?php echo $status == 'completed' ? '#059669' : ($status == 'in_progress' ? '#d97706' : '#475569'); ?>;">
+                                                    <?php echo ucfirst(str_replace('_', ' ', $status)); ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </td>
+
+                                        <!-- Featured Switch -->
+                                        <td style="padding: 1rem; text-align: center;">
+                                            <?php if (!isReceptionist()): ?>
+                                                <form method="POST" style="display: inline-block;">
+                                                    <?php echo csrf_field(); ?>
+                                                    <input type="hidden" name="action" value="toggle_featured">
+                                                    <input type="hidden" name="id" value="<?php echo $project['id']; ?>">
+                                                    <input type="hidden" name="featured" value="<?php echo $is_feat; ?>">
+                                                    <button type="submit" title="Click to toggle featured" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; transition: transform 0.2s; color: <?php echo $is_feat ? '#2563eb' : '#cbd5e1'; ?>;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'">
+                                                        ★
                                                     </button>
                                                 </form>
-                                            </div>
+                                            <?php else: ?>
+                                                <span style="font-size: 1.2rem; color: <?php echo $is_feat ? '#2563eb' : '#cbd5e1'; ?>;">
+                                                    ★
+                                                </span>
+                                            <?php endif; ?>
+                                        </td>
+
+                                        <!-- Action Buttons -->
+                                        <td style="padding: 1rem; text-align: right;">
+                                            <?php if (!isReceptionist()): ?>
+                                                <div style="display: inline-flex; gap: 0.4rem;">
+                                                    <!-- Edit Project Modal Trigger -->
+                                                    <button type="button" onclick="openEditModal(<?php echo htmlspecialchars(json_encode($project)); ?>)" class="action-icon-btn" title="Edit Project Details">
+                                                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                                   </button>
+
+                                                   <!-- Delete Project -->
+                                                   <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to permanently delete this project?');">
+                                                       <?php echo csrf_field(); ?>
+                                                       <input type="hidden" name="action" value="delete">
+                                                       <input type="hidden" name="id" value="<?php echo $project['id']; ?>">
+                                                       <button type="submit" class="action-icon-btn" title="Delete Project" style="color: #ef4444;">
+                                                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                                       </button>
+                                                   </form>
+                                               </div>
+                                            <?php else: ?>
+                                                <span style="font-size: 0.75rem; color: var(--color-text-muted); font-weight: 500;">View Only</span>
+                                            <?php endif; ?>
                                         </td>
 
                                     </tr>
@@ -637,6 +661,7 @@ if ($projects_res) {
         </div>
     </div>
 
+    <?php if (!isReceptionist()): ?>
     <!-- ADD PROJECT MODAL -->
     <div id="addModal" class="modal-overlay">
         <div class="modal-box">
@@ -836,6 +861,7 @@ if ($projects_res) {
             </form>
         </div>
     </div>
+    <?php endif; ?>
 
     <script>
         let currentFilter = 'all';
