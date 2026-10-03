@@ -4,7 +4,7 @@ An enterprise-grade interior design, architectural management, and spatial visua
 
 ---
 
-## 🚀 What's New in Version 1.7.0 (Latest Release)
+## 🚀 What's New in Version 1.8.0 (Latest Release)
 
 ### 1. Three-Tier Role-Based Access Control (RBAC)
 The administration platform enforces three explicit roles with server-side validation:
@@ -147,14 +147,11 @@ creative-touch-interiors/
 │   │   └── three.min.js           # 3D spatial scene engine
 │   ├── script.js                  # Frontend interactions & validation
 │   └── spatial-3d.js              # 3D viewport controller & camera rigs
-├── migrations/                    # Database migration scripts
-│   └── add_receptionist_role.sql  # Schema migration for Receptionist role
 ├── uploads/                       # Media uploads (portfolio, quotes, team)
 ├── about.php                      # About the studio & design philosophy
 ├── blog.php                       # Design articles & trend spotlights
 ├── consultation.php               # Dynamic Quote Calculator & Booking
 ├── contact.php                    # Contact page with interactive form
-├── creative_touch_interiors (2).sql # Database schema & seed records
 ├── forgot_password.php            # Password recovery request
 ├── gallery.php                    # Portfolio showcase & lightbox gallery
 ├── index.php                      # Studio homepage with 3D spatial hero
@@ -204,9 +201,7 @@ creative-touch-interiors/
    ```sql
    CREATE DATABASE creative_touch_interiors CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
    ```
-3. Import the database dump provided in the project root:
-   - File: `creative_touch_interiors (2).sql`
-4. *Self-Healing Note*: On initial page load, the built-in system repair scripts in [includes/system_repair.php](file:///c:/xampp/htdocs/project/creative%20touch%20interiors/includes/system_repair.php) and [includes/quote_db_setup.php](file:///c:/xampp/htdocs/project/creative%20touch%20interiors/includes/quote_db_setup.php) automatically verify table schemas and ensure all required columns and tables exist.
+3. *Automated Self-Healing Architecture*: On initial page load, the built-in system repair scripts in [includes/system_repair.php](file:///c:/xampp/htdocs/project/creative%20touch%20interiors/includes/system_repair.php) and [includes/quote_db_setup.php](file:///c:/xampp/htdocs/project/creative%20touch%20interiors/includes/quote_db_setup.php) automatically verify table schemas, create any missing tables, and ensure essential records are in place.
 
 ### 2. Environment Configuration
 Verify your database settings in [includes/config.php](file:///c:/xampp/htdocs/project/creative%20touch%20interiors/includes/config.php):

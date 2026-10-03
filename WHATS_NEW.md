@@ -74,7 +74,6 @@ The admin sidebar (`admin/includes/sidebar.php`) automatically updates according
 
 - **Database Extension**: The `admin_users.role` column has been extended from `ENUM('admin', 'super_admin')` to `ENUM('admin', 'super_admin', 'receptionist')`.
 - **Zero Data Loss**: Existing Super Admin and Admin records were preserved without corruption or conversion.
-- **Migration Script**: Stored in `migrations/add_receptionist_role.sql` for automated deployments.
 - **Self-Healing Integration**: Step 8 was added to `includes/system_repair.php` to automatically check and maintain the role column schema on any deployment.
 
 ---
