@@ -4,7 +4,7 @@ An enterprise-grade interior design, architectural management, and spatial visua
 
 ---
 
-## 🚀 What's New in Version 1.6.0 (Latest Release)
+## 🚀 What's New in Version 1.7.0 (Latest Release)
 
 ### 1. Three-Tier Role-Based Access Control (RBAC)
 The administration platform enforces three explicit roles with server-side validation:
