@@ -1,6 +1,6 @@
 # What's New in Creative Touch Interiors
 
-## Version 1.6.0 — Enterprise Role-Based Access Control (RBAC) & Security Release
+## Version 1.8.0 — Enterprise Role-Based Access Control (RBAC) & Security Release
 
 This release introduces a three-tier Role-Based Access Control (RBAC) architecture, view-only module protections, staff profile management, and server-side authorization enforcement across the administration suite.
 
@@ -43,7 +43,7 @@ The system now enforces exactly three distinct administrative roles with server-
 
 ### 2. View-Only Protections & Server-Side Security
 
-Hiding buttons in the UI is not enough for true security. Version 1.6.0 implements multi-layer authorization:
+Hiding buttons in the UI is not enough for true security. Version 1.8.0 implements multi-layer authorization:
 
 - **Server-Side Action Guards**: Direct `POST` submissions (create, edit, delete, toggle) to view-only pages (`projects.php`, `services.php`, `gallery.php`) are verified on the server. If a Receptionist sends a request, it is denied without touching the database.
 - **Deletion Locks**: Deletion endpoints across Leads, Contact Inquiries, Consultations, and Quotes strictly prohibit Receptionist execution.
