@@ -1,6 +1,35 @@
-# Creative Touch Interiors — v1.6.0
+# Creative Touch Interiors
 
 An enterprise-grade interior design, architectural management, and spatial visualization platform engineered with PHP, MySQL, HTML5, CSS3, and JavaScript. Featuring a Three.js 3D spatial visualization engine, an automated room-by-room quotation calculation system, instant downloadable PDF proposals, a self-service client dashboard, and a centralized executive administration suite.
+
+---
+
+## 🚀 What's New in Version 1.6.0 (Latest Release)
+
+### 1. Three-Tier Role-Based Access Control (RBAC)
+The administration platform enforces three explicit roles with server-side validation:
+- **👑 Super Admin (`super_admin`)**: Complete system authority across all modules, administrative staff management, website settings, team members, editorial blog, and database integrity tools. Includes safeguards preventing self-deletion or self-demotion.
+- **🏢 Admin (`admin`)**: Core business operations manager with full authority over Leads, Inquiries, Consultations, Quotes & Estimations, Projects, Services, Gallery, and Testimonials. Strictly restricted from user management, blog, team, settings, and system tools.
+- **🛎️ Receptionist (`receptionist`)**: Front-desk customer relationship manager with Add & Update capabilities for Leads, Inquiries, Consultations, and Quotes; strict **View-Only** mode for Projects, Services, and Gallery; and complete restriction from deletion actions, settings, and user management.
+
+### 2. View-Only Protections & Server-Side Security
+- **Strict Server-Side Validation**: View-only modules (`projects.php`, `services.php`, `gallery.php`) reject all unauthorized `POST` requests on the server, ensuring security cannot be bypassed by inspecting or modifying UI elements.
+- **Deletion Safeguards**: Endpoint-level guards prevent Receptionists from deleting Leads, Inquiries, Consultations, or Quotes.
+- **Estimation Engine Locks**: Quotation calculation parameters and discounts in `admin/quote_details.php` are protected against unauthorized adjustments.
+- **URL Tampering Prevention**: Direct navigation to restricted management pages automatically halts execution and redirects to the dashboard.
+
+### 3. Dedicated Staff Profile Management (`admin/profile.php`)
+- A self-service portal accessible to all 3 roles from the sidebar capsule.
+- Enables staff members to review their role badge, registration date, and securely update their name, email, and password.
+
+### 4. Dynamic Role-Aware Sidebar Navigation
+- The navigation menu (`admin/includes/sidebar.php`) dynamically filters links according to the logged-in role.
+- Visual role badges (`Super Admin`, `Admin`, `Receptionist`) and live counters for unread leads, new quotes, and pending consultations.
+
+### 5. Automated Schema Self-Healing & Test Suite
+- Database column `admin_users.role` expanded to `ENUM('admin', 'super_admin', 'receptionist')` with zero data loss.
+- Automatic self-repair integrated into `includes/system_repair.php`.
+- Full test suite in `scratch/test_rbac_full.php` verifying 87/87 test cases (100% pass rate).
 
 ---
 
@@ -34,8 +63,8 @@ An enterprise-grade interior design, architectural management, and spatial visua
 ### 4. Executive Administration Suite (`/admin`)
 - **Executive Analytics Dashboard (`admin/dashboard.php`)**: Live business KPIs, monthly quote trends, active leads, scheduled site visits, and recent client inquiries.
 - **Quotation Lifecycle Management (`admin/quotes.php`, `admin/quote_details.php`)**:
-  - Full status lifecycle: *Pending Review → Site Visit Scheduled → Estimation in Progress → Quote Sent → Approved / Rejected → Project Started*.
-  - Ability to adjust room dimensions, add/modify custom line items, modify material multipliers, and apply administrative discounts.
+  - Full status lifecycle: *New Request → Under Review → Site Visit Scheduled → Estimation Prepared → Quote Sent → Approved → In Execution → Completed*.
+  - Calculation engine to adjust room dimensions, add/modify custom line items, modify material multipliers, and apply administrative discounts.
 - **Consultation & Lead Management (`admin/consultations.php`, `admin/leads.php`)**: Schedule and track client on-site or virtual design consultations.
 - **Inquiry Desk (`admin/contact_inquiries.php`)**: Centralized mailbox to triage, review, and follow up on customer inquiries.
 - **Content Management Systems (CMS)**:
@@ -54,14 +83,36 @@ An enterprise-grade interior design, architectural management, and spatial visua
 
 ---
 
+## 🔐 Administrative Role-Based Permissions Matrix
+
+| Feature / Module | Super Admin (`super_admin`) | Admin (`admin`) | Receptionist (`receptionist`) |
+| :--- | :---: | :---: | :---: |
+| **Dashboard** | Full Access | Full Access | Limited (KPIs only) |
+| **Leads CRM** | Full CRUD | Full CRUD | Add & Update (No Delete) |
+| **Contact Inquiries** | Full CRUD | Full CRUD | View & Update (No Delete) |
+| **Consultations** | Full CRUD | Full CRUD | Create & Update (No Delete) |
+| **Quotes & Estimations** | Full CRUD + Calculation | Full CRUD + Calculation | Create & View (No Calculation/Delete) |
+| **Projects / Portfolio** | Full CRUD | Full CRUD | **View Only** |
+| **Services Catalog** | Full CRUD | Full CRUD | **View Only** |
+| **Visual Gallery** | Full CRUD | Full CRUD | **View Only** |
+| **Client Testimonials** | Full CRUD | Full CRUD | No Access |
+| **Editorial Blog** | Full CRUD | No Access | No Access |
+| **Studio Team** | Full CRUD | No Access | No Access |
+| **User & Staff Mgmt** | Full CRUD | No Access | No Access |
+| **Site Settings** | Full CRUD | No Access | No Access |
+| **System Integrity Tools**| Full Access | No Access | No Access |
+| **Staff Profile** | Full Access | Full Access | Full Access |
+
+---
+
 ## 📁 Project Directory Structure
 
 ```
 creative-touch-interiors/
 ├── admin/                         # Executive Administration Suite
 │   ├── includes/
-│   │   └── sidebar.php            # Administrative sidebar navigation
-│   ├── blog.php                   # CMS: Blog article management
+│   │   └── sidebar.php            # Role-aware administrative sidebar navigation
+│   ├── blog.php                   # CMS: Blog article management (Super Admin)
 │   ├── consultations.php          # Consultation schedule & appointments
 │   ├── contact_inquiries.php      # Customer inquiry management
 │   ├── dashboard.php              # Analytics overview & KPI reporting
@@ -69,19 +120,20 @@ creative-touch-interiors/
 │   ├── leads.php                  # Lead qualification tracking
 │   ├── login.php                  # Administrative login gateway
 │   ├── logout.php                 # Administrative session termination
+│   ├── profile.php                # Staff profile management (All 3 roles)
 │   ├── projects.php               # CMS: Portfolio projects management
 │   ├── quote_details.php          # Quotation review & pricing adjustment
 │   ├── quotes.php                 # Quotation lifecycle dashboard
 │   ├── services.php               # CMS: Service catalog & rate card
-│   ├── settings.php               # System & site configuration
-│   ├── team.php                   # CMS: Team member profiles
-│   ├── testimonials.php           # CMS: Client review management
-│   └── users.php                  # User accounts & privilege control
+│   ├── settings.php               # System & site configuration (Super Admin)
+│   ├── team.php                   # CMS: Team member profiles (Super Admin)
+│   ├── testimonials.php           # CMS: Client review management (Super Admin & Admin)
+│   └── users.php                  # User accounts & privilege control (Super Admin)
 ├── css/
 │   ├── spatial-3d.css             # 3D spatial viewport & luxury styling
 │   └── style.css                  # Core application stylesheet
 ├── includes/
-│   ├── config.php                 # Database connection, helpers & settings
+│   ├── config.php                 # Database connection, helpers, RBAC functions & settings
 │   ├── header.php                 # Global public navigation & header
 │   ├── footer.php                 # Global public footer & scripts
 │   ├── quote_db_setup.php         # Database migration engine for quotes
@@ -95,6 +147,8 @@ creative-touch-interiors/
 │   │   └── three.min.js           # 3D spatial scene engine
 │   ├── script.js                  # Frontend interactions & validation
 │   └── spatial-3d.js              # 3D viewport controller & camera rigs
+├── migrations/                    # Database migration scripts
+│   └── add_receptionist_role.sql  # Schema migration for Receptionist role
 ├── uploads/                       # Media uploads (portfolio, quotes, team)
 ├── about.php                      # About the studio & design philosophy
 ├── blog.php                       # Design articles & trend spotlights
@@ -116,7 +170,8 @@ creative-touch-interiors/
 ├── services.php                   # Service catalog & pricing guide
 ├── terms.php                      # Terms of service
 ├── user_logout.php                # Client session termination
-└── VERSION                        # Application release tracker
+├── VERSION                        # Application release tracker
+└── WHATS_NEW.md                   # Detailed release notes
 ```
 
 ---
@@ -151,7 +206,7 @@ creative-touch-interiors/
    ```
 3. Import the database dump provided in the project root:
    - File: `creative_touch_interiors (2).sql`
-4. *Self-Healing Note*: On initial page load, the built-in system repair scripts in [includes/system_repair.php](file:///c:/xampp/htdocs/project/creative%20touch%20interiors/includes/system_repair.php) and [includes/quote_db_setup.php](file:///c:/xampp/htdocs/project/creative%20touch%20interiors/includes/quote_db_setup.php) automatically verify table schemas and ensure essential records are in place.
+4. *Self-Healing Note*: On initial page load, the built-in system repair scripts in [includes/system_repair.php](file:///c:/xampp/htdocs/project/creative%20touch%20interiors/includes/system_repair.php) and [includes/quote_db_setup.php](file:///c:/xampp/htdocs/project/creative%20touch%20interiors/includes/quote_db_setup.php) automatically verify table schemas and ensure all required columns and tables exist.
 
 ### 2. Environment Configuration
 Verify your database settings in [includes/config.php](file:///c:/xampp/htdocs/project/creative%20touch%20interiors/includes/config.php):
@@ -178,27 +233,11 @@ define('DB_NAME', 'creative_touch_interiors');
 
 ---
 
-## 🔐 Administrative Access & Role-Based Control
-
-The platform features a secure, compartmentalized administration suite designed for team collaboration:
-
-### Role Privileges
-- **Super Administrator**: Complete administrative control, platform settings configuration, database integrity management, and administrative user provisioning.
-- **Administrator**: Day-to-day operations including quotation review, consultation bookings, project portfolio updates, service catalog management, and client inquiries.
-
-### Access Protocol
-- The administrative suite is accessed via the dedicated portal URL: `/admin/login.php`.
-- Authorized personnel must log in using their assigned administrative accounts.
-- Administrative accounts and permissions are provisioned and managed directly within the **User & Access Control** module (`admin/users.php`).
-- For security in production deployments, ensure all team members utilize unique organizational credentials and implement role-appropriate permissions.
-
----
-
 ## 🗄️ Database Schema Overview
 
 | Table Name | Description |
 | :--- | :--- |
-| `admin_users` | Administrative staff credentials, roles (`super_admin`, `admin`), and status |
+| `admin_users` | Administrative staff credentials, roles (`super_admin`, `admin`, `receptionist`), and status |
 | `users` | Registered client profiles, authentication credentials, and metadata |
 | `password_resets` | Cryptographic recovery tokens with expiration timestamps |
 | `quote_requests` | Quotation submissions, scope details, client contact, and totals |
@@ -222,7 +261,7 @@ The platform features a secure, compartmentalized administration suite designed 
 - **Password Protection**: Passwords are saved using industry-standard Bcrypt hashing via `password_hash()`.
 - **Cross-Site Scripting (XSS) Mitigation**: Output rendering uses contextual sanitization through `htmlspecialchars()`.
 - **Session Integrity**: Session identifiers are regenerated upon authentication (`session_regenerate_id(true)`) to mitigate session fixation attacks.
-- **Access Boundary Enforcement**: Administrative routes verify active sessions and RBAC roles before executing sensitive actions.
+- **Access Boundary Enforcement**: Administrative routes verify active sessions and RBAC roles on the server before executing sensitive actions.
 - **Self-Healing Schema**: Missing columns or required schema adjustments are verified automatically by the backend system.
 
 ---
