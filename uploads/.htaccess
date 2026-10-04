@@ -1,0 +1,17 @@
+# Creative Touch Interiors - Upload Directory Security Guard
+# Prevent script execution inside uploads
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+Options -ExecCGI -Indexes
+AddHandler cgi-script .php .phtml .php3 .php4 .php5 .php7 .php8 .phps .cgi .pl .py
+<FilesMatch "(?i:\.(php|phtml|php3|php4|php5|php7|php8|phps|phar|cgi|pl|py|pyc|pyo|js|html|htm|exe|sh|bat|cmd|vbs|msi|asp|aspx|jsp))$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>

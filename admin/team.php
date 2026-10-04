@@ -54,30 +54,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $status = sanitize($_POST['status'] ?? 'active');
 
             $photo_path = null;
-            if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
-                $uploadDir = '../uploads/team/';
-                if (!is_dir($uploadDir)) {
-                    @mkdir($uploadDir, 0755, true);
-                }
-                $ext = strtolower(pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION));
-                $allowed = ['jpg', 'jpeg', 'png', 'webp'];
-                if (in_array($ext, $allowed)) {
-                    $filename = 'member_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
-                    if (move_uploaded_file($_FILES['photo']['tmp_name'], $uploadDir . $filename)) {
-                        $photo_path = 'uploads/team/' . $filename;
-                    }
+            if (isset($_FILES['photo']) && $_FILES['photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+                $uploadRes = secure_upload_image($_FILES['photo'], 'team', 'team_');
+                if (!$uploadRes['success']) {
+                    $error = $uploadRes['error'];
+                } else {
+                    $photo_path = $uploadRes['filepath'];
                 }
             }
 
             if (empty($name) || empty($designation)) {
                 $error = "Name and Designation are required fields.";
-            } else {
+                if (!empty($photo_path)) {
+                    safe_delete_uploaded_image($photo_path);
+                }
+            } elseif (empty($error)) {
                 $stmt = $conn->prepare("INSERT INTO team_members (name, designation, bio, photo, email, linkedin, order_index, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
                 $stmt->bind_param("ssssssis", $name, $designation, $bio, $photo_path, $email, $linkedin, $order_index, $status);
                 if ($stmt->execute()) {
                     $success = "Team member '$name' added successfully!";
                 } else {
-                    $error = "Failed to add team member: " . $conn->error;
+                    if (!empty($photo_path)) {
+                        safe_delete_uploaded_image($photo_path);
+                    }
+                    $error = "Failed to add team member. Please try again.";
                 }
             }
         }
@@ -96,52 +96,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (empty($name) || empty($designation)) {
                 $error = "Name and Designation are required.";
             } else {
+                // Fetch current member photo using prepared statement
+                $chkStmt = $conn->prepare("SELECT photo FROM team_members WHERE id = ?");
+                $chkStmt->bind_param("i", $id);
+                $chkStmt->execute();
+                $currRow = $chkStmt->get_result()->fetch_assoc();
+                $old_photo = $currRow['photo'] ?? null;
+                $new_photo = $old_photo;
+                $new_upload = false;
+
                 // Check if new photo was uploaded
-                if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
-                    $uploadDir = '../uploads/team/';
-                    if (!is_dir($uploadDir)) {
-                        @mkdir($uploadDir, 0755, true);
+                if (isset($_FILES['photo']) && $_FILES['photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+                    $uploadRes = secure_upload_image($_FILES['photo'], 'team', 'team_');
+                    if (!$uploadRes['success']) {
+                        $error = $uploadRes['error'];
+                    } else {
+                        $new_photo = $uploadRes['filepath'];
+                        $new_upload = true;
                     }
-                    $ext = strtolower(pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION));
-                    $allowed = ['jpg', 'jpeg', 'png', 'webp'];
-                    if (in_array($ext, $allowed)) {
-                        $filename = 'member_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
-                        if (move_uploaded_file($_FILES['photo']['tmp_name'], $uploadDir . $filename)) {
-                            $new_photo = 'uploads/team/' . $filename;
-                            $upd = $conn->prepare("UPDATE team_members SET name=?, designation=?, bio=?, photo=?, email=?, linkedin=?, order_index=?, status=? WHERE id=?");
-                            $upd->bind_param("ssssssisi", $name, $designation, $bio, $new_photo, $email, $linkedin, $order_index, $status, $id);
-                            $upd->execute();
-                        }
-                    }
-                } else {
-                    $upd = $conn->prepare("UPDATE team_members SET name=?, designation=?, bio=?, email=?, linkedin=?, order_index=?, status=? WHERE id=?");
-                    $upd->bind_param("sssssisi", $name, $designation, $bio, $email, $linkedin, $order_index, $status, $id);
-                    $upd->execute();
                 }
-                $success = "Team member details updated successfully!";
+
+                if (empty($error)) {
+                    $upd = $conn->prepare("UPDATE team_members SET name=?, designation=?, bio=?, photo=?, email=?, linkedin=?, order_index=?, status=? WHERE id=?");
+                    $upd->bind_param("ssssssisi", $name, $designation, $bio, $new_photo, $email, $linkedin, $order_index, $status, $id);
+                    if ($upd->execute()) {
+                        // Safe Image Replacement: Delete old image only after successful DB update
+                        if ($new_upload && !empty($old_photo) && $old_photo !== $new_photo) {
+                            safe_delete_uploaded_image($old_photo);
+                        }
+                        $success = "Team member details updated successfully!";
+                    } else {
+                        // If DB update failed, delete the newly uploaded photo and preserve existing
+                        if ($new_upload && !empty($new_photo)) {
+                            safe_delete_uploaded_image($new_photo);
+                        }
+                        $error = "Failed to update team member. Please try again.";
+                    }
+                }
             }
         }
 
         // 3. TOGGLE STATUS
         if ($action === 'toggle_status') {
             $id = (int)$_POST['id'];
-            $newStatus = sanitize($_POST['status'] ?? 'active');
+            $newStatus = in_array($_POST['status'] ?? '', ['active', 'inactive']) ? $_POST['status'] : 'active';
             $stmt = $conn->prepare("UPDATE team_members SET status = ? WHERE id = ?");
             $stmt->bind_param("si", $newStatus, $id);
             if ($stmt->execute()) {
                 $success = "Status updated to " . ucfirst($newStatus) . "!";
+            } else {
+                $error = "Failed to update status. Please try again.";
             }
         }
 
         // 4. DELETE
         if ($action === 'delete') {
             $id = (int)$_POST['id'];
+            // Fetch photo path before deletion
+            $chkStmt = $conn->prepare("SELECT photo FROM team_members WHERE id = ?");
+            $chkStmt->bind_param("i", $id);
+            $chkStmt->execute();
+            $row = $chkStmt->get_result()->fetch_assoc();
+            $photo_to_delete = $row['photo'] ?? null;
+
             $stmt = $conn->prepare("DELETE FROM team_members WHERE id = ?");
             $stmt->bind_param("i", $id);
             if ($stmt->execute()) {
+                if (!empty($photo_to_delete)) {
+                    safe_delete_uploaded_image($photo_to_delete);
+                }
                 $success = "Team member removed successfully.";
             } else {
-                $error = "Failed to remove team member.";
+                $error = "Failed to remove team member. Please try again.";
             }
         }
     }
@@ -363,8 +389,8 @@ $page_title = 'Studio Team Management — Executive Suite';
                 </div>
 
                 <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label class="form-label" style="color: #334155; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem; display: block;">Profile Photo (JPG, PNG, WEBP)</label>
-                    <input type="file" name="photo" class="form-control" accept="image/*" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; border-radius: 8px; padding: 0.5rem 0.85rem; width: 100%;">
+                    <label class="form-label" style="color: #334155; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem; display: block;">Profile Photo (JPG, PNG, WEBP — Max 5 MB)</label>
+                    <input type="file" name="photo" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; border-radius: 8px; padding: 0.5rem 0.85rem; width: 100%;">
                 </div>
 
                 <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
@@ -419,8 +445,8 @@ $page_title = 'Studio Team Management — Executive Suite';
                 </div>
 
                 <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label class="form-label" style="color: #334155; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem; display: block;">Update Photo (Optional)</label>
-                    <input type="file" name="photo" class="form-control" accept="image/*" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; border-radius: 8px; padding: 0.5rem 0.85rem; width: 100%;">
+                    <label class="form-label" style="color: #334155; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem; display: block;">Update Photo (Optional — JPG, PNG, WEBP — Max 5 MB)</label>
+                    <input type="file" name="photo" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a; border-radius: 8px; padding: 0.5rem 0.85rem; width: 100%;">
                 </div>
 
                 <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">

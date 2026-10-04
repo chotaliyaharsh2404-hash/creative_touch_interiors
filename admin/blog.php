@@ -43,29 +43,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Handle Image Upload
                 $featured_image = '';
-                if (isset($_FILES['featured_image']) && $_FILES['featured_image']['error'] === UPLOAD_ERR_OK) {
-                    $file = $_FILES['featured_image'];
-                    $allowed_exts = ['jpg', 'jpeg', 'png', 'webp'];
-                    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-
-                    if (in_array($ext, $allowed_exts)) {
-                        $target_dir = '../uploads/blogs/';
-                        if (!is_dir($target_dir)) {
-                            mkdir($target_dir, 0755, true);
-                        }
-                        $filename = 'blog_' . time() . '_' . rand(100, 999) . '.' . $ext;
-                        if (move_uploaded_file($file['tmp_name'], $target_dir . $filename)) {
-                            $featured_image = 'uploads/blogs/' . $filename;
-                        }
+                if (isset($_FILES['featured_image']) && $_FILES['featured_image']['error'] !== UPLOAD_ERR_NO_FILE) {
+                    $uploadRes = secure_upload_image($_FILES['featured_image'], 'blogs', 'blog_');
+                    if (!$uploadRes['success']) {
+                        $error = $uploadRes['error'];
+                    } else {
+                        $featured_image = $uploadRes['filepath'];
                     }
                 }
 
-                $stmt = $conn->prepare("INSERT INTO blogs (title, slug, category, excerpt, content, featured_image, author, reading_time, featured, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("ssssssssis", $title, $slug, $category, $excerpt, $content, $featured_image, $author, $reading_time, $featured, $status);
-                if ($stmt->execute()) {
-                    $success = 'Article created and saved successfully!';
-                } else {
-                    $error = 'Failed to create article: ' . $conn->error;
+                if (empty($error)) {
+                    $stmt = $conn->prepare("INSERT INTO blogs (title, slug, category, excerpt, content, featured_image, author, reading_time, featured, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    $stmt->bind_param("ssssssssis", $title, $slug, $category, $excerpt, $content, $featured_image, $author, $reading_time, $featured, $status);
+                    if ($stmt->execute()) {
+                        $success = 'Article created and saved successfully!';
+                    } else {
+                        if (!empty($featured_image)) {
+                            safe_delete_uploaded_image($featured_image);
+                        }
+                        $error = 'Failed to create article. Please try again.';
+                    }
                 }
             }
         }
@@ -86,34 +83,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($id <= 0 || empty($title) || empty($excerpt) || empty($content)) {
                 $error = 'Invalid article parameters.';
             } else {
-                // Fetch current image
-                $cur = $conn->query("SELECT featured_image FROM blogs WHERE id = {$id}")->fetch_assoc();
-                $featured_image = $cur['featured_image'] ?? '';
+                // Fetch current image using prepared statement
+                $curStmt = $conn->prepare("SELECT featured_image FROM blogs WHERE id = ?");
+                $curStmt->bind_param("i", $id);
+                $curStmt->execute();
+                $cur = $curStmt->get_result()->fetch_assoc();
+                $current_image = $cur['featured_image'] ?? '';
+                $featured_image = $current_image;
+                $new_upload = false;
 
                 // Handle replacement image upload
-                if (isset($_FILES['featured_image']) && $_FILES['featured_image']['error'] === UPLOAD_ERR_OK) {
-                    $file = $_FILES['featured_image'];
-                    $allowed_exts = ['jpg', 'jpeg', 'png', 'webp'];
-                    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-
-                    if (in_array($ext, $allowed_exts)) {
-                        $target_dir = '../uploads/blogs/';
-                        if (!is_dir($target_dir)) {
-                            mkdir($target_dir, 0755, true);
-                        }
-                        $filename = 'blog_' . time() . '_' . rand(100, 999) . '.' . $ext;
-                        if (move_uploaded_file($file['tmp_name'], $target_dir . $filename)) {
-                            $featured_image = 'uploads/blogs/' . $filename;
-                        }
+                if (isset($_FILES['featured_image']) && $_FILES['featured_image']['error'] !== UPLOAD_ERR_NO_FILE) {
+                    $uploadRes = secure_upload_image($_FILES['featured_image'], 'blogs', 'blog_');
+                    if (!$uploadRes['success']) {
+                        $error = $uploadRes['error'];
+                    } else {
+                        $featured_image = $uploadRes['filepath'];
+                        $new_upload = true;
                     }
                 }
 
-                $stmt = $conn->prepare("UPDATE blogs SET title = ?, slug = ?, category = ?, excerpt = ?, content = ?, featured_image = ?, author = ?, reading_time = ?, featured = ?, status = ? WHERE id = ?");
-                $stmt->bind_param("ssssssssisi", $title, $slug, $category, $excerpt, $content, $featured_image, $author, $reading_time, $featured, $status, $id);
-                if ($stmt->execute()) {
-                    $success = 'Article updated successfully!';
-                } else {
-                    $error = 'Failed to update article: ' . $conn->error;
+                if (empty($error)) {
+                    $stmt = $conn->prepare("UPDATE blogs SET title = ?, slug = ?, category = ?, excerpt = ?, content = ?, featured_image = ?, author = ?, reading_time = ?, featured = ?, status = ? WHERE id = ?");
+                    $stmt->bind_param("ssssssssisi", $title, $slug, $category, $excerpt, $content, $featured_image, $author, $reading_time, $featured, $status, $id);
+                    if ($stmt->execute()) {
+                        // Safe Image Replacement: delete old image only after successful DB update
+                        if ($new_upload && !empty($current_image) && $current_image !== $featured_image) {
+                            safe_delete_uploaded_image($current_image);
+                        }
+                        $success = 'Article updated successfully!';
+                    } else {
+                        // If DB update failed, delete the newly uploaded image and preserve the old image
+                        if ($new_upload && !empty($featured_image)) {
+                            safe_delete_uploaded_image($featured_image);
+                        }
+                        $error = 'Failed to update article. Please try again.';
+                    }
                 }
             }
         }
@@ -122,12 +127,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         elseif ($action === 'delete') {
             $id = (int)($_POST['id'] ?? 0);
             if ($id > 0) {
+                // Fetch existing image before deletion
+                $imgStmt = $conn->prepare("SELECT featured_image FROM blogs WHERE id = ?");
+                $imgStmt->bind_param("i", $id);
+                $imgStmt->execute();
+                $imgRow = $imgStmt->get_result()->fetch_assoc();
+                $imgToDelete = $imgRow['featured_image'] ?? '';
+
                 $del = $conn->prepare("DELETE FROM blogs WHERE id = ?");
                 $del->bind_param("i", $id);
                 if ($del->execute()) {
+                    if (!empty($imgToDelete)) {
+                        safe_delete_uploaded_image($imgToDelete);
+                    }
                     $success = 'Article deleted successfully.';
                 } else {
-                    $error = 'Failed to delete article.';
+                    $error = 'Failed to delete article. Please try again.';
                 }
             }
         }
@@ -135,12 +150,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // 4. TOGGLE STATUS
         elseif ($action === 'toggle_status') {
             $id = (int)($_POST['id'] ?? 0);
-            $curr = $conn->query("SELECT status FROM blogs WHERE id = {$id}")->fetch_assoc()['status'] ?? '';
+            $stStmt = $conn->prepare("SELECT status FROM blogs WHERE id = ?");
+            $stStmt->bind_param("i", $id);
+            $stStmt->execute();
+            $curr = $stStmt->get_result()->fetch_assoc()['status'] ?? '';
             $new_st = ($curr === 'published') ? 'draft' : 'published';
             $upd = $conn->prepare("UPDATE blogs SET status = ? WHERE id = ?");
             $upd->bind_param("si", $new_st, $id);
-            $upd->execute();
-            $success = "Status updated to " . ucfirst($new_st) . ".";
+            if ($upd->execute()) {
+                $success = "Status updated to " . ucfirst($new_st) . ".";
+            } else {
+                $error = "Failed to update status. Please try again.";
+            }
         }
 
         // 5. TOGGLE FEATURED
@@ -509,8 +530,8 @@ $articles = $conn->query($sql)->fetch_all(MYSQLI_ASSOC);
 
             <div class="grid grid-2" style="gap: 1rem; margin-bottom: 1.5rem;">
                 <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase;">Featured Image (Cover)</label>
-                    <input type="file" name="featured_image" accept="image/*" class="form-control">
+                    <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase;">Featured Image (Cover — JPG, PNG, WEBP, Max 5 MB)</label>
+                    <input type="file" name="featured_image" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="form-control">
                 </div>
                 <div class="form-group" style="margin-bottom: 0;">
                     <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase;">Publication Status</label>
@@ -599,8 +620,8 @@ $articles = $conn->query($sql)->fetch_all(MYSQLI_ASSOC);
 
             <div class="grid grid-2" style="gap: 1rem; margin-bottom: 1.5rem;">
                 <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase;">Replace Cover Image (Optional)</label>
-                    <input type="file" name="featured_image" accept="image/*" class="form-control">
+                    <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase;">Replace Cover Image (Optional — JPG, PNG, WEBP, Max 5 MB)</label>
+                    <input type="file" name="featured_image" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="form-control">
                 </div>
                 <div class="form-group" style="margin-bottom: 0;">
                     <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase;">Publication Status</label>
