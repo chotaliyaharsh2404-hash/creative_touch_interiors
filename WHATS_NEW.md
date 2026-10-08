@@ -101,3 +101,4 @@ An automated test suite (`scratch/test_rbac_full.php`) was executed via PHP CLI:
 - **Server Guards**: Validated Receptionist blocks on modifications and deletions.
 - **Access Matrix**: Tested 14 administrative endpoints across 3 roles (42 permission scenarios).
 - **Result**: **87 / 87 tests passed (100% pass rate)**.
+
