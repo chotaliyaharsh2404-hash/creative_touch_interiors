@@ -2321,15 +2321,37 @@ body:has(.admin-sidebar) .review-card:hover {
     box-shadow: 0 14px 35px rgba(0, 87, 255, 0.12), 0 4px 10px rgba(15, 23, 42, 0.04) !important;
 }
 
-/* Typography Hierarchy in Admin */
-body:has(.admin-sidebar) h1,
-body:has(.admin-sidebar) h2,
-body:has(.admin-sidebar) h3,
-body:has(.admin-sidebar) h4 {
+/* Typography Hierarchy in Admin Content Viewport */
+body:has(.admin-sidebar) .admin-content h1,
+body:has(.admin-sidebar) .admin-content h2,
+body:has(.admin-sidebar) .admin-content h3,
+body:has(.admin-sidebar) .admin-content h4,
+body:has(.admin-sidebar) .admin-content-viewport h1,
+body:has(.admin-sidebar) .admin-content-viewport h2,
+body:has(.admin-sidebar) .admin-content-viewport h3,
+body:has(.admin-sidebar) .admin-content-viewport h4,
+body:has(.admin-sidebar) .admin-main h1,
+body:has(.admin-sidebar) .admin-main h2,
+body:has(.admin-sidebar) .admin-main h3,
+body:has(.admin-sidebar) .admin-main h4 {
     color: #0f172a !important;
     font-family: var(--font-body, 'Plus Jakarta Sans', sans-serif) !important;
     font-weight: 700 !important;
     letter-spacing: -0.015em;
+}
+
+/* Sidebar Headings & Brand Text Must Always Be Crisp White on Dark Navy */
+.admin-sidebar h1,
+.admin-sidebar h2,
+.admin-sidebar h3,
+.admin-sidebar h4,
+body:has(.admin-sidebar) .admin-sidebar h1,
+body:has(.admin-sidebar) .admin-sidebar h2,
+body:has(.admin-sidebar) .admin-sidebar h3,
+body:has(.admin-sidebar) .admin-sidebar h4,
+.admin-sidebar .admin-sidebar-brand-title {
+    color: #ffffff !important;
+    font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif) !important;
 }
 
 body:has(.admin-sidebar) p,

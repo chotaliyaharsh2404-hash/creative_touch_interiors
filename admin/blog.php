@@ -281,6 +281,9 @@ $articles = $conn->query($sql)->fetch_all(MYSQLI_ASSOC);
     <!-- Main Content -->
     <main class="admin-main">
         
+        <!-- Executive Header with Avatar & Dropdown -->
+        <?php include 'includes/header.php'; ?>
+        
         <!-- Header -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
             <div>

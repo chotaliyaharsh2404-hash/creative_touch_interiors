@@ -244,10 +244,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
                 if ($target_id === (int)$_SESSION['admin_id']) {
                     $error = 'You cannot delete your own active administrator account.';
                 } else {
+                    // Fetch existing profile picture for safe cleanup
+                    $picStmt = $conn->prepare("SELECT profile_image FROM admin_users WHERE id = ?");
+                    $picStmt->bind_param("i", $target_id);
+                    $picStmt->execute();
+                    $picRow = $picStmt->get_result()->fetch_assoc();
+                    $target_pic = $picRow['profile_image'] ?? '';
+
                     $stmt = $conn->prepare("DELETE FROM admin_users WHERE id = ?");
                     if ($stmt) {
                         $stmt->bind_param("i", $target_id);
                         if ($stmt->execute()) {
+                            if (!empty($target_pic)) {
+                                safe_delete_uploaded_image($target_pic);
+                            }
                             $success = 'Administrator account deleted.';
                         } else {
                             $error = 'Failed to delete admin account: ' . $conn->error;
@@ -424,6 +434,9 @@ foreach ($admins as $a) {
         <!-- Main Content -->
         <div class="admin-content" style="flex: 1; padding: 2.25rem 2.5rem;">
             
+            <!-- Executive Header with Avatar & Dropdown -->
+            <?php include 'includes/header.php'; ?>
+
             <!-- Header Bar -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
                 <div>
@@ -623,19 +636,24 @@ foreach ($admins as $a) {
                                     <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.04);">
                                         <td style="padding: 1rem;">
                                             <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                                <div class="user-avatar" style="background: <?php echo ($adm['role'] ?? '') == 'super_admin' ? '#eff6ff' : '#f8fafc'; ?>; color: <?php echo ($adm['role'] ?? '') == 'super_admin' ? '#1d4ed8' : '#2563eb'; ?>; display: inline-flex; align-items: center; justify-content: center; border: 1px solid <?php echo ($adm['role'] ?? '') == 'super_admin' ? '#bfdbfe' : '#cbd5e1'; ?>;">
-                                                    <?php if (($adm['role'] ?? '') == 'super_admin'): ?>
-                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                                            <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"></path>
-                                                        </svg>
-                                                    <?php else: ?>
-                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                                                        </svg>
-                                                    <?php endif; ?>
-                                                </div>
+                                                <?php 
+                                                    $adm_pic_url = getAdminAvatarUrl($adm['profile_image'] ?? null);
+                                                    $adm_init = getAdminInitials($adm['name'] ?? $adm['username']);
+                                                ?>
+                                                <?php if (!empty($adm_pic_url)): ?>
+                                                    <div style="position: relative; width: 38px; height: 38px; flex-shrink: 0;">
+                                                        <img src="<?php echo htmlspecialchars($adm_pic_url); ?>" alt="<?php echo htmlspecialchars($adm['name']); ?>" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid #0057FF; box-shadow: 0 2px 8px rgba(0, 87, 255, 0.25); display: block;" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+                                                        <div style="display: none; width: 38px; height: 38px; border-radius: 50%; background: #0057FF; color: #ffffff; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem;">
+                                                            <?php echo htmlspecialchars($adm_init); ?>
+                                                        </div>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <div style="width: 38px; height: 38px; border-radius: 50%; background: #0057FF; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem; box-shadow: 0 2px 8px rgba(0, 87, 255, 0.25); flex-shrink: 0;">
+                                                        <?php echo htmlspecialchars($adm_init); ?>
+                                                    </div>
+                                                <?php endif; ?>
                                                 <div>
-                                                    <div style="font-weight: 700; color: #ffffff; font-size: 0.95rem;">
+                                                    <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem;">
                                                         <?php echo htmlspecialchars($adm['username']); ?>
                                                         <?php if ((int)$adm['id'] === (int)($_SESSION['admin_id'] ?? 0)): ?>
                                                             <span style="font-size: 0.75rem; background: #e0e7ff; color: #4338ca; padding: 0.15rem 0.5rem; border-radius: 9999px; margin-left: 0.35rem; font-weight: 600;">You</span>

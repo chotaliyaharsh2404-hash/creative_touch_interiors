@@ -271,6 +271,13 @@ function runSystemRepairs($conn) {
         }
     }
 
+    // 9. Ensure admin_users has profile_image column
+    $admPicCol = $conn->query("SHOW COLUMNS FROM admin_users LIKE 'profile_image'");
+    if ($admPicCol && $admPicCol->num_rows === 0) {
+        $conn->query("ALTER TABLE admin_users ADD COLUMN profile_image VARCHAR(255) NULL DEFAULT NULL AFTER email");
+        $log[] = "Added 'profile_image' column to 'admin_users' table.";
+    }
+
     return $log;
 }
 

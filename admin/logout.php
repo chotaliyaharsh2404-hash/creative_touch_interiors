@@ -8,6 +8,7 @@ unset($_SESSION['admin_id']);
 unset($_SESSION['admin_username']);
 unset($_SESSION['admin_name']);
 unset($_SESSION['admin_role']);
+unset($_SESSION['admin_profile_image']);
 unset($_SESSION['show_welcome_modal']);
 
 // If no user is logged in, clean entire session

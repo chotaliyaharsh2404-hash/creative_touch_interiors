@@ -161,6 +161,9 @@ if (empty($cat_distribution)) {
         <!-- Main Dashboard Viewport -->
         <main class="admin-content-viewport">
             
+            <!-- Executive Header with Avatar & Dropdown -->
+            <?php include 'includes/header.php'; ?>
+            
             <?php if (!empty($_GET['error'])): ?>
                 <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); color: #fca5a5; padding: 1rem 1.25rem; border-radius: var(--radius-md); margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
                     <div style="display: flex; align-items: center; gap: 0.75rem;">
@@ -568,6 +571,9 @@ if (empty($cat_distribution)) {
                     <?php endif; ?>
                 </div>
             </div>
+
+            <!-- Subtle Admin Footer Indicator -->
+            <?php include 'includes/footer.php'; ?>
 
         </main>
     </div>

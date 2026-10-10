@@ -298,6 +298,11 @@ $statusInfo = getQuoteStatusInfo($quote['status']);
         <!-- Main Content -->
         <div class="admin-content" style="flex: 1; padding: 2.25rem 2.5rem;">
             
+            <!-- Executive Header with Avatar & Dropdown -->
+            <div class="no-print">
+                <?php include 'includes/header.php'; ?>
+            </div>
+
             <!-- Breadcrumbs & Top Actions -->
             <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 1rem;">
                 <div>

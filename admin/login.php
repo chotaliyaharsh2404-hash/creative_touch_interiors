@@ -32,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['admin_username'] = $user['username'];
                 $_SESSION['admin_name'] = $user['name'];
                 $_SESSION['admin_role'] = $user['role'];
+                $_SESSION['admin_profile_image'] = $user['profile_image'] ?? null;
                 $_SESSION['show_welcome_modal'] = true;
                 redirect('dashboard.php');
             } else {

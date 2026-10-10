@@ -245,6 +245,67 @@ if (!function_exists('getTeamMemberPhoto')) {
     }
 }
 
+// Helper function to resolve admin profile avatar URL with cache-busting and path-traversal guards
+if (!function_exists('getAdminAvatarUrl')) {
+    function getAdminAvatarUrl($imagePath = null, $prefix = '../') {
+        global $conn;
+        // If imagePath is null, check session or query DB for current logged-in admin
+        if ($imagePath === null && isset($_SESSION['admin_id'])) {
+            $imagePath = $_SESSION['admin_profile_image'] ?? null;
+            if ($imagePath === null && isset($conn) && $conn instanceof mysqli) {
+                $aid = (int)$_SESSION['admin_id'];
+                $st = $conn->prepare("SELECT profile_image FROM admin_users WHERE id = ?");
+                if ($st) {
+                    $st->bind_param("i", $aid);
+                    $st->execute();
+                    $res = $st->get_result()->fetch_assoc();
+                    $imagePath = $res['profile_image'] ?? '';
+                    $_SESSION['admin_profile_image'] = $imagePath;
+                }
+            }
+        }
+
+        if (empty($imagePath) || !is_string($imagePath)) {
+            return '';
+        }
+
+        $cleanRel = ltrim(str_replace('\\', '/', trim($imagePath)), '/');
+        // Strictly prevent path traversal or stream wrappers
+        if (strpos($cleanRel, '..') !== false || strpos($cleanRel, ':') !== false) {
+            return '';
+        }
+
+        // If path only contains filename without subfolder (e.g. admin_5_xyz.jpg)
+        if (strpos($cleanRel, 'uploads/') === false) {
+            $cleanRel = 'uploads/profiles/' . $cleanRel;
+        }
+
+        $projectRoot = dirname(__DIR__);
+        $diskPath = $projectRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $cleanRel);
+
+        if (file_exists($diskPath)) {
+            $ver = @filemtime($diskPath);
+            return $prefix . $cleanRel . ($ver ? '?v=' . $ver : '');
+        }
+
+        return '';
+    }
+}
+
+// Helper function to get initials for fallback avatar (e.g. 'H' for Harsh)
+if (!function_exists('getAdminInitials')) {
+    function getAdminInitials($name = null) {
+        $n = trim($name ?? ($_SESSION['admin_name'] ?? 'Admin'));
+        if ($n === '') {
+            return 'A';
+        }
+        if (function_exists('mb_substr')) {
+            return strtoupper(mb_substr($n, 0, 1, 'UTF-8'));
+        }
+        return strtoupper(substr($n, 0, 1));
+    }
+}
+
 // Quotation & Estimation Helpers
 if (!function_exists('generateQuoteNumber')) {
     function generateQuoteNumber($conn) {

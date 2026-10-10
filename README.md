@@ -4,32 +4,26 @@ An enterprise-grade interior design, architectural management, and spatial visua
 
 ---
 
-## 🚀 What's New in Version 1.8.0 (Latest Release)
+## 🚀 Version & Release History
 
-### 1. Three-Tier Role-Based Access Control (RBAC)
-The administration platform enforces three explicit roles with server-side validation:
-- **👑 Super Admin (`super_admin`)**: Complete system authority across all modules, administrative staff management, website settings, team members, editorial blog, and database integrity tools. Includes safeguards preventing self-deletion or self-demotion.
-- **🏢 Admin (`admin`)**: Core business operations manager with full authority over Leads, Inquiries, Consultations, Quotes & Estimations, Projects, Services, Gallery, and Testimonials. Strictly restricted from user management, blog, team, settings, and system tools.
-- **🛎️ Receptionist (`receptionist`)**: Front-desk customer relationship manager with Add & Update capabilities for Leads, Inquiries, Consultations, and Quotes; strict **View-Only** mode for Projects, Services, and Gallery; and complete restriction from deletion actions, settings, and user management.
+- **Current Stable Version**: **v2.1.0** — *Admin Profile & Avatar System*
+- **Previous Release**: **v2.0.0** — *Enterprise Role-Based Access Control (RBAC)*
+- **Changelog**: See [CHANGELOG.md](CHANGELOG.md) for full historical changes.
+- **Release Notes**: See [docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md) for version release summaries and Semantic Versioning rules.
 
-### 2. View-Only Protections & Server-Side Security
-- **Strict Server-Side Validation**: View-only modules (`projects.php`, `services.php`, `gallery.php`) reject all unauthorized `POST` requests on the server, ensuring security cannot be bypassed by inspecting or modifying UI elements.
-- **Deletion Safeguards**: Endpoint-level guards prevent Receptionists from deleting Leads, Inquiries, Consultations, or Quotes.
-- **Estimation Engine Locks**: Quotation calculation parameters and discounts in `admin/quote_details.php` are protected against unauthorized adjustments.
-- **URL Tampering Prevention**: Direct navigation to restricted management pages automatically halts execution and redirects to the dashboard.
+### 🌟 Latest in Version 2.1.0 (Admin Profile & Avatar System)
+1. **Self-Service Avatar Management**: Admin profile picture upload, replacement, and removal with multi-tier MIME/image security.
+2. **Dynamic Fallback Badges**: Automatic name initials avatar (e.g., `H` for Harsh) on `#0057FF` surface when no photo is uploaded.
+3. **Unified Executive SaaS Header**: Global top header with brand identity, interactive unread notification bell `[🔔]`, role badge, and profile dropdown menu.
+4. **Comprehensive System Security**: Strict 5 MB ceiling, dangerous extension rejection, path traversal prevention, cryptographically random filenames, and execution-disabled storage in `uploads/profiles/`.
+5. **Universal Role Support**: Avatar system enabled across all 3 roles: `super_admin`, `admin`, and `receptionist`.
 
-### 3. Dedicated Staff Profile Management (`admin/profile.php`)
-- A self-service portal accessible to all 3 roles from the sidebar capsule.
-- Enables staff members to review their role badge, registration date, and securely update their name, email, and password.
-
-### 4. Dynamic Role-Aware Sidebar Navigation
-- The navigation menu (`admin/includes/sidebar.php`) dynamically filters links according to the logged-in role.
-- Visual role badges (`Super Admin`, `Admin`, `Receptionist`) and live counters for unread leads, new quotes, and pending consultations.
-
-### 5. Automated Schema Self-Healing & Test Suite
-- Database column `admin_users.role` expanded to `ENUM('admin', 'super_admin', 'receptionist')` with zero data loss.
-- Automatic self-repair integrated into `includes/system_repair.php`.
-- Full test suite in `scratch/test_rbac_full.php` verifying 87/87 test cases (100% pass rate).
+### 🔐 Foundation in Version 2.0.0 (Three-Tier RBAC)
+1. **Three-Tier Administrative Roles**: `super_admin` (full authority), `admin` (operational authority), and `receptionist` (front-desk CRM + view-only portfolio/services).
+2. **Server-Side Action Guards**: Multi-layer authorization blocking unauthorized actions and deletions at the server level.
+3. **Dedicated Staff Profile Workspace**: Self-service profile management for all administrative roles in `admin/profile.php`.
+4. **Dynamic Role-Aware Sidebar Navigation**: Menu items dynamically filter according to active permissions.
+5. **Database Self-Healing**: Automated schema migrations in `includes/system_repair.php`.
 
 ---
 

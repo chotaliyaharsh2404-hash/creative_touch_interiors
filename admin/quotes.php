@@ -188,6 +188,9 @@ if ($quotes_res) {
         <!-- Main Content -->
         <div class="admin-content" style="margin-left: 260px; width: calc(100% - 260px); max-width: calc(100% - 260px); min-width: 0; box-sizing: border-box; padding: 2rem 1.75rem;">
             
+            <!-- Executive Header with Avatar & Dropdown -->
+            <?php include 'includes/header.php'; ?>
+
             <!-- Header Bar -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
                 <div>

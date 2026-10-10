@@ -43,17 +43,30 @@ $current_role = getAdminRole();
             <span style="position: relative; font-family: var(--font-heading); font-size: 0.95rem; font-weight: 800; color: #60a5fa; letter-spacing: 0.05em;">CTI</span>
         </div>
         <div>
-            <h2 style="font-family: var(--font-heading); font-size: 1.15rem; color: #ffffff; margin: 0; font-weight: 700; letter-spacing: -0.01em;">Creative Touch</h2>
-            <span style="font-size: 0.72rem; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;">Executive Suite</span>
+            <h2 class="admin-sidebar-brand-title" style="font-family: var(--font-heading); font-size: 1.15rem; color: #ffffff !important; margin: 0; font-weight: 700; letter-spacing: -0.01em; line-height: 1.25;">Creative Touch</h2>
+            <span style="font-size: 0.72rem; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; display: block; line-height: 1.2;">Executive Suite</span>
         </div>
     </div>
 
     <!-- Admin User Profile Capsule with Quick-Logout Button -->
     <div style="margin: 1.25rem 0; padding: 0.75rem 0.85rem; background: rgba(255,255,255,0.04); border-radius: var(--radius-md); display: flex; align-items: center; gap: 0.75rem; border: 1px solid #1e293b;">
         <a href="profile.php" title="View Profile" style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none; overflow: hidden; flex: 1;">
-            <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%); border: 1.5px solid #60a5fa; display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: 700; font-size: 0.85rem; flex-shrink: 0;">
-                <?php echo strtoupper(substr($_SESSION['admin_name'] ?? 'A', 0, 1)); ?>
-            </div>
+            <?php 
+                $sidebar_avatar = getAdminAvatarUrl();
+                $sidebar_initial = getAdminInitials($_SESSION['admin_name'] ?? 'Admin');
+            ?>
+            <?php if (!empty($sidebar_avatar)): ?>
+                <div style="position: relative; width: 36px; height: 36px; flex-shrink: 0;">
+                    <img src="<?php echo htmlspecialchars($sidebar_avatar); ?>" alt="<?php echo htmlspecialchars($_SESSION['admin_name'] ?? 'Admin'); ?>" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #0057FF; box-shadow: 0 2px 8px rgba(0, 87, 255, 0.25); display: block;" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+                    <div style="display: none; width: 36px; height: 36px; border-radius: 50%; background: #0057FF; border: 2px solid #0057FF; align-items: center; justify-content: center; color: #ffffff; font-weight: 700; font-size: 0.85rem;">
+                        <?php echo htmlspecialchars($sidebar_initial); ?>
+                    </div>
+                </div>
+            <?php else: ?>
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: #0057FF; border: 2px solid #0057FF; display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: 700; font-size: 0.85rem; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0, 87, 255, 0.25);">
+                    <?php echo htmlspecialchars($sidebar_initial); ?>
+                </div>
+            <?php endif; ?>
             <div style="overflow: hidden; flex: 1;">
                 <div style="color: white; font-size: 0.85rem; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;" title="<?php echo htmlspecialchars($_SESSION['admin_name'] ?? 'Staff Member'); ?>">
                     <?php echo htmlspecialchars($_SESSION['admin_name'] ?? 'Staff Member'); ?>
@@ -231,5 +244,8 @@ $current_role = getAdminRole();
             </svg>
             <span>End Session</span>
         </a>
+        <div style="text-align: center; margin-top: 0.85rem; font-size: 0.7rem; color: #64748b; letter-spacing: 0.02em; user-select: none;">
+            Creative Touch Interiors &bull; v<?php echo htmlspecialchars(APP_VERSION); ?>
+        </div>
     </div>
 </div>

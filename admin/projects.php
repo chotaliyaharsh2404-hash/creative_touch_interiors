@@ -394,6 +394,9 @@ if ($projects_res) {
         <!-- Main Content -->
         <div class="admin-content" style="flex: 1; padding: 2.25rem 2.5rem;">
             
+            <!-- Executive Header with Avatar & Dropdown -->
+            <?php include 'includes/header.php'; ?>
+
             <!-- Header Bar -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
                 <div>

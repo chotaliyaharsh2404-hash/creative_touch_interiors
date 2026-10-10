@@ -233,6 +233,9 @@ $page_title = 'Client Testimonials & Reviews — Executive Suite';
 
         <div class="admin-content" style="flex: 1; padding: 2.25rem 2.5rem;">
             
+            <!-- Executive Header with Avatar & Dropdown -->
+            <?php include 'includes/header.php'; ?>
+
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
                 <div>
                     <h1 style="font-family: var(--font-heading); font-size: 1.85rem; color: #0f172a; margin: 0 0 0.25rem;">

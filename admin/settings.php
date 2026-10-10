@@ -61,6 +61,9 @@ $page_title = 'Website Content & Configuration — Executive Suite';
 
         <div class="admin-content" style="flex: 1; padding: 2.25rem 2.5rem;">
             
+            <!-- Executive Header with Avatar & Dropdown -->
+            <?php include 'includes/header.php'; ?>
+
             <div style="margin-bottom: 2rem;">
                 <h1 style="font-family: var(--font-heading); font-size: 1.85rem; color: #0f172a; margin: 0 0 0.25rem;">
                     Website Content & Studio Configuration
@@ -136,6 +139,40 @@ $page_title = 'Website Content & Configuration — Executive Suite';
                     </div>
                 </form>
             </div>
+
+            <!-- System & Application Information Section -->
+            <div class="card" style="background: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 2rem 2.5rem; max-width: 820px; margin-top: 2rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                <h2 style="font-family: var(--font-heading); font-size: 1.2rem; color: #0f172a; margin: 0 0 1.25rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.65rem; display: flex; align-items: center; gap: 0.6rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0057FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    <span>System &amp; Application Information</span>
+                </h2>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                    <div style="background: #F8F7F4; padding: 1.25rem 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; font-weight: 700;">Application</div>
+                        <div style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin-top: 0.35rem;">Creative Touch Interiors</div>
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Executive Administration Suite</div>
+                    </div>
+
+                    <div style="background: #F8F7F4; padding: 1.25rem 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; font-weight: 700;">Version</div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem;">
+                            <span style="font-size: 1.15rem; font-weight: 800; color: #0057FF; font-family: monospace;">v<?php echo htmlspecialchars(APP_VERSION); ?></span>
+                            <span style="background: rgba(0, 87, 255, 0.1); color: #0057FF; font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.55rem; border-radius: 9999px; border: 1px solid rgba(0, 87, 255, 0.2);">Stable</span>
+                        </div>
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Production Build Channel</div>
+                    </div>
+
+                    <div style="background: #F8F7F4; padding: 1.25rem 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; font-weight: 700;">Release</div>
+                        <div style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin-top: 0.35rem;">Admin Profile &amp; Avatar System</div>
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Multi-tier Security &amp; Custom Avatars</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subtle Admin Footer Indicator -->
+            <?php include 'includes/footer.php'; ?>
 
         </div>
     </div>
