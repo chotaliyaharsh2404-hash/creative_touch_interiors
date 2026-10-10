@@ -91,7 +91,7 @@ include 'includes/header.php';
     <section class="spatial-section" style="padding: 5rem 0 7rem;">
         <div class="container">
             <div style="margin-bottom: 2rem; font-size: 0.9rem; color: var(--color-stone);">
-                Presenting <strong id="visibleImagesCount" style="color: #ffffff;"><?php echo count($images); ?></strong> curated perspectives
+                Presenting <strong id="visibleImagesCount" style="color: #0f172a;"><?php echo count($images); ?></strong> curated perspectives
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.75rem;" id="galleryGrid">

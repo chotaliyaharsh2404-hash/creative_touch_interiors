@@ -44,14 +44,14 @@ include 'includes/header.php';
 ?>
 
     <!-- Breadcrumb -->
-    <div style="background: rgba(12, 14, 19, 0.95); border-bottom: 1px solid var(--glass-border); padding: 1rem 0; margin-top: 5rem; font-size: 0.85rem;">
+    <div style="background: #F8F7F4; border-bottom: 1px solid rgba(0, 0, 0, 0.06); padding: 1rem 0; margin-top: 5rem; font-size: 0.85rem;">
         <div class="container">
-            <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--color-stone);">
-                <a href="index.php" style="color: var(--color-stone); transition: color 0.2s;" onmouseover="this.style.color='#fff';" onmouseout="this.style.color='var(--color-stone)';">Home</a>
+            <div style="display: flex; align-items: center; gap: 0.5rem; color: #64748b;">
+                <a href="index.php" style="color: #64748b; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#0057FF';" onmouseout="this.style.color='#64748b';">Home</a>
                 <span>/</span>
-                <a href="projects.php" style="color: var(--color-stone); transition: color 0.2s;" onmouseover="this.style.color='#fff';" onmouseout="this.style.color='var(--color-stone)';">Projects</a>
+                <a href="projects.php" style="color: #64748b; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#0057FF';" onmouseout="this.style.color='#64748b';">Projects</a>
                 <span>/</span>
-                <span style="color: var(--color-bronze-light); font-weight: 600;"><?php echo htmlspecialchars($project['title']); ?></span>
+                <span style="color: #0057FF; font-weight: 600;"><?php echo htmlspecialchars($project['title']); ?></span>
             </div>
         </div>
     </div>
@@ -79,10 +79,10 @@ include 'includes/header.php';
     </section>
 
     <!-- Main Project Visual Showcase -->
-    <section class="spatial-section" style="padding: 4rem 0;">
+    <section class="spatial-section" style="padding: 4rem 0; background: #F8F7F4;">
         <div class="container">
             <!-- Large Hero Project Visual -->
-            <div style="border-radius: var(--radius-2xl); overflow: hidden; border: 1px solid var(--glass-border); box-shadow: var(--shadow-spatial-3d); margin-bottom: 4.5rem; aspect-ratio: 16/9; max-height: 640px; background: var(--color-charcoal);">
+            <div style="border-radius: var(--radius-2xl); overflow: hidden; border: 1px solid rgba(0, 0, 0, 0.08); box-shadow: var(--shadow-spatial-3d); margin-bottom: 4.5rem; aspect-ratio: 16/9; max-height: 640px; background: #0f172a;">
                 <img src="<?php echo htmlspecialchars($project['image'] ?: 'uploads/projects/1786870500_project_05.jpg'); ?>" 
                      alt="<?php echo htmlspecialchars($project['title']); ?>" 
                      style="width: 100%; height: 100%; object-fit: cover;">
@@ -94,28 +94,28 @@ include 'includes/header.php';
                 <!-- Left: Narrative & Execution -->
                 <div>
                     <span class="spatial-section-eyebrow">Concept &amp; Execution</span>
-                    <h2 style="font-size: 2.25rem; color: #ffffff; margin-bottom: 1.5rem;">Spatial Narrative</h2>
-                    <div style="color: var(--color-stone-light); font-size: 1.05rem; line-height: 1.8; margin-bottom: 2.5rem;">
+                    <h2 style="font-size: 2.25rem; color: #0f172a; margin-bottom: 1.5rem; font-family: var(--font-heading); font-weight: 700;">Spatial Narrative</h2>
+                    <div style="color: #334155; font-size: 1.05rem; line-height: 1.8; margin-bottom: 2.5rem;">
                         <?php echo nl2br(htmlspecialchars($project['description'] ?: 'This bespoke interior project showcases our signature blend of architectural proportion, tactile materiality, and tailored lighting design. Crafted to provide a tranquil and functional sanctuary, every joinery detail and custom furnishing was specifically fabricated to harmonize with the structural layout.')); ?>
                     </div>
 
-                    <h3 style="font-size: 1.5rem; color: #ffffff; margin-bottom: 1.25rem;">Architectural Highlights</h3>
-                    <div style="background: var(--glass-bg-card); border: 1px solid var(--glass-border); border-radius: var(--radius-xl); padding: 2rem; box-shadow: var(--shadow-spatial-sm);">
-                        <ul style="list-style: none; display: flex; flex-direction: column; gap: 1rem; color: var(--color-stone-light); font-size: 0.95rem;">
+                    <h3 style="font-size: 1.5rem; color: #0f172a; margin-bottom: 1.25rem; font-family: var(--font-heading); font-weight: 700;">Architectural Highlights</h3>
+                    <div style="background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); border: 1px solid rgba(0, 87, 255, 0.12); border-radius: var(--radius-xl); padding: 2rem; box-shadow: var(--shadow-spatial-sm);">
+                        <ul style="list-style: none; display: flex; flex-direction: column; gap: 1rem; color: #334155; font-size: 0.95rem;">
                             <li style="display: flex; gap: 0.85rem; align-items: flex-start;">
-                                <span style="color: var(--color-bronze); font-weight: bold; font-size: 1.1rem; line-height: 1;">✓</span>
+                                <span style="color: #0057FF; font-weight: bold; font-size: 1.1rem; line-height: 1;">✓</span>
                                 <span>Complete turnkey electrical, plumbing, civil, acoustic, and joinery coordination.</span>
                             </li>
                             <li style="display: flex; gap: 0.85rem; align-items: flex-start;">
-                                <span style="color: var(--color-bronze); font-weight: bold; font-size: 1.1rem; line-height: 1;">✓</span>
+                                <span style="color: #0057FF; font-weight: bold; font-size: 1.1rem; line-height: 1;">✓</span>
                                 <span>Bespoke custom furniture designed specifically for optimal sightlines and circulation.</span>
                             </li>
                             <li style="display: flex; gap: 0.85rem; align-items: flex-start;">
-                                <span style="color: var(--color-bronze); font-weight: bold; font-size: 1.1rem; line-height: 1;">✓</span>
+                                <span style="color: #0057FF; font-weight: bold; font-size: 1.1rem; line-height: 1;">✓</span>
                                 <span>Natural organic stone, Central Province teakwood veneers, and warm circadian lighting.</span>
                             </li>
                             <li style="display: flex; gap: 0.85rem; align-items: flex-start;">
-                                <span style="color: var(--color-bronze); font-weight: bold; font-size: 1.1rem; line-height: 1;">✓</span>
+                                <span style="color: #0057FF; font-weight: bold; font-size: 1.1rem; line-height: 1;">✓</span>
                                 <span>Full 4K 3D visualization and photometric lighting simulations delivered prior to civil execution.</span>
                             </li>
                         </ul>
@@ -123,37 +123,37 @@ include 'includes/header.php';
                 </div>
 
                 <!-- Right: Specifications Card -->
-                <div style="background: var(--glass-bg-card); border: 1px solid var(--color-bronze-border); border-radius: var(--radius-2xl); padding: 2.5rem; box-shadow: var(--shadow-spatial-lg); position: sticky; top: 120px;">
+                <div style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); border: 1px solid rgba(0, 87, 255, 0.16); border-radius: var(--radius-2xl); padding: 2.5rem; box-shadow: var(--shadow-spatial-lg); position: sticky; top: 120px;">
                     <span class="spatial-section-eyebrow" style="margin-bottom: 0.5rem;">Technical Profile</span>
-                    <h3 style="font-size: 1.5rem; color: #ffffff; margin-bottom: 1.5rem;">Commission Details</h3>
+                    <h3 style="font-size: 1.5rem; color: #0f172a; margin-bottom: 1.5rem; font-family: var(--font-heading); font-weight: 700;">Commission Details</h3>
 
                     <div style="display: flex; flex-direction: column; gap: 1.25rem;">
-                        <div style="display: flex; justify-content: space-between; padding-bottom: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                            <span style="color: var(--color-stone); font-size: 0.85rem; text-transform: uppercase;">Location</span>
-                            <strong style="color: #ffffff;"><?php echo htmlspecialchars($project['location'] ?: 'Surat, Gujarat'); ?></strong>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.85rem; border-bottom: 1px solid rgba(0, 0, 0, 0.06);">
+                            <span style="color: #64748b; font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Location</span>
+                            <strong style="color: #0f172a; font-weight: 700; font-size: 0.95rem; text-align: right;"><?php echo htmlspecialchars($project['location'] ?: 'Surat, Gujarat'); ?></strong>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding-bottom: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                            <span style="color: var(--color-stone); font-size: 0.85rem; text-transform: uppercase;">Carpet Area</span>
-                            <strong style="color: #ffffff;"><?php echo htmlspecialchars($project['area'] ?: '2,500 sq.ft'); ?></strong>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.85rem; border-bottom: 1px solid rgba(0, 0, 0, 0.06);">
+                            <span style="color: #64748b; font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Carpet Area</span>
+                            <strong style="color: #0f172a; font-weight: 700; font-size: 0.95rem; text-align: right;"><?php echo htmlspecialchars($project['area'] ?: '2,500 sq.ft'); ?></strong>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding-bottom: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                            <span style="color: var(--color-stone); font-size: 0.85rem; text-transform: uppercase;">Design Aesthetic</span>
-                            <strong style="color: #ffffff;"><?php echo htmlspecialchars($project['design_style'] ?: 'Contemporary Luxury'); ?></strong>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.85rem; border-bottom: 1px solid rgba(0, 0, 0, 0.06);">
+                            <span style="color: #64748b; font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Design Aesthetic</span>
+                            <strong style="color: #0f172a; font-weight: 700; font-size: 0.95rem; text-align: right;"><?php echo htmlspecialchars($project['design_style'] ?: 'Contemporary Luxury'); ?></strong>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding-bottom: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                            <span style="color: var(--color-stone); font-size: 0.85rem; text-transform: uppercase;">Project Typology</span>
-                            <strong style="color: #ffffff;"><?php echo htmlspecialchars(ucfirst($project['category'])); ?></strong>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.85rem; border-bottom: 1px solid rgba(0, 0, 0, 0.06);">
+                            <span style="color: #64748b; font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Project Typology</span>
+                            <strong style="color: #0f172a; font-weight: 700; font-size: 0.95rem; text-align: right;"><?php echo htmlspecialchars(ucfirst($project['category'])); ?></strong>
                         </div>
-                        <div style="display: flex; justify-content: space-between; padding-bottom: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                            <span style="color: var(--color-stone); font-size: 0.85rem; text-transform: uppercase;">Status</span>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.85rem; border-bottom: 1px solid rgba(0, 0, 0, 0.06);">
+                            <span style="color: #64748b; font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Status</span>
                             <span class="status-badge <?php echo htmlspecialchars($project['status'] ?: 'completed'); ?>">
                                 <?php echo htmlspecialchars(ucfirst(str_replace('_', ' ', $project['status'] ?? 'Completed'))); ?>
                             </span>
                         </div>
                         <?php if (!empty($project['completion_date'])): ?>
-                            <div style="display: flex; justify-content: space-between; padding-bottom: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
-                                <span style="color: var(--color-stone); font-size: 0.85rem; text-transform: uppercase;">Handover</span>
-                                <strong style="color: #ffffff;"><?php echo date('F Y', strtotime($project['completion_date'])); ?></strong>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.85rem; border-bottom: 1px solid rgba(0, 0, 0, 0.06);">
+                                <span style="color: #64748b; font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Handover</span>
+                                <strong style="color: #0f172a; font-weight: 700; font-size: 0.95rem; text-align: right;"><?php echo date('F Y', strtotime($project['completion_date'])); ?></strong>
                             </div>
                         <?php endif; ?>
                     </div>

@@ -29,7 +29,7 @@ define('BASE_URL', (isset($_SERVER['HTTP_HOST']) ? ((!empty($_SERVER['HTTPS']) &
 define('SITE_NAME', 'Creative Touch Interiors');
 define('SITE_EMAIL', 'harshchotaliya@gmail.com');
 define('SITE_PHONE', '+91 9316856961');
-define('APP_VERSION', '2.1.0');
+define('APP_VERSION', '2.2.2');
 
 // Timezone Configuration
 date_default_timezone_set('Asia/Kolkata');
@@ -456,6 +456,106 @@ if (!function_exists('getAllSiteContent')) {
             }
         }
         return $content;
+    }
+}
+
+// ============================================================================
+// Public Announcement & Promotion System Helpers (v2.2.0)
+// ============================================================================
+if (!function_exists('sanitizeCtaUrl')) {
+    function sanitizeCtaUrl($url) {
+        $url = trim((string)$url);
+        if ($url === '') {
+            return '';
+        }
+        // Strictly disallow dangerous pseudo-protocols
+        if (preg_match('/^(javascript|data|vbscript):/i', $url)) {
+            return '';
+        }
+        // Allow relative site links (e.g., 'consultation.php', 'contact.php?ref=promo')
+        if (preg_match('/^[a-zA-Z0-9_\-\.\/\?\#\=\&\%]+$/', $url)) {
+            return $url;
+        }
+        // Allow valid external https/http URLs
+        if (filter_var($url, FILTER_VALIDATE_URL)) {
+            $scheme = parse_url($url, PHP_URL_SCHEME);
+            if (in_array(strtolower((string)$scheme), ['http', 'https'], true)) {
+                return $url;
+            }
+        }
+        return '';
+    }
+}
+
+if (!function_exists('recordAnonymousAnnouncementView')) {
+    function recordAnonymousAnnouncementView($conn, $announcementId) {
+        $announcementId = (int)$announcementId;
+        if ($announcementId <= 0 || !($conn instanceof mysqli)) {
+            return false;
+        }
+
+        // 1. Increment total anonymous views
+        $conn->query("UPDATE announcements SET views_count = views_count + 1 WHERE id = {$announcementId}");
+
+        // 2. Approximate unique visitor telemetry via SHA-256 hash (Zero PII stored)
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+        $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'Mozilla/5.0';
+        $visitorHash = hash('sha256', 'cti_anon_' . $ip . '_' . $ua);
+
+        $stmt = $conn->prepare("INSERT IGNORE INTO announcement_views (announcement_id, visitor_hash) VALUES (?, ?)");
+        if ($stmt) {
+            $stmt->bind_param("is", $announcementId, $visitorHash);
+            $stmt->execute();
+            if ($stmt->affected_rows > 0) {
+                $conn->query("UPDATE announcements SET unique_views_count = unique_views_count + 1 WHERE id = {$announcementId}");
+            }
+            $stmt->close();
+        }
+        return true;
+    }
+}
+
+if (!function_exists('getActiveAnnouncements')) {
+    function getActiveAnnouncements($conn, $limit = 10, $type = null) {
+        if (!($conn instanceof mysqli)) {
+            return [];
+        }
+        $limit = max(1, min(50, (int)$limit));
+        $now = date('Y-m-d H:i:s');
+        
+        $sql = "SELECT * FROM announcements 
+                WHERE status = 'published' 
+                  AND deleted_at IS NULL 
+                  AND (start_at IS NULL OR start_at <= ?) 
+                  AND (expires_at IS NULL OR expires_at >= ?)";
+        
+        if (!empty($type) && in_array($type, ['promotion', 'announcement', 'update', 'notice', 'system'], true)) {
+            $sql .= " AND type = ?";
+            $sql .= " ORDER BY FIELD(priority, 'urgent', 'important', 'normal') ASC, id DESC LIMIT ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("sssi", $now, $now, $type, $limit);
+        } else {
+            $sql .= " ORDER BY FIELD(priority, 'urgent', 'important', 'normal') ASC, id DESC LIMIT ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ssi", $now, $now, $limit);
+        }
+        
+        $results = [];
+        if ($stmt && $stmt->execute()) {
+            $res = $stmt->get_result();
+            while ($row = $res->fetch_assoc()) {
+                $results[] = $row;
+            }
+            $stmt->close();
+        }
+        return $results;
+    }
+}
+
+if (!function_exists('getAnnouncementBarItem')) {
+    function getAnnouncementBarItem($conn) {
+        $items = getActiveAnnouncements($conn, 1);
+        return !empty($items) ? $items[0] : null;
     }
 }
 

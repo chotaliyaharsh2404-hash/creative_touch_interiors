@@ -1,5 +1,111 @@
 # What's New in Creative Touch Interiors
 
+## Version 2.2.2 — Project Category Badge UI Polish
+
+This patch release refines the visual styling of project category badges across project cards to seamlessly harmonize with the primary `#0057FF` and `#F8F7F4` glassmorphism architectural design system. The previous heavy dark/black badge styling is replaced with a refined, light translucent glassmorphic pill badge with crisp brand typography.
+
+---
+
+### 🎨 1. Light Glassmorphism Category Badge Styling
+
+- **Light Translucent Glass Surface**: Replaced opaque dark/black badge background with a modern light translucent surface (`rgba(255, 255, 255, 0.88)` / `rgba(0, 87, 255, 0.08)`) with `10px` backdrop blur.
+- **Brand Typography**: Category labels now render in the signature `#0057FF` royal blue hue with `700` font weight and crisp architectural uppercase letter spacing.
+- **Architectural Pill Geometry**: Clean `999px` fully rounded pill shape with a subtle `1px solid rgba(0, 87, 255, 0.20)` border.
+- **Micro-Shadow & Elevation**: Added delicate elevation (`box-shadow: 0 4px 12px rgba(0, 30, 90, 0.08)`) ensuring the badge lifts gently from project photography.
+- **Subtle Interaction Hover**: Hovering over the card softly illuminates the badge to `rgba(255, 255, 255, 0.96)` with enhanced border and shadow clarity.
+
+---
+
+### 🖼️ 2. Universal Legibility & Zero Regressions
+
+- **High-Contrast Photography Legibility**: Tested against both bright, high-key renderings and dark, mood-lit architectural scenes to ensure zero text illegibility.
+- **All Categories Supported**: Consistently applied to `RESIDENTIAL`, `COMMERCIAL`, `OFFICE`, and `RETAIL` project cards.
+- **Preserved Card Dimensions**: No alteration to card layouts, grid systems, images, descriptions, or exploration buttons.
+- **Responsive Geometry**: Flawless presentation across desktop, tablet, and mobile breakpoints without text clipping.
+
+---
+
+## Version 2.2.1 — Announcement Bell Interaction Fix
+
+This patch release resolves an issue where clicking the announcement bell button in the public website header did not open the glassmorphism dropdown. It improves interaction reliability, accessibility, and event lifecycle management across all public pages while strictly preserving existing styling and announcement data.
+
+---
+
+### 🔔 1. Announcement Bell Interaction Fix & Dropdown Toggle
+
+- **Root Cause Resolution**: Resolved CSS overflow clipping on `.spatial-nav-container` that prevented dropdown content from displaying below the navigation bar.
+- **Reliable Open / Close Toggle**: Clicking the bell opens the dropdown; clicking the bell again closes it without page reloading.
+- **Outside-Click Dismissal**: Clicking anywhere outside the dropdown or trigger button safely closes the dropdown menu.
+- **Keyboard ESC Key Handling**: Pressing `Escape` smoothly closes the dropdown and returns keyboard focus to the bell button.
+- **Unobstructed Link Navigation**: Clicking announcements inside the dropdown opens their respective detail page (`announcement.php?id=...`) without dropdown interference.
+
+---
+
+### ♿ 2. Accessibility & UX Enhancements
+
+- **ARIA Attributes**: Properly configured `aria-controls="spatialAnnouncementDropdown"` and reactive `aria-expanded="false|true"`.
+- **Accessible Focus States**: Added `:focus-visible` styling with high-contrast indicator matching the `#0057FF` brand color.
+- **Empty State Enhancement**: Displays clear `"No new announcements"` status when no active broadcasts are currently scheduled.
+- **Responsive Viewport Alignment**: Dropdown alignment optimized for desktop, tablet, and mobile displays without horizontal scroll overflow.
+
+---
+
+### 🛡️ 3. Unchanged Core Architectures
+
+- **Security & RBAC**: Existing Three-Tier RBAC, CSRF protections, server-side validation, and safe URL sanitization remain completely unchanged.
+- **Zero PII Telemetry**: Announcements remain strictly public with zero login requirements and no personal data collection.
+
+---
+
+## Version 2.2.0 — Public Announcement & Promotion System
+
+This release introduces an enterprise-grade Public Announcement & Promotion System natively integrated into the Creative Touch Interiors platform, enabling high-impact visitor communication, promotional offer broadcasting, glassmorphic header interactions, and privacy-preserving anonymous view analytics.
+
+---
+
+### 📢 1. Public Announcement & Promotional Offer System
+
+Broadcast time-sensitive offers, seasonal promotions, and studio updates to all website visitors without login requirements:
+- **10% Discount Offers & Festive Packages**: Highlighting tailored discounts across bespoke residential estates, luxury villas, and modular kitchens.
+- **New Service & Project Launches**: Promoting new capabilities such as German Modular Kitchen installations and 3D architectural renders.
+- **Holiday & Studio Advisories**: Sharing booking schedules, holiday deadlines, and consultation windows.
+- **Full Call-To-Action (CTA) Integration**: Directly connecting visitors to the custom quotation calculator (`consultation.php`) or contact form (`contact.php`).
+
+---
+
+### 🌐 2. Dual Front-Facing Interfaces (Announcement Bar & Header Dropdown)
+
+- **Subtle Glassmorphic Announcement Bar**: Fixed top banner with animated badge (`PROMOTION`, `UPDATE`, `NOTICE`), offer validity timeframe, direct "View Details" link, and session-remembered dismissal.
+- **Header Announcement Bell & Dropdown (`includes/header.php`)**: A dedicated icon in the spatial navigation with an animated red notification dot and interactive glassmorphic dropdown showcasing recent broadcasts and a quick link to the full catalog.
+- **Mobile Navigation Drawer**: Directly accessible from the fullscreen mobile drawer on smartphones and tablets.
+
+---
+
+### 📋 3. Public Announcements Catalog & Dedicated Details
+
+- **Public Announcements Hub (`announcements.php`)**: No login required. Filterable by type (All, Promotions, Updates, Notices), live search input, responsive cards grid, cover images, and validity badges.
+- **Announcement Details Page (`announcement.php`)**: Full formatted broadcast copy, validity notices, cover artwork, anonymous share capability, and direct quote consultation CTA.
+
+---
+
+### 📊 4. Anonymous View Analytics (Zero PII Privacy Architecture)
+
+- **Aggregate Telemetry**: Tracks Total Views and Approximate Unique Visitors using salted SHA-256 visitor hashing.
+- **Privacy Compliance**: No individual visitor accounts, no read/unread tracking, and zero personal information collected.
+- **Admin Insights**: Real-time telemetry displayed on the admin dashboard and within the details modal.
+
+---
+
+### 🛠️ 5. Executive Administration & Preview Workflow
+
+- **Role-Based Authority**: Super Admins and Admins manage the full lifecycle: `Create` &rarr; `Preview` &rarr; `Publish` &rarr; `Edit` &rarr; `Archive` &rarr; `Delete`. Receptionists are strictly restricted to public viewing.
+- **Interactive Preview HUD (`admin/announcement_preview.php`)**: Allows administrators to preview the announcement using the exact public design layout before making it live, featuring `[ Back to Edit ]` and `[ Publish Announcement ]` buttons.
+- **Security & Integrity**: Session-bound CSRF tokens, strict CTA URL sanitization blocking `javascript:` payloads, prepared SQL queries, and multi-tier image validation.
+
+> **Privacy Architecture Notice**: Announcements are public and do not require visitor login. Read/unread tracking is intentionally not implemented.
+
+---
+
 ## Version 1.8.0 — Enterprise Role-Based Access Control (RBAC) & Security Release
 
 This release introduces a three-tier Role-Based Access Control (RBAC) architecture, view-only module protections, staff profile management, and server-side authorization enforcement across the administration suite.

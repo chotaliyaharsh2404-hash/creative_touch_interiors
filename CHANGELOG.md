@@ -9,6 +9,86 @@ The project follows [Semantic Versioning](https://semver.org/):
 
 ---
 
+## [v2.2.2] — Project Category Badge UI Polish
+
+Patch release refining the visual styling of project category badges across project cards to seamlessly align with Creative Touch Interiors' light glassmorphic architectural aesthetic.
+
+### UI Polish & Styling
+- **Light Glassmorphic Badges**: Replaced heavy dark/black category badges with a premium light translucent glassmorphism pill badge across all project cards (`.spatial-project-badge-tag`).
+- **Surface & Elevation**: Styled with `rgba(255, 255, 255, 0.88)` backdrop, `1px solid rgba(0, 87, 255, 0.20)` border, `10px` backdrop blur, fully rounded pill radius (`999px`), and a subtle architectural shadow (`0 4px 12px rgba(0, 30, 90, 0.08)`).
+- **Brand Typography**: Updated badge label color to primary brand `#0057FF` with bold weight (`700`) and refined tracking (`0.06em`).
+- **Interactive Micro-Hover**: Added smooth transition state illuminating to `rgba(255, 255, 255, 0.96)` with heightened border accent and soft glow on card interaction.
+- **Image Compatibility**: Guaranteed crystal-clear text readability over both dark and high-key architectural photography without requiring large opaque blocks.
+
+### Compatibility & Regressions
+- **Universal Category Support**: Seamlessly rendered across all project categories (`RESIDENTIAL`, `COMMERCIAL`, `OFFICE`, `RETAIL`).
+- **Zero Layout Shifts**: Preserved card dimensions, grid layouts, card spacing, project images, titles, descriptions, and CTA buttons.
+- **Responsive Integrity**: Tested and verified on desktop, tablet, and mobile viewports with no text clipping or horizontal overflow.
+- **Architectural Stability**: No changes to database schema, RBAC, header/navigation, footer, or announcement systems.
+
+---
+
+## [v2.2.1] — Announcement Bell Interaction Fix
+
+Patch release fixing an issue where clicking the announcement bell button in the public website header did not open the glassmorphism dropdown.
+
+### Fixed
+- **Announcement Bell Click Interaction**: Fixed the public announcement bell button not responding to clicks.
+- **Dropdown Open/Close Toggle**: Fixed announcement dropdown opening on bell click and smoothly toggling closed on second click.
+- **Outside-Click & Keyboard ESC Closing**: Added robust document click and ESC key handlers to close the dropdown and restore trigger button focus.
+- **Interaction Reliability**: Resolved CSS overflow clipping on `.spatial-nav-container`, added DOM ready safety checks, and ensured click events inside dropdown items don't prematurely close menus while preserving link navigation.
+- **Data & Pages Preserved**: Preserved existing announcement database records, active seed announcements, and public announcements catalog and detail views.
+
+### UI & Accessibility
+- **No Visual Redesign**: Existing #0057FF / #F8F7F4 glassmorphism design preserved.
+- **ARIA & Keyboard Accessibility**: Added `aria-controls="spatialAnnouncementDropdown"`, dynamic `aria-expanded="false|true"`, and visible `:focus-visible` styling.
+- **Responsive Layout**: Refined dropdown alignment and `max-width` on mobile/tablet viewports.
+
+### Security
+- **RBAC**: Existing RBAC remains unchanged (Super Admin and Admin manage; Receptionist view only).
+- **CSRF**: Existing CSRF protection remains unchanged.
+- **Announcement Security**: Server-side validation, safe CTA sanitization, and prepared queries remain unchanged.
+
+> **Note**: Announcements are public and do not require visitor login. Read/unread tracking is intentionally not implemented.
+
+---
+
+## [v2.2.0] — Public Announcement & Promotion System
+
+Current release introducing a complete Public Announcement & Promotion System natively integrated into the Creative Touch Interiors platform, enabling high-impact visitor communication, promotional offer broadcasting, glassmorphic header interactions, and privacy-preserving anonymous view analytics.
+
+### Added
+- **Public Announcement System**: Broadcast seasonal promotions, new architectural services, festival discounts, and studio notices directly to visitors without login requirements.
+- **Promotional Offers**: Flexible campaign management with discount notices, validity timeframes, and dedicated call-to-action buttons.
+- **Header Announcement Interface (`includes/header.php`)**: Subtle glassmorphism bell icon in header with animated notification dot and drop-down menu showcasing recent broadcasts.
+- **Public Announcement Bar (`includes/header.php`)**: Top glassmorphic announcement banner highlighting top urgent or active promotions with dismiss memory.
+- **Public Announcements Page (`announcements.php`)**: Responsive catalog of studio announcements featuring filter pills (All, Promotions, Updates, Notices), live search, cover image displays, and validity badges.
+- **Announcement Details Page (`announcement.php`)**: Dedicated detail view presenting full broadcast copy, validity notices, cover artwork, anonymous share capability, and direct quote consultation CTA.
+- **Anonymous View Analytics**: Privacy-first aggregate metrics tracking total impressions and approximate unique visitors via salted SHA-256 telemetry without capturing PII.
+- **Optional Announcement Images**: Secure file upload support for custom promotional graphic banners (.jpg, .jpeg, .png, .webp).
+- **Admin Announcement Management (`admin/announcements.php`)**: Executive administrative CRUD workspace featuring real-time telemetry metrics, filter tabs, create/edit modals, and one-click publish/archive controls.
+- **Announcement Preview (`admin/announcement_preview.php`)**: Live architectural preview modal and full-page preview HUD with `[ Back to Edit ]` and `[ Publish Announcement ]` controls.
+- **Publish / Update / Archive Workflow**: Complete lifecycle progression from Draft &rarr; Preview &rarr; Published &rarr; Archived &rarr; Deleted.
+- **What's New Section (`admin/settings.php`)**: Professional application release overview documenting features, architectural improvements, security parameters, and lineage.
+
+### Improved
+- **Visitor Communication**: Direct, friction-free discovery of current interior packages and studio offerings.
+- **Promotion Visibility**: Multi-touchpoint placement across top notification bar, header bell dropdown, public index, dedicated catalog, and footer.
+- **Public Website Engagement**: Clean glassmorphic styling perfectly aligned with the `#0057FF` primary palette, `#F8F7F4` surfaces, and blur mesh aesthetics.
+- **Navigation Discoverability**: Added announcements route to mobile drawer and site footer.
+
+### Security
+- **RBAC Protection**: Administrative announcement management strictly restricted to `super_admin` and `admin` roles; `receptionist` restricted to public viewing only.
+- **CSRF Protection**: All mutations (create, edit, publish, archive, delete) guarded by session-bound CSRF tokens.
+- **Server-Side Validation**: Rigorous validation on title, message, dates, priorities, and status values.
+- **Safe CTA Sanitization**: Strict blocking of `javascript:`, `data:`, and malicious pseudo-protocols on CTA destination URLs.
+- **Secure Image Uploads**: Multi-tier verification enforcing true MIME detection via `finfo_file()`, image binary verification via `getimagesize()`, 5 MB file size limit, and execution-disabled directory rules.
+- **Prepared Database Queries**: 100% prepared SQL statements preventing SQL injection attacks.
+
+> **Note**: Announcements are public and do not require visitor login. Read/unread tracking is intentionally not implemented.
+
+---
+
 ## [v2.1.0] — Admin Profile & Avatar System
 
 Current stable release introducing a personal administrative profile picture and avatar management system, unified executive header, interactive profile dropdown, and multi-tier upload security.

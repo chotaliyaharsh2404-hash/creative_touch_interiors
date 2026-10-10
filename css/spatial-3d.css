@@ -706,7 +706,7 @@ body.cursor-view .spatial-cursor-ring::after {
     pointer-events: auto;
     transition: all 0.4s var(--ease-liquid);
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .spatial-nav.scrolled .spatial-nav-container {
@@ -1272,15 +1272,25 @@ body.cursor-view .spatial-cursor-ring::after {
     left: 1rem;
     z-index: 2;
     padding: 0.35rem 0.85rem;
-    background: rgba(7, 8, 10, 0.8);
-    backdrop-filter: blur(8px);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-full);
-    color: var(--color-bronze-light);
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 87, 255, 0.20);
+    border-radius: 999px;
+    color: #0057FF;
     font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.12em;
+    box-shadow: 0 4px 12px rgba(0, 30, 90, 0.08);
+    transition: all 0.25s var(--ease-out-expo);
+}
+
+.spatial-project-card:hover .spatial-project-badge-tag,
+.spatial-project-badge-tag:hover {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(0, 87, 255, 0.35);
+    box-shadow: 0 6px 16px rgba(0, 87, 255, 0.14);
 }
 
 .spatial-project-body {
@@ -2772,5 +2782,385 @@ textarea:focus {
     }
 }
 
+/* ==========================================================================
+   Public Announcement & Promotion System (v2.2.0)
+   ========================================================================== */
+.cti-announcement-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1002;
+    background: rgba(248, 247, 244, 0.92);
+    backdrop-filter: blur(24px) saturate(190%);
+    -webkit-backdrop-filter: blur(24px) saturate(190%);
+    border-bottom: 1px solid rgba(0, 87, 255, 0.14);
+    box-shadow: 0 4px 20px rgba(0, 50, 160, 0.05);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
 
+body.has-announcement-bar .spatial-nav {
+    top: 3.65rem;
+}
 
+body.ann-dismissed .cti-announcement-bar {
+    transform: translateY(-100%);
+    pointer-events: none;
+    opacity: 0;
+}
+
+body.ann-dismissed .spatial-nav {
+    top: 1.5rem !important;
+}
+
+.cti-announcement-bar-inner {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 0.42rem 2.5rem 0.42rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    font-size: 0.85rem;
+    color: #1e293b;
+}
+
+.cti-announcement-bar-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+}
+
+.cti-ann-badge {
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.15rem 0.55rem;
+    border-radius: 9999px;
+    background: rgba(0, 87, 255, 0.1);
+    color: #0057FF;
+    border: 1px solid rgba(0, 87, 255, 0.2);
+}
+
+.cti-ann-badge.promotion {
+    background: rgba(234, 88, 12, 0.12);
+    color: #ea580c;
+    border-color: rgba(234, 88, 12, 0.25);
+}
+
+.cti-ann-badge.notice {
+    background: rgba(217, 119, 6, 0.12);
+    color: #b45309;
+    border-color: rgba(217, 119, 6, 0.25);
+}
+
+.cti-ann-badge.update {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+    border-color: rgba(16, 185, 129, 0.25);
+}
+
+.cti-ann-badge.urgent {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.25);
+}
+
+.cti-ann-title {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.cti-ann-validity {
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.cti-ann-cta {
+    color: #0057FF;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.65rem;
+    border-radius: 9999px;
+    background: rgba(0, 87, 255, 0.08);
+    transition: all 0.2s ease;
+}
+
+.cti-ann-cta:hover {
+    background: #0057FF;
+    color: #ffffff;
+    transform: translateX(2px);
+}
+
+.cti-ann-close {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.3rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.cti-ann-close:hover {
+    color: #0f172a;
+    background: rgba(0, 0, 0, 0.06);
+}
+
+/* Header Announcement Icon & Glass Dropdown */
+.spatial-announcement-wrapper {
+    position: relative;
+}
+
+.spatial-announcement-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(0, 87, 255, 0.18);
+    color: #0057FF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 87, 255, 0.08);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.spatial-announcement-btn:hover {
+    background: #0057FF;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 87, 255, 0.28);
+}
+
+.spatial-announcement-btn:focus-visible {
+    outline: 2px solid #0057FF;
+    outline-offset: 2px;
+}
+
+.spatial-announcement-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ef4444;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+    animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+    0% { transform: scale(0.95); opacity: 0.85; }
+    50% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.85; }
+}
+
+.spatial-announcement-dropdown {
+    position: absolute;
+    top: calc(100% + 14px);
+    right: 0;
+    width: 340px;
+    max-width: calc(100vw - 2rem);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(28px) saturate(200%);
+    -webkit-backdrop-filter: blur(28px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.95);
+    border-radius: 18px;
+    box-shadow: 0 20px 48px rgba(0, 30, 90, 0.16), 0 0 1px rgba(0, 87, 255, 0.3);
+    z-index: 1005;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px) scale(0.97);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.spatial-announcement-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.spatial-ann-dd-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    background: rgba(248, 247, 244, 0.6);
+}
+
+.spatial-ann-dd-title {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.spatial-ann-dd-count {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #0057FF;
+    background: rgba(0, 87, 255, 0.08);
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+}
+
+.spatial-ann-dd-list {
+    max-height: 330px;
+    overflow-y: auto;
+    padding: 0.4rem 0;
+}
+
+.spatial-ann-dd-item {
+    display: block;
+    padding: 0.85rem 1.25rem;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+    transition: background 0.18s ease;
+}
+
+.spatial-ann-dd-item:last-child {
+    border-bottom: none;
+}
+
+.spatial-ann-dd-item:hover {
+    background: rgba(0, 87, 255, 0.04);
+}
+
+.spatial-ann-dd-item-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.35rem;
+}
+
+.spatial-ann-tag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+    background: rgba(0, 87, 255, 0.1);
+    color: #0057FF;
+}
+
+.spatial-ann-tag.promotion {
+    background: rgba(234, 88, 12, 0.12);
+    color: #ea580c;
+}
+
+.spatial-ann-tag.notice {
+    background: rgba(217, 119, 6, 0.12);
+    color: #b45309;
+}
+
+.spatial-ann-tag.update {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+}
+
+.spatial-ann-tag.urgent {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+}
+
+.spatial-ann-date {
+    font-size: 0.72rem;
+    color: #94a3b8;
+}
+
+.spatial-ann-dd-item-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.3;
+    margin-bottom: 0.25rem;
+}
+
+.spatial-ann-dd-item-excerpt {
+    font-size: 0.78rem;
+    color: #64748b;
+    line-height: 1.4;
+    margin-bottom: 0.35rem;
+}
+
+.spatial-ann-view-link {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #0057FF;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.spatial-ann-dd-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.85rem 1.25rem;
+    background: #F8F7F4;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    color: #0057FF;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.spatial-ann-dd-footer:hover {
+    background: rgba(0, 87, 255, 0.08);
+}
+
+.spatial-ann-empty {
+    padding: 1.5rem;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+    .spatial-announcement-dropdown {
+        width: min(320px, calc(100vw - 2rem));
+        right: -40px;
+    }
+    .cti-announcement-bar-inner {
+        padding: 0.35rem 2rem 0.35rem 1rem;
+        font-size: 0.78rem;
+    }
+    .cti-ann-validity {
+        display: none;
+    }
+    body.has-announcement-bar .spatial-nav {
+        top: 3.2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .spatial-announcement-dropdown {
+        right: -75px;
+        width: min(300px, calc(100vw - 1.5rem));
+    }
+}

@@ -4,7 +4,7 @@
  * Displays subtle application version indicator in compliance with CTI Design System.
  */
 if (!defined('APP_VERSION')) {
-    define('APP_VERSION', '2.1.0');
+    define('APP_VERSION', '2.2.2');
 }
 ?>
 <footer class="admin-footer" style="margin-top: 3.5rem; padding-top: 1.5rem; padding-bottom: 1.5rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; font-size: 0.78rem; color: #64748b;">

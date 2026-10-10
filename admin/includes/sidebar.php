@@ -189,6 +189,13 @@ $current_role = getAdminRole();
                 <span>Testimonials</span>
             </a>
         </li>
+        <!-- 10. Announcements & Promotions (Super Admin & Admin ONLY — Hidden from Receptionist) -->
+        <li>
+            <a href="announcements.php" class="<?php echo ($current_page == 'announcements' || $current_page == 'announcement_preview') ? 'active' : ''; ?>" style="display: flex; align-items: center; gap: 0.75rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                <span>Announcements</span>
+            </a>
+        </li>
         <?php endif; ?>
 
         <!-- 10. Profile (All 3 Roles) -->

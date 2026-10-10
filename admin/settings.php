@@ -165,8 +165,122 @@ $page_title = 'Website Content & Configuration — Executive Suite';
 
                     <div style="background: #F8F7F4; padding: 1.25rem 1.5rem; border-radius: 12px; border: 1px solid #e2e8f0;">
                         <div style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; font-weight: 700;">Release</div>
-                        <div style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin-top: 0.35rem;">Admin Profile &amp; Avatar System</div>
-                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Multi-tier Security &amp; Custom Avatars</div>
+                        <div style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin-top: 0.35rem;">Project Category Badge UI Polish</div>
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.2rem;">Light Glassmorphic Badges on Project Cards</div>
+                    </div>
+                </div>
+
+                <!-- Professional What's New Section (v2.2.2 Current Release) -->
+                <div style="margin-top: 2rem; border-top: 1px solid #e2e8f0; padding-top: 1.5rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+                        <h3 style="font-family: var(--font-heading); font-size: 1.15rem; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #0057FF;"></span>
+                            <span>What's New in v2.2.2 &bull; Project Category Badge UI Polish</span>
+                        </h3>
+                        <span style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; background: rgba(0, 87, 255, 0.1); color: #0057FF; padding: 0.25rem 0.75rem; border-radius: 9999px;">
+                            Current Release
+                        </span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+                        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem;">
+                            <div style="font-weight: 800; font-size: 0.8rem; text-transform: uppercase; color: #0057FF; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>UI POLISH</span>
+                            </div>
+                            <ul style="margin: 0; padding-left: 1.1rem; font-size: 0.825rem; color: #334155; line-height: 1.65;">
+                                <li>Replaced dark/black project badge styling with light glassmorphism pills</li>
+                                <li>Applied translucent white/blue surface with subtle 1px border (rgba(0, 87, 255, 0.20))</li>
+                                <li>Enhanced typography with brand #0057FF color and 700 font weight</li>
+                                <li>Integrated 10px backdrop blur with refined micro-shadow</li>
+                                <li>Interactive hover state with subtle illumination transition</li>
+                            </ul>
+                        </div>
+
+                        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem;">
+                            <div style="font-weight: 800; font-size: 0.8rem; text-transform: uppercase; color: #059669; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20V10"></path><path d="M18 20V4"></path><path d="M6 20v-4"></path></svg>
+                                <span>COMPATIBILITY</span>
+                            </div>
+                            <ul style="margin: 0; padding-left: 1.1rem; font-size: 0.825rem; color: #334155; line-height: 1.65;">
+                                <li>High contrast and readability over both bright and dark imagery</li>
+                                <li>Consistent across all categories: Residential, Commercial, Office, Retail</li>
+                                <li>Zero layout shift; dimensions, grid, and card spacing strictly preserved</li>
+                                <li>Fully responsive on desktop, tablet, and mobile displays</li>
+                                <li>No text clipping or horizontal overflow</li>
+                            </ul>
+                        </div>
+
+                        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem;">
+                            <div style="font-weight: 800; font-size: 0.8rem; text-transform: uppercase; color: #7c3aed; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                <span>STABILITY &amp; INTEGRITY</span>
+                            </div>
+                            <ul style="margin: 0; padding-left: 1.1rem; font-size: 0.825rem; color: #334155; line-height: 1.65;">
+                                <li>No changes to project database records or schema</li>
+                                <li>No modifications to unrelated components, header, or footer</li>
+                                <li>Preserved v2.2.0 announcement system &amp; v2.2.1 bell fixes</li>
+                                <li>Zero regression across admin management suite and RBAC</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preserved Version 2.2.0 Milestone Overview -->
+                <div style="margin-top: 1.5rem; background: #F8F7F4; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem 1.5rem;">
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">
+                        v2.2.0 Feature Milestone: Public Announcement &amp; Promotion System
+                    </div>
+                    <div style="font-size: 0.8rem; color: #475569; line-height: 1.6;">
+                        Introduced public broadcasts, glassmorphic top announcement banner with dismiss memory, header announcement bell dropdown, public catalog (announcements.php), announcement details (announcement.php), anonymous aggregate telemetry, and admin management suite.
+                    </div>
+                </div>
+
+                <!-- Preserved Version History -->
+                <div style="margin-top: 2rem; border-top: 1px solid #e2e8f0; padding-top: 1.5rem;">
+                    <h3 style="font-family: var(--font-heading); font-size: 1.05rem; color: #0f172a; margin: 0 0 1rem;">
+                        Version History &amp; Release Lineage
+                    </h3>
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div style="padding: 0.85rem 1.25rem; background: #ffffff; border: 1px solid #0057FF; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                            <div>
+                                <span style="font-family: monospace; font-weight: 800; color: #0057FF; font-size: 0.95rem;">v2.2.2</span>
+                                <strong style="margin-left: 0.75rem; color: #0f172a; font-size: 0.9rem;">Project Category Badge UI Polish</strong>
+                            </div>
+                            <span style="background: #0057FF; color: #ffffff; font-size: 0.7rem; font-weight: 800; padding: 0.2rem 0.6rem; border-radius: 9999px;">CURRENT RELEASE</span>
+                        </div>
+
+                        <div style="padding: 0.85rem 1.25rem; background: #F8F7F4; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                            <div>
+                                <span style="font-family: monospace; font-weight: 700; color: #475569; font-size: 0.95rem;">v2.2.1</span>
+                                <strong style="margin-left: 0.75rem; color: #334155; font-size: 0.9rem;">Announcement Bell Interaction Fix</strong>
+                            </div>
+                            <span style="color: #64748b; font-size: 0.75rem; font-weight: 600;">Previous Patch Release</span>
+                        </div>
+
+                        <div style="padding: 0.85rem 1.25rem; background: #F8F7F4; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                            <div>
+                                <span style="font-family: monospace; font-weight: 700; color: #475569; font-size: 0.95rem;">v2.2.0</span>
+                                <strong style="margin-left: 0.75rem; color: #334155; font-size: 0.9rem;">Public Announcement &amp; Promotion System</strong>
+                            </div>
+                            <span style="color: #64748b; font-size: 0.75rem; font-weight: 600;">Previous Minor Release</span>
+                        </div>
+
+                        <div style="padding: 0.85rem 1.25rem; background: #F8F7F4; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                            <div>
+                                <span style="font-family: monospace; font-weight: 700; color: #475569; font-size: 0.95rem;">v2.1.0</span>
+                                <strong style="margin-left: 0.75rem; color: #334155; font-size: 0.9rem;">Admin Profile &amp; Avatar System</strong>
+                            </div>
+                            <span style="color: #64748b; font-size: 0.75rem; font-weight: 600;">Previous Release</span>
+                        </div>
+
+                        <div style="padding: 0.85rem 1.25rem; background: #F8F7F4; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                            <div>
+                                <span style="font-family: monospace; font-weight: 700; color: #475569; font-size: 0.95rem;">v2.0.0</span>
+                                <strong style="margin-left: 0.75rem; color: #334155; font-size: 0.9rem;">Role-Based Access Control</strong>
+                            </div>
+                            <span style="color: #64748b; font-size: 0.75rem; font-weight: 600;">Major Architecture</span>
+                        </div>
                     </div>
                 </div>
             </div>

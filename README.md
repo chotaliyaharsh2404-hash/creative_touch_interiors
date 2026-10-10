@@ -6,12 +6,35 @@ An enterprise-grade interior design, architectural management, and spatial visua
 
 ## 🚀 Version & Release History
 
-- **Current Stable Version**: **v2.1.0** — *Admin Profile & Avatar System*
-- **Previous Release**: **v2.0.0** — *Enterprise Role-Based Access Control (RBAC)*
+- **Current Stable Version**: **v2.2.2** — *Project Category Badge UI Polish*
+- **Previous Patch Release**: **v2.2.1** — *Announcement Bell Interaction Fix*
+- **Previous Minor Release**: **v2.2.0** — *Public Announcement & Promotion System*
 - **Changelog**: See [CHANGELOG.md](CHANGELOG.md) for full historical changes.
 - **Release Notes**: See [docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md) for version release summaries and Semantic Versioning rules.
 
-### 🌟 Latest in Version 2.1.0 (Admin Profile & Avatar System)
+### 🎨 Latest in Version 2.2.2 (Project Category Badge UI Polish)
+1. **Light Glassmorphic Badges**: Replaced heavy dark/black category badges on project cards with sleek, light translucent glassmorphism pills (`rgba(255, 255, 255, 0.88)` / `rgba(0, 87, 255, 0.08)` backdrop, `10px` blur, `999px` radius).
+2. **Brand Typography & Color**: Rendered category tags in signature `#0057FF` with bold weight (`700`) and refined architectural tracking.
+3. **Elevated Visibility**: Engineered for high contrast and readability over both bright and dark architectural project photography.
+4. **Universal Across Categories**: Uniformly applied to `RESIDENTIAL`, `COMMERCIAL`, `OFFICE`, and `RETAIL` projects.
+5. **Zero Layout Shifts**: Preserved existing card dimensions, grid structure, images, buttons, and website navigation.
+
+### 🔧 Previous in Version 2.2.1 (Announcement Bell Interaction Fix)
+1. **Public Announcement Bell Interaction**: Resolved the bell click issue by eliminating CSS overflow clipping on `.spatial-nav-container` and enhancing click event lifecycle handling.
+2. **Smooth Open/Close Dropdown**: Bell click smoothly opens and closes the glassmorphic dropdown without page reloading.
+3. **Outside-Click & ESC Dismissal**: Clicking outside the dropdown or pressing Escape smoothly closes the dropdown and returns focus to the bell button.
+4. **Enhanced ARIA Accessibility**: Added `aria-controls="spatialAnnouncementDropdown"`, dynamic `aria-expanded`, and visible keyboard focus styling.
+5. **Full Backward Compatibility**: All v2.2.0 features, database records, and public announcement catalog views remain fully intact.
+
+### 📢 Milestone in Version 2.2.0 (Public Announcement & Promotion System)
+1. **Public Announcement System**: Broadcast promotional discounts (e.g. 10% OFF), festival offers, new services, and notices to all visitors without login.
+2. **Subtle Glassmorphic Announcement Bar**: Top banner highlighting urgent promotions with validity and dismiss memory.
+3. **Header Announcement Interface**: Dedicated bell icon with animated active notification dot and interactive glass dropdown.
+4. **Public Announcements Hub (`announcements.php`) & Details (`announcement.php`)**: Fully responsive catalog with category filtering (Promotions, Updates, Notices), live search, cover artwork, and direct quote CTA.
+5. **Anonymous View Analytics**: Privacy-first aggregate telemetry tracking total views and approximate unique visitors via salted SHA-256 hashing without capturing PII.
+6. **Executive Admin Management (`admin/announcements.php`)**: Full CRUD workspace, filter tabs, live preview HUD (`admin/announcement_preview.php`), and one-click publish/archive lifecycle controls.
+
+### 🌟 Foundation in Version 2.1.0 (Admin Profile & Avatar System)
 1. **Self-Service Avatar Management**: Admin profile picture upload, replacement, and removal with multi-tier MIME/image security.
 2. **Dynamic Fallback Badges**: Automatic name initials avatar (e.g., `H` for Harsh) on `#0057FF` surface when no photo is uploaded.
 3. **Unified Executive SaaS Header**: Global top header with brand identity, interactive unread notification bell `[🔔]`, role badge, and profile dropdown menu.

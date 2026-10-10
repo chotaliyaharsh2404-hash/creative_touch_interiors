@@ -44,6 +44,7 @@
                         <li><a href="projects.php" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#0057FF';" onmouseout="this.style.color='#94a3b8';">Signature Portfolio</a></li>
                         <li><a href="gallery.php" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#0057FF';" onmouseout="this.style.color='#94a3b8';">Design Lookbook</a></li>
                         <li><a href="blog.php" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#0057FF';" onmouseout="this.style.color='#94a3b8';">Editorial Magazine</a></li>
+                        <li><a href="announcements.php" style="color: #94a3b8; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#0057FF';" onmouseout="this.style.color='#94a3b8';">Announcements &amp; Offers</a></li>
                     </ul>
                 </div>
 

@@ -1,5 +1,10 @@
 <?php
 $current_page = basename($_SERVER['PHP_SELF']);
+
+// Public Announcements Telemetry (v2.2.0)
+$announcement_bar_item = isset($conn) ? getAnnouncementBarItem($conn) : null;
+$header_latest_announcements = isset($conn) ? getActiveAnnouncements($conn, 4) : [];
+$header_active_ann_count = count($header_latest_announcements);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -24,13 +29,38 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <script src="js/vendor/gsap.min.js"></script>
     <script src="js/vendor/ScrollTrigger.min.js"></script>
 </head>
-<body>
+<body class="<?php echo $announcement_bar_item ? 'has-announcement-bar' : ''; ?>">
     <!-- Liquid Glass Ambient Atmospheric Mesh -->
     <div class="liquid-bg-mesh" aria-hidden="true">
         <div class="liquid-orb liquid-orb-1"></div>
         <div class="liquid-orb liquid-orb-2"></div>
         <div class="liquid-orb liquid-orb-3"></div>
     </div>
+
+    <?php if ($announcement_bar_item): ?>
+    <!-- Subtle Glassmorphic Public Announcement Bar (v2.2.0) -->
+    <aside class="cti-announcement-bar" id="ctiAnnouncementBar" role="region" aria-label="Public Announcement">
+        <div class="cti-announcement-bar-inner">
+            <div class="cti-announcement-bar-content">
+                <span class="cti-ann-badge <?php echo htmlspecialchars($announcement_bar_item['type']); ?>">
+                    <?php echo strtoupper(htmlspecialchars($announcement_bar_item['type'])); ?>
+                </span>
+                <span class="cti-ann-title">
+                    <?php echo htmlspecialchars($announcement_bar_item['title']); ?>
+                </span>
+                <?php if (!empty($announcement_bar_item['expires_at'])): ?>
+                    <span class="cti-ann-validity">
+                        Valid until <?php echo date('d F Y', strtotime($announcement_bar_item['expires_at'])); ?>
+                    </span>
+                <?php endif; ?>
+                <a href="announcement.php?id=<?php echo (int)$announcement_bar_item['id']; ?>" class="cti-ann-cta">
+                    View Details &rarr;
+                </a>
+            </div>
+            <button type="button" class="cti-ann-close" id="ctiDismissAnnBar" aria-label="Dismiss Announcement">&times;</button>
+        </div>
+    </aside>
+    <?php endif; ?>
 
     <!-- Floating Glass Spatial Navigation -->
     <nav class="spatial-nav" role="navigation" aria-label="Main Navigation">
@@ -60,6 +90,49 @@ $current_page = basename($_SERVER['PHP_SELF']);
 
             <!-- Navigation CTA & Auth -->
             <div class="spatial-nav-cta">
+                <!-- Header Announcement Bell Icon Dropdown -->
+                <div class="spatial-announcement-wrapper" id="spatialAnnouncementWrapper">
+                    <button type="button" class="spatial-announcement-btn" id="spatialAnnouncementBtn" aria-label="Latest Announcements and Special Offers" aria-expanded="false" aria-controls="spatialAnnouncementDropdown" title="Announcements &amp; Offers">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <?php if ($header_active_ann_count > 0): ?>
+                            <span class="spatial-announcement-dot" title="<?php echo $header_active_ann_count; ?> Active Announcements"></span>
+                        <?php endif; ?>
+                    </button>
+                    <!-- Glassmorphism Dropdown -->
+                    <div class="spatial-announcement-dropdown" id="spatialAnnouncementDropdown" role="menu">
+                        <div class="spatial-ann-dd-header">
+                            <span class="spatial-ann-dd-title">Latest Announcements</span>
+                            <span class="spatial-ann-dd-count"><?php echo $header_active_ann_count; ?> Active</span>
+                        </div>
+                        <div class="spatial-ann-dd-list">
+                            <?php if (!empty($header_latest_announcements)): ?>
+                                <?php foreach ($header_latest_announcements as $ann): ?>
+                                    <a href="announcement.php?id=<?php echo (int)$ann['id']; ?>" class="spatial-ann-dd-item">
+                                        <div class="spatial-ann-dd-item-top">
+                                            <span class="spatial-ann-tag <?php echo htmlspecialchars($ann['type']); ?>"><?php echo ucfirst(htmlspecialchars($ann['type'])); ?></span>
+                                            <?php if (!empty($ann['expires_at'])): ?>
+                                                <span class="spatial-ann-date">Valid until <?php echo date('d M', strtotime($ann['expires_at'])); ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="spatial-ann-dd-item-title"><?php echo htmlspecialchars($ann['title']); ?></div>
+                                        <div class="spatial-ann-dd-item-excerpt"><?php echo htmlspecialchars(mb_strimwidth(strip_tags($ann['message']), 0, 75, '...')); ?></div>
+                                        <span class="spatial-ann-view-link">View &rarr;</span>
+                                    </a>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <div class="spatial-ann-empty">No new announcements</div>
+                            <?php endif; ?>
+                        </div>
+                        <a href="announcements.php" class="spatial-ann-dd-footer">
+                            <span>View All Announcements</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </a>
+                    </div>
+                </div>
+
                 <a href="consultation.php" class="btn-spatial-bronze">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
@@ -133,6 +206,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <li class="spatial-mobile-nav-item"><a href="gallery.php"><span>Gallery</span> <span>&rarr;</span></a></li>
             <li class="spatial-mobile-nav-item"><a href="blog.php"><span>Blog</span> <span>&rarr;</span></a></li>
             <li class="spatial-mobile-nav-item"><a href="contact.php"><span>Contact</span> <span>&rarr;</span></a></li>
+            <li class="spatial-mobile-nav-item"><a href="announcements.php" style="color: #0057FF; font-weight: 700;"><span>Announcements &amp; Offers</span> <span>&rarr;</span></a></li>
         </ul>
 
         <div style="display: flex; flex-direction: column; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--glass-border);">
@@ -147,3 +221,76 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <?php endif; ?>
         </div>
     </div>
+
+    <!-- Public Announcement Dynamic Interactions Script -->
+    <script>
+    (function() {
+        function initAnnouncements() {
+            // Announcement Bar Dismissal Memory
+            const annBar = document.getElementById('ctiAnnouncementBar');
+            const dismissBtn = document.getElementById('ctiDismissAnnBar');
+            if (annBar && dismissBtn) {
+                const barId = '<?php echo $announcement_bar_item ? (int)$announcement_bar_item['id'] : 0; ?>';
+                if (sessionStorage.getItem('cti_dismissed_ann_' + barId) === '1') {
+                    document.body.classList.add('ann-dismissed');
+                }
+                dismissBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.body.classList.add('ann-dismissed');
+                    sessionStorage.setItem('cti_dismissed_ann_' + barId, '1');
+                });
+            }
+
+            // Header Bell Dropdown Toggle
+            const annBtn = document.getElementById('spatialAnnouncementBtn');
+            const annDropdown = document.getElementById('spatialAnnouncementDropdown');
+            if (annBtn && annDropdown) {
+                annBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const isOpen = annDropdown.classList.contains('show');
+                    if (isOpen) {
+                        annDropdown.classList.remove('show');
+                        annBtn.setAttribute('aria-expanded', 'false');
+                    } else {
+                        annDropdown.classList.add('show');
+                        annBtn.setAttribute('aria-expanded', 'true');
+                    }
+                });
+
+                // Prevent click on dropdown interior from closing it unless clicking an actual navigation link
+                annDropdown.addEventListener('click', function(e) {
+                    const link = e.target.closest('a');
+                    if (!link) {
+                        e.stopPropagation();
+                    }
+                });
+
+                // Outside click closes dropdown
+                document.addEventListener('click', function(e) {
+                    if (!annDropdown.contains(e.target) && !annBtn.contains(e.target)) {
+                        if (annDropdown.classList.contains('show')) {
+                            annDropdown.classList.remove('show');
+                            annBtn.setAttribute('aria-expanded', 'false');
+                        }
+                    }
+                });
+
+                // Escape key closes dropdown and restores focus to the trigger button
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && annDropdown.classList.contains('show')) {
+                        annDropdown.classList.remove('show');
+                        annBtn.setAttribute('aria-expanded', 'false');
+                        annBtn.focus();
+                    }
+                });
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAnnouncements);
+        } else {
+            initAnnouncements();
+        }
+    })();
+    </script>

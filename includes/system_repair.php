@@ -278,6 +278,109 @@ function runSystemRepairs($conn) {
         $log[] = "Added 'profile_image' column to 'admin_users' table.";
     }
 
+    // 10. Ensure announcements and announcement_views tables exist (v2.2.0)
+    $uploadAnnDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'announcements';
+    if (!is_dir($uploadAnnDir)) {
+        @mkdir($uploadAnnDir, 0755, true);
+        @file_put_contents($uploadAnnDir . DIRECTORY_SEPARATOR . '.htaccess', "php_flag engine off\nOptions -ExecCGI\nAddHandler cgi-script .php .phtml .php3 .php4 .php5 .php7 .php8 .phps\n");
+    }
+
+    $annCheck = $conn->query("SHOW TABLES LIKE 'announcements'");
+    if (!$annCheck || $annCheck->num_rows == 0) {
+        $sqlAnn = "CREATE TABLE IF NOT EXISTS `announcements` (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `title` VARCHAR(255) NOT NULL,
+            `message` TEXT NOT NULL,
+            `type` ENUM('promotion', 'announcement', 'update', 'notice', 'system') NOT NULL DEFAULT 'announcement',
+            `cover_image` VARCHAR(255) NULL DEFAULT NULL,
+            `priority` ENUM('normal', 'important', 'urgent') NOT NULL DEFAULT 'normal',
+            `cta_text` VARCHAR(100) NULL DEFAULT NULL,
+            `cta_url` VARCHAR(255) NULL DEFAULT NULL,
+            `start_at` DATETIME NULL DEFAULT NULL,
+            `expires_at` DATETIME NULL DEFAULT NULL,
+            `status` ENUM('draft', 'published', 'expired', 'archived') NOT NULL DEFAULT 'draft',
+            `views_count` INT(10) UNSIGNED NOT NULL DEFAULT 0,
+            `unique_views_count` INT(10) UNSIGNED NOT NULL DEFAULT 0,
+            `created_by` INT(11) NULL DEFAULT NULL,
+            `updated_by` INT(11) NULL DEFAULT NULL,
+            `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            `deleted_at` TIMESTAMP NULL DEFAULT NULL,
+            PRIMARY KEY (`id`),
+            KEY `idx_status_dates` (`status`, `start_at`, `expires_at`, `deleted_at`),
+            KEY `idx_priority` (`priority`),
+            KEY `idx_type` (`type`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+        $conn->query($sqlAnn);
+        $log[] = "Created 'announcements' table for Public Announcement & Promotion System (v2.2.0).";
+
+        // Seed default high-value announcements
+        $seedAnnouncements = [
+            [
+                'title' => '🎉 10% OFF Selected Interior Services',
+                'message' => 'Get 10% OFF on selected interior design services across bespoke residential and commercial fit-outs. Our team will tailor every space to perfection with curated finishes, sensory lighting, and turnkey precision.',
+                'type' => 'promotion',
+                'priority' => 'urgent',
+                'cta_text' => 'Get a Quote',
+                'cta_url' => 'consultation.php',
+                'start_at' => date('Y-m-d 00:00:00', strtotime('-5 days')),
+                'expires_at' => '2026-10-31 23:59:59',
+                'status' => 'published',
+                'views_count' => 1284,
+                'unique_views_count' => 936
+            ],
+            [
+                'title' => '📢 New Service Available: Modular Kitchen Design',
+                'message' => 'State-of-the-art modular kitchen design and installation is now officially available at Creative Touch Interiors. Experience ergonomic Italian hardware, waterproof marine ply joinery, and quartz island counters tailored for your lifestyle.',
+                'type' => 'update',
+                'priority' => 'important',
+                'cta_text' => 'Explore Services',
+                'cta_url' => 'services.php',
+                'start_at' => date('Y-m-d 00:00:00', strtotime('-3 days')),
+                'expires_at' => '2026-11-30 23:59:59',
+                'status' => 'published',
+                'views_count' => 852,
+                'unique_views_count' => 610
+            ],
+            [
+                'title' => '✨ Festival Styling & Turnkey Booking Notice',
+                'message' => 'Reserve your festive season design consultation early to guarantee pre-holiday handover slots. Complimentary 3D spatial render included with all full-home interior packages.',
+                'type' => 'notice',
+                'priority' => 'normal',
+                'cta_text' => 'Book Consultation',
+                'cta_url' => 'consultation.php',
+                'start_at' => date('Y-m-d 00:00:00', strtotime('-1 days')),
+                'expires_at' => '2026-11-15 18:00:00',
+                'status' => 'published',
+                'views_count' => 420,
+                'unique_views_count' => 315
+            ]
+        ];
+
+        foreach ($seedAnnouncements as $sa) {
+            $stmt = $conn->prepare("INSERT INTO announcements (title, message, type, priority, cta_text, cta_url, start_at, expires_at, status, views_count, unique_views_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssssssssii", $sa['title'], $sa['message'], $sa['type'], $sa['priority'], $sa['cta_text'], $sa['cta_url'], $sa['start_at'], $sa['expires_at'], $sa['status'], $sa['views_count'], $sa['unique_views_count']);
+            $stmt->execute();
+        }
+        $log[] = "Seeded verified introductory announcements into 'announcements' table.";
+    }
+
+    $viewsCheck = $conn->query("SHOW TABLES LIKE 'announcement_views'");
+    if (!$viewsCheck || $viewsCheck->num_rows == 0) {
+        $sqlViews = "CREATE TABLE IF NOT EXISTS `announcement_views` (
+            `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            `announcement_id` INT(11) NOT NULL,
+            `visitor_hash` CHAR(64) NOT NULL,
+            `viewed_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `uniq_ann_visitor` (`announcement_id`, `visitor_hash`),
+            KEY `idx_ann_viewed` (`announcement_id`, `viewed_at`),
+            CONSTRAINT `fk_ann_views` FOREIGN KEY (`announcement_id`) REFERENCES `announcements` (`id`) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+        $conn->query($sqlViews);
+        $log[] = "Created 'announcement_views' table for anonymous unique view telemetry.";
+    }
+
     return $log;
 }
 
