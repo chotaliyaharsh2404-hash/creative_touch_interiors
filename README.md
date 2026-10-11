@@ -6,7 +6,8 @@ An enterprise-grade interior design, architectural management, and spatial visua
 
 ## 🚀 Version & Release History
 
-- **Current Stable Version**: **v2.3.1** — *Quotation PDF Visual & Brand System Alignment*
+- **Current Stable Version**: **v2.4.0** — *Smart Typology-Based Capability Scope Selection*
+- **Previous Patch Release**: **v2.3.1** — *Quotation PDF Visual & Brand System Alignment*
 - **Previous Minor Release**: **v2.3.0** — *Smart Budget & Design Preferences*
 - **Previous Minor Release**: **v2.2.3** — *Room Dimension Calculator UX Polish*
 - **Previous Patch Release**: **v2.2.2** — *Project Category Badge UI Polish*
@@ -15,7 +16,18 @@ An enterprise-grade interior design, architectural management, and spatial visua
 - **Changelog**: See [CHANGELOG.md](CHANGELOG.md) for full historical changes.
 - **Release Notes**: See [docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md) for version release summaries and Semantic Versioning rules.
 
-### 📄 Latest in Version 2.3.1 (Quotation PDF Visual & Brand System Alignment)
+### 🎯 Latest in Version 2.4.0 (Smart Typology-Based Capability Scope Selection)
+1. **Typology-Based Capability Filtering**: Stage 05 strictly isolates compatible capabilities for the active Stage 02 typology (`Residential Estate`, `Commercial / Retail`, or `Executive Office`).
+2. **Explicit Zero-Default Selection**: Capabilities are no longer automatically checked on load; users explicitly choose the modules required.
+3. **Dynamic Typology Headings**: Stage 05 headings adapt in real time to the selected scope (`CAPABILITY SCOPE — RESIDENTIAL`, `CAPABILITY SCOPE — COMMERCIAL & RETAIL`, `CAPABILITY SCOPE — EXECUTIVE OFFICE`).
+4. **Live Live Selection Counter**: Real-time counter badge displaying `0 CAPABILITIES SELECTED`, `X CAPABILITIES SELECTED`.
+5. **Select All & Clear All Controls**: Quick actions scoped strictly to the visible and compatible capabilities of the current typology.
+6. **In-Typology Search**: Real-time search filter searching strictly inside the active typology capability set.
+7. **Typology Change Protection**: Safe handling when users navigate back to Stage 02 to change typologies, automatically clearing incompatible modules and alerting the user.
+8. **Server-Side Validation**: Authoritative `validateTypologyServices()` engine rejecting tampered or incompatible capability IDs upon submission.
+9. **Stage 06 Review Sync**: Review card itemizes chosen capability modules or indicates turnkey base scope.
+
+### 📄 Previous in Version 2.3.1 (Quotation PDF Visual & Brand System Alignment)
 1. **Brand System Alignment**: Full visual transformation of the client quotation PDF docket (`quote_pdf.php`) aligned with the `#0057FF` brand palette and `#F8F7F4` ivory backdrop.
 2. **Modern Card-Based Parameter Architecture**: Dual rounded cards for Client Details and Project Parameters with clean key-value rows and soft status pills.
 3. **Executive Summary with Grand Total Highlight**: Financial breakdown card with prominent `#0057FF` Grand Investment Total highlight banner.

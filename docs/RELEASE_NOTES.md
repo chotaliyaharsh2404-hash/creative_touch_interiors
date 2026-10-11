@@ -18,8 +18,27 @@ Creative Touch Interiors adheres to Semantic Versioning (`MAJOR.MINOR.PATCH`):
 
 ## Release History
 
-### [v2.3.1] — Quotation PDF Visual & Brand System Alignment
+### [v2.4.0] — Smart Typology-Based Capability Scope Selection
 **Status:** Current Stable Release
+
+#### Summary
+Upgrades Stage 05 (Capability Scope Selection) of the public Get a Quote flow (`consultation.php`). Filters capabilities strictly according to the customer's selected Stage 02 project typology (`Residential Estate`, `Commercial / Retail`, or `Executive Office`), establishes explicit opt-in selection (0 preselected by default), adds a live capability selection counter and scope summary, provides live in-typology search, and enforces authoritative server-side validation.
+
+#### Key Features & Improvements
+- **Typology-Based Capability Filtering**: Stage 05 strictly isolates compatible design and execution modules for Residential (IDs 8–15 + 27), Commercial/Retail (IDs 20–26 + 27), and Executive Office (IDs 16–19 + 27).
+- **Zero Preselection by Default**: Removed automatic pre-checking. Customers explicitly choose the capabilities their commission requires.
+- **Dynamic Typology Headings**: Stage 05 header dynamically responds to typology (`CAPABILITY SCOPE — RESIDENTIAL`, `CAPABILITY SCOPE — COMMERCIAL & RETAIL`, `CAPABILITY SCOPE — EXECUTIVE OFFICE`).
+- **Live Selection Counter & Bottom Scope Summary**: Real-time counter badge and interactive summary card (`YOUR CAPABILITY SCOPE`) displaying chosen modules.
+- **Filtered Select All & Clear All**: Actions target only visible and allowed capabilities for the active typology.
+- **In-Typology Search**: Live search input filters strictly within the active typology's capability set.
+- **Typology Switch Protection**: Changing typology in Stage 02 cleanly clears incompatible selections and informs the customer via an alert banner without losing compatible choices.
+- **Authoritative Server Validation**: `validateTypologyServices()` prevents unauthorized or incompatible capability IDs upon form submission.
+- **Review Synchronization**: Stage 06 Review card displays selected capability items or turnkey execution notes.
+
+---
+
+### [v2.3.1] — Quotation PDF Visual & Brand System Alignment
+**Status:** Previous Release
 
 #### Summary
 Delivers a comprehensive visual redesign of the quotation PDF docket (`quote_pdf.php`), bringing it into complete alignment with the Creative Touch Interiors website visual identity and design system (#0057FF primary brand palette, #F8F7F4 ivory document backdrop, modern rounded cards, clean typography, and print-ready aesthetics).

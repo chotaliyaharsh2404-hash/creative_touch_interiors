@@ -455,4 +455,176 @@ if (!defined('QUOTE_ENGINE_LOADED')) {
             return $badges[$status] ?? ['label' => ucfirst(str_replace('_', ' ', (string)$status)), 'color' => '#64748b', 'bg' => '#f8fafc', 'border' => '#e2e8f0', 'icon' => '📌'];
         }
     }
+
+    /**
+     * 12. SMART TYPOLOGY-BASED CAPABILITY SCOPE HELPERS (v2.4.0)
+     */
+    if (!function_exists('normalizeTypologyKey')) {
+        function normalizeTypologyKey($projectType) {
+            $t = strtolower(trim((string)$projectType));
+            if ($t === 'commercial' || stripos($t, 'commer') !== false || stripos($t, 'retail') !== false) {
+                return 'commercial';
+            } elseif ($t === 'office' || stripos($t, 'exec') !== false || stripos($t, 'office') !== false) {
+                return 'executive';
+            }
+            return 'residential';
+        }
+    }
+
+    if (!function_exists('getTypologyLabel')) {
+        function getTypologyLabel($projectType) {
+            $key = normalizeTypologyKey($projectType);
+            switch ($key) {
+                case 'commercial':
+                    return 'Commercial / Retail';
+                case 'executive':
+                    return 'Executive Office';
+                case 'residential':
+                default:
+                    return 'Residential Estate';
+            }
+        }
+    }
+
+    if (!function_exists('getAllowedServiceCategoriesForTypology')) {
+        function getAllowedServiceCategoriesForTypology($typologyKey) {
+            $key = normalizeTypologyKey($typologyKey);
+            switch ($key) {
+                case 'commercial':
+                    return ['Commercial', 'Retail', 'Design Service'];
+                case 'executive':
+                    return ['Office', 'Design Service'];
+                case 'residential':
+                default:
+                    return ['Residential', 'Design Service'];
+            }
+        }
+    }
+
+    if (!function_exists('getServiceTypologies')) {
+        function getServiceTypologies($category) {
+            switch ($category) {
+                case 'Residential':
+                    return ['residential'];
+                case 'Commercial':
+                case 'Retail':
+                    return ['commercial'];
+                case 'Office':
+                    return ['executive'];
+                case 'Design Service':
+                    return ['residential', 'commercial', 'executive'];
+                default:
+                    return ['residential', 'commercial', 'executive'];
+            }
+        }
+    }
+
+    if (!function_exists('getTypologyGroupForService')) {
+        function getTypologyGroupForService($serviceTitle, $category, $typologyKey = 'residential') {
+            $t = normalizeTypologyKey($typologyKey);
+            $cat = trim((string)$category);
+            $title = strtolower(trim((string)$serviceTitle));
+
+            if ($cat === 'Design Service' || stripos($title, '3d') !== false) {
+                return 'Architectural Visualization';
+            }
+
+            if ($t === 'commercial') {
+                if ($cat === 'Retail' || stripos($title, 'retail') !== false || stripos($title, 'boutique') !== false || stripos($title, 'showroom') !== false || stripos($title, 'store') !== false) {
+                    return 'Retail Environments';
+                }
+                return 'Commercial & Hospitality';
+            }
+
+            if ($t === 'executive') {
+                if (stripos($title, 'conference') !== false || stripos($title, 'reception') !== false || stripos($title, 'meeting') !== false) {
+                    return 'Meeting & Client Areas';
+                }
+                return 'Executive & Corporate Workspaces';
+            }
+
+            // Residential defaults
+            if (stripos($title, 'kitchen') !== false || stripos($title, 'bath') !== false) {
+                return 'Kitchen & Bath';
+            }
+            if (stripos($title, 'complete home') !== false || stripos($title, 'villa') !== false || stripos($title, 'apartment') !== false) {
+                return 'Residential Design & Estates';
+            }
+            return 'Room & Living Spaces';
+        }
+    }
+
+    if (!function_exists('validateTypologyServices')) {
+        function validateTypologyServices($conn, $selectedServiceIds, $projectType) {
+            if (empty($selectedServiceIds) || !is_array($selectedServiceIds)) {
+                return ['valid' => true, 'services' => [], 'valid_ids' => [], 'error' => null, 'errors' => []];
+            }
+
+            $typologyKey = normalizeTypologyKey($projectType);
+            $allowedCategories = getAllowedServiceCategoriesForTypology($typologyKey);
+            $typologyLabel = getTypologyLabel($projectType);
+
+            // Clean IDs
+            $cleanIds = [];
+            foreach ($selectedServiceIds as $id) {
+                $intId = (int)$id;
+                if ($intId > 0) {
+                    $cleanIds[] = $intId;
+                }
+            }
+            $cleanIds = array_values(array_unique($cleanIds));
+
+            if (empty($cleanIds)) {
+                return ['valid' => true, 'services' => [], 'valid_ids' => [], 'error' => null, 'errors' => []];
+            }
+
+            $inClause = implode(',', $cleanIds);
+            $stmt = $conn->query("SELECT id, title, category, status FROM services WHERE id IN ($inClause)");
+            if (!$stmt) {
+                $errMsg = 'Database error validating services.';
+                return ['valid' => false, 'services' => [], 'valid_ids' => [], 'error' => $errMsg, 'errors' => [$errMsg]];
+            }
+
+            $foundServices = [];
+            while ($row = $stmt->fetch_assoc()) {
+                $foundServices[(int)$row['id']] = $row;
+            }
+
+            foreach ($cleanIds as $sid) {
+                if (!isset($foundServices[$sid])) {
+                    $errMsg = "Selected capability module ID #{$sid} does not exist or has been archived.";
+                    return [
+                        'valid' => false,
+                        'services' => [],
+                        'valid_ids' => [],
+                        'error' => $errMsg,
+                        'errors' => [$errMsg]
+                    ];
+                }
+                $srv = $foundServices[$sid];
+                if (($srv['status'] ?? 'active') !== 'active') {
+                    $errMsg = "Selected capability '{$srv['title']}' is currently inactive.";
+                    return [
+                        'valid' => false,
+                        'services' => [],
+                        'valid_ids' => [],
+                        'error' => $errMsg,
+                        'errors' => [$errMsg]
+                    ];
+                }
+                if (!in_array($srv['category'], $allowedCategories)) {
+                    $errMsg = "Selected capability '{$srv['title']}' is not compatible with your selected project typology ({$typologyLabel}).";
+                    return [
+                        'valid' => false,
+                        'services' => [],
+                        'valid_ids' => [],
+                        'error' => $errMsg,
+                        'errors' => [$errMsg]
+                    ];
+                }
+            }
+
+            return ['valid' => true, 'services' => $foundServices, 'valid_ids' => array_keys($foundServices), 'error' => null, 'errors' => []];
+        }
+    }
 }

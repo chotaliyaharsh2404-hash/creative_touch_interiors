@@ -7,6 +7,41 @@ The project follows [Semantic Versioning](https://semver.org/):
 - **MINOR (`vx.Y.0`)**: Significant new features or modules added in a backwards-compatible manner.
 - **PATCH (`vx.y.Z`)**: Backwards-compatible bug fixes, security patches, and minor UI enhancements.
 
+## [v2.4.0] — Smart Typology-Based Capability Scope Selection
+
+Minor feature release upgrading Stage 05 (Capability Scope Selection) of the public Get a Quote flow (`consultation.php`). Dynamically filters design and execution capabilities strictly by project typology (`Residential Estate`, `Commercial / Retail`, `Executive Office`), establishes explicit opt-in selection (0 capabilities preselected by default), adds live counters and scope summaries, and enforces authoritative server-side validation.
+
+### Added
+- **Typology-based capability filtering**: Dynamically filters available capabilities based strictly on the Stage 02 selected project typology.
+- **Residential capability scope**: Shows only residential-specific modules (IDs 8–15: Complete Home Interior, Modular Kitchen, Living Room, Bedrooms, Villa, etc.) plus 3D Visualization (ID 27).
+- **Commercial/Retail capability scope**: Shows only commercial, hospitality, and retail modules (IDs 20–26: Retail Fit-Out, Boutiques, Showrooms, Cafés, Restaurants, Salons) plus 3D Visualization (ID 27).
+- **Executive Office capability scope**: Shows only workplace and office modules (IDs 16–19: Corporate Office, Executive Suites, Workstations, Boardrooms) plus 3D Visualization (ID 27).
+- **Dynamic selected capability count**: Live badge counter displaying `0 CAPABILITIES SELECTED`, `X CAPABILITIES SELECTED` updating in real-time.
+- **Capability summary**: Interactive card (`YOUR CAPABILITY SCOPE`) near the bottom of Stage 05 displaying selected capabilities and counts.
+- **Select All / Clear All**: Instant selection actions operating exclusively on currently visible and allowed capabilities for the active typology.
+- **Capability search**: Live instant search (`🔍 Search capabilities...`) operating within the active typology set.
+- **Contextual recommendation badges**: Non-intrusive `⭐ Recommended` pills based on property layout without forcing pre-selection.
+- **Server-side capability compatibility validation**: Authoritative `validateTypologyServices()` engine function enforcing typology compatibility and rejecting incompatible submissions.
+- **Stage 06 Review capability integration**: Stage 06 Review card dynamically lists all selected capability modules or turnkey base execution.
+
+### Improved
+- **Stage 05 usability**: Replaced confusing 20-module generic checkbox list with responsive, clean 2-column card grid.
+- **Capability selection accuracy**: Customers now configure commission scopes tailored directly to their architectural scope.
+- **Quote configuration experience**: Interactive glassmorphic cards with blue `#0057FF` active state, hover animations, and subtle glow.
+- **Typology change handling**: Switching project typologies automatically invalidates incompatible selections and presents an informative notice banner without clearing unrelated fields.
+
+### Security
+- **Server-side typology/capability validation**: Rejects tampered POST submissions attempting to attach capabilities incompatible with selected typology.
+- **Existing CSRF protection preserved**: All quote submissions require verified CSRF session tokens.
+- **Existing prepared queries preserved**: All database queries use parameterized prepared statements.
+
+### Preserved
+- **Existing capability pricing**: Preserved all existing unit rates, min charges, and indicative pricing ranges.
+- **Existing quotation calculations**: Zero change to base rates, material multipliers, package pricing, GST (18%), and grand totals.
+- **Existing Admin Quotes & Quote Details**: Preserved admin inspection displaying only customer-selected capabilities.
+- **Existing quotation PDF**: Quotation docket displays selected itemized capabilities without altering visual formatting.
+- **Existing historical quotes**: Full backward compatibility ensuring historical quotes render intact.
+
 ---
 
 ## [v2.3.1] — Quotation PDF Visual & Brand System Alignment

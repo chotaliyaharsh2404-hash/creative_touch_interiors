@@ -29,7 +29,7 @@ define('BASE_URL', (isset($_SERVER['HTTP_HOST']) ? ((!empty($_SERVER['HTTPS']) &
 define('SITE_NAME', 'Creative Touch Interiors');
 define('SITE_EMAIL', 'harshchotaliya@gmail.com');
 define('SITE_PHONE', '+91 9316856961');
-define('APP_VERSION', '2.3.1');
+define('APP_VERSION', '2.4.0');
 
 // Timezone Configuration
 date_default_timezone_set('Asia/Kolkata');

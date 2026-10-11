@@ -3444,3 +3444,115 @@ body.ann-dismissed .spatial-nav {
         width: min(300px, calc(100vw - 1.5rem));
     }
 }
+
+/* =====================================================================
+   Stage 05 Smart Typology-Based Capability Scope System (v2.4.0)
+   ===================================================================== */
+.capability-scope-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.15rem;
+    margin-bottom: 2rem;
+}
+
+.capability-item-card {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: var(--radius-md);
+    padding: 1.25rem 1.35rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.95rem;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0, 40, 120, 0.02);
+}
+
+.capability-item-card:hover {
+    border-color: #0057FF;
+    background: #f8fbff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(0, 87, 255, 0.08);
+}
+
+.capability-item-card.selected {
+    border-color: #0057FF !important;
+    background: #eff6ff !important;
+    box-shadow: 0 0 0 1px #0057FF, 0 8px 24px rgba(0, 87, 255, 0.12) !important;
+}
+
+.capability-checkbox {
+    width: 20px;
+    height: 20px;
+    margin-top: 0.25rem;
+    accent-color: #0057FF;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.capability-title {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 0.98rem;
+    line-height: 1.35;
+}
+
+.capability-rec-badge {
+    background: #eff6ff;
+    color: #0057FF;
+    border: 1px solid #bfdbfe;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.18rem 0.55rem;
+    border-radius: 9999px;
+    white-space: nowrap;
+}
+
+.capability-group-badge {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 0.12rem 0.45rem;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.capability-price-tag {
+    font-weight: 700;
+    color: #0057FF;
+    font-size: 0.82rem;
+}
+
+.capability-summary-chip {
+    background: #eff6ff;
+    color: #0057FF;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    padding: 0.28rem 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    animation: fadeInChip 0.2s ease;
+}
+
+@keyframes fadeInChip {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@media (max-width: 768px) {
+    .capability-scope-grid {
+        grid-template-columns: 1fr;
+    }
+    .capability-control-bar {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+}
+

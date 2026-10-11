@@ -1,5 +1,26 @@
 # What's New in Creative Touch Interiors
 
+## Version 2.4.0 — Smart Typology-Based Capability Scope Selection
+
+This feature release upgrades Stage 05 (Capability Scope Selection) of the public Get a Quote flow (`consultation.php`). It dynamically connects Stage 02's selected project typology (`Residential Estate`, `Commercial / Retail`, or `Executive Office`) with Stage 05 capability options, enforces an explicit 0-preselected default, adds live counters and scope summaries, introduces in-typology search, and secures the workflow with authoritative server-side validation.
+
+### NEW:
+- **Typology-Aware Capability Filtering**: Shows only residential capabilities for residential projects, retail/hospitality capabilities for commercial projects, and workplace capabilities for executive office commissions.
+- **Explicit Customer Opt-In**: 0 capabilities selected by default. Customers deliberately choose the design and execution modules relevant to their project.
+- **Dynamic Typology Stage Headings**: Header titles dynamically shift to `CAPABILITY SCOPE — RESIDENTIAL`, `CAPABILITY SCOPE — COMMERCIAL & RETAIL`, and `CAPABILITY SCOPE — EXECUTIVE OFFICE`.
+- **Live Live Selection Counter**: Visual counter badge (`0 CAPABILITIES SELECTED`, `X CAPABILITIES SELECTED`) updating in real time.
+- **Scoped Select All & Clear All Controls**: Allows instant bulk selection/clearing exclusively within the allowed typology capabilities.
+- **Live In-Typology Capability Search**: Integrated search bar (`🔍 Search capabilities...`) searching only within the allowed typology set.
+- **Selected Capability Scope Summary**: Interactive card (`YOUR CAPABILITY SCOPE`) near the bottom of Stage 05 itemizing chosen modules with checkmarks.
+- **Typology Switch Protection**: Changing typology in Stage 02 cleanly clears incompatible selections, preserves valid ones, and shows an explanatory notice banner.
+- **Stage 06 Review Sync**: Displays itemized capability list in the final review summary before submission.
+
+### SECURITY & VALIDATION:
+- **Authoritative Server-Side Validation**: `validateTypologyServices()` verifies that every submitted capability exists, is active, and is strictly compatible with the submitted project typology.
+- **Tamper Rejection**: Malicious or inconsistent POST submissions with invalid capability IDs are rejected server-side.
+
+---
+
 ## Version 2.3.1 — Quotation PDF Visual & Brand System Alignment
 
 This release delivers a comprehensive visual redesign of the quotation PDF docket (`quote_pdf.php`), bringing it into complete alignment with the Creative Touch Interiors website visual identity and design system (#0057FF primary brand palette, #F8F7F4 ivory document backdrop, modern rounded cards, clean typography, and print-ready aesthetics).

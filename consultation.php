@@ -204,6 +204,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = "Please specify your project city.";
             } elseif (!$is_budget_valid || empty($raw_budget)) {
                 $error = "Please select a valid estimated budget range.";
+            } elseif (!empty($selected_service_ids)) {
+                $serviceValidation = validateTypologyServices($conn, $selected_service_ids, $project_type);
+                if (!$serviceValidation['valid']) {
+                    $error = $serviceValidation['errors'][0];
+                } else {
+                    $selected_service_ids = $serviceValidation['valid_ids'];
+                }
             }
         }
 
@@ -898,29 +905,123 @@ include 'includes/header.php';
                             </div>
                         </div>
 
-                        <!-- STEP 5: Service Selection -->
+                        <!-- STEP 5: Service Selection (v2.4.0 Smart Typology Scope) -->
                         <div class="spatial-wizard-pane" id="wizard-pane-5">
                             <span class="spatial-section-eyebrow" style="color: #2563eb; font-weight: 700; text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.12em; display: inline-block; margin-bottom: 0.35rem;">Stage 05</span>
-                            <h3 style="font-size: 1.75rem; color: #0f172a; margin-bottom: 0.5rem; font-weight: 800;">Capability Scope Selection</h3>
-                            <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 2rem;">
-                                Check the design and execution modules required for your commission.
+                            <h3 id="stage5_heading" style="font-size: 1.75rem; color: #0f172a; margin-bottom: 0.5rem; font-weight: 800;">CAPABILITY SCOPE — RESIDENTIAL</h3>
+                            <p id="stage5_subheading" style="color: #64748b; font-size: 0.95rem; margin-bottom: 1.5rem;">
+                                Select the design and execution capabilities required for your project.
                             </p>
 
-                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 2rem;">
-                                <?php foreach ($active_services as $srvItem): ?>
-                                    <label style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-md); padding: 1.15rem; display: flex; align-items: flex-start; gap: 0.85rem; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#2563eb'; this.style.background='#eff6ff';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc';">
-                                        <input type="checkbox" name="selected_services[]" value="<?php echo $srvItem['id']; ?>" style="margin-top: 0.25rem; accent-color: #2563eb;" checked>
-                                        <div>
-                                            <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem;"><?php echo htmlspecialchars($srvItem['title']); ?></div>
-                                            <div style="font-size: 0.78rem; color: #64748b;"><?php echo htmlspecialchars($srvItem['category']); ?> &bull; <?php echo htmlspecialchars($srvItem['price_range'] ?? 'Standard'); ?></div>
+                            <!-- Incompatible Typology Change Alert Banner -->
+                            <div id="capability_typology_change_alert" style="display: none; background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 8px; padding: 0.9rem 1.15rem; margin-bottom: 1.5rem; align-items: center; justify-content: space-between; gap: 1rem;">
+                                <div style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.88rem; color: #92400e;">
+                                    <span style="font-size: 1.15rem;">⚠️</span>
+                                    <span id="capability_typology_change_text">Your project type has changed. Some previously selected capabilities were updated to match your new scope.</span>
+                                </div>
+                                <button type="button" id="dismiss_typology_alert_btn" style="background: none; border: none; font-size: 0.8rem; font-weight: 700; color: #b45309; cursor: pointer; text-decoration: underline; white-space: nowrap;">Dismiss</button>
+                            </div>
+
+                            <!-- Capability Scope Control Bar -->
+                            <div class="capability-control-bar" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+                                    <span id="capability_selected_count_badge" style="background: #0057FF; color: #ffffff; padding: 0.4rem 0.95rem; border-radius: 9999px; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; box-shadow: 0 2px 8px rgba(0, 87, 255, 0.25);">
+                                        0 CAPABILITIES SELECTED
+                                    </span>
+                                    <button type="button" id="capability_select_all_btn" style="background: #ffffff; border: 1px solid #cbd5e1; color: #1e293b; padding: 0.38rem 0.85rem; border-radius: 9999px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" title="Select all capabilities for this project type">
+                                        SELECT ALL
+                                    </button>
+                                    <button type="button" id="capability_clear_all_btn" style="background: #ffffff; border: 1px solid #cbd5e1; color: #64748b; padding: 0.38rem 0.85rem; border-radius: 9999px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" title="Clear selected capabilities">
+                                        CLEAR ALL
+                                    </button>
+                                </div>
+                                <div style="position: relative; min-width: 240px; flex: 1; max-width: 320px;">
+                                    <input type="text" id="capability_search_input" placeholder="🔍 Search capabilities..." class="spatial-form-control" style="padding: 0.45rem 0.95rem; font-size: 0.85rem; border-radius: 9999px; border: 1px solid #cbd5e1; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                                </div>
+                            </div>
+
+                            <!-- Capability Scope Grid (0 Preselected by Default) -->
+                            <div class="capability-scope-grid" id="capability_cards_container">
+                                <?php 
+                                $post_selected_services = isset($_POST['selected_services']) && is_array($_POST['selected_services'])
+                                    ? array_map('intval', $_POST['selected_services'])
+                                    : [];
+                                ?>
+                                <?php foreach ($active_services as $srvItem): 
+                                    $srvId = (int)$srvItem['id'];
+                                    $srvCat = $srvItem['category'] ?? '';
+                                    $srvTitle = $srvItem['title'] ?? '';
+                                    $typos = getServiceTypologies($srvCat);
+                                    $typosAttr = implode(',', $typos);
+                                    $isPostSelected = in_array($srvId, $post_selected_services);
+                                    $indicativePrice = !empty($srvItem['price_range']) ? $srvItem['price_range'] : ((float)($srvItem['unit_rate'] ?? 0) > 0 ? '₹' . number_format($srvItem['unit_rate']) . ' / sq.ft' : 'Indicative Pricing');
+                                ?>
+                                    <div class="capability-item-card <?php echo $isPostSelected ? 'selected' : ''; ?>"
+                                         id="capability_card_<?php echo $srvId; ?>"
+                                         data-service-id="<?php echo $srvId; ?>"
+                                         data-typologies="<?php echo htmlspecialchars($typosAttr); ?>"
+                                         data-category="<?php echo htmlspecialchars($srvCat); ?>"
+                                         data-title="<?php echo htmlspecialchars($srvTitle); ?>"
+                                         data-price="<?php echo htmlspecialchars($indicativePrice); ?>"
+                                         tabindex="0"
+                                         role="checkbox"
+                                         aria-checked="<?php echo $isPostSelected ? 'true' : 'false'; ?>">
+                                        <input type="checkbox" 
+                                               name="selected_services[]" 
+                                               value="<?php echo $srvId; ?>" 
+                                               id="chk_srv_<?php echo $srvId; ?>"
+                                               class="capability-checkbox" 
+                                               tabindex="-1"
+                                               <?php echo $isPostSelected ? 'checked' : ''; ?>>
+                                        <div style="flex: 1; min-width: 0;">
+                                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.35rem;">
+                                                <div class="capability-title"><?php echo htmlspecialchars($srvTitle); ?></div>
+                                                <span class="capability-rec-badge" id="rec_badge_<?php echo $srvId; ?>" style="display: none;">
+                                                    ⭐ Recommended
+                                                </span>
+                                            </div>
+                                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.45rem;">
+                                                <div style="display: flex; align-items: center; gap: 0.45rem;">
+                                                    <span class="capability-group-badge" id="group_badge_<?php echo $srvId; ?>"><?php echo htmlspecialchars(strtoupper($srvCat)); ?></span>
+                                                </div>
+                                                <div class="capability-price-tag">
+                                                    <?php echo htmlspecialchars($indicativePrice); ?>
+                                                    <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 500; display: block; text-align: right;">*Indicative range</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </label>
+                                    </div>
                                 <?php endforeach; ?>
+                            </div>
+
+                            <!-- Search Empty State -->
+                            <div id="capability_search_empty" style="display: none; padding: 2.5rem 1rem; text-align: center; background: #ffffff; border: 1px dashed #cbd5e1; border-radius: var(--radius-md); margin-bottom: 2rem;">
+                                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔍</div>
+                                <div style="font-weight: 700; color: #0f172a; margin-bottom: 0.25rem;">No capabilities found</div>
+                                <div style="font-size: 0.85rem; color: #64748b;">Try searching for a different term or clear the search filter.</div>
+                            </div>
+
+                            <!-- Selected Capability Summary Box (v2.4.0) -->
+                            <div id="capability_summary_box" style="background: #ffffff; border: 1.5px solid #bfdbfe; border-radius: var(--radius-lg); padding: 1.35rem 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 14px rgba(0, 87, 255, 0.04);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #0057FF; display: inline-block;"></span>
+                                        <span style="font-size: 0.85rem; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em;">YOUR CAPABILITY SCOPE</span>
+                                    </div>
+                                    <span id="capability_summary_count" style="font-size: 0.82rem; font-weight: 700; color: #0057FF;">
+                                        0 capabilities selected
+                                    </span>
+                                </div>
+                                <div id="capability_summary_list" style="display: flex; flex-wrap: wrap; gap: 0.5rem; min-height: 28px; align-items: center;">
+                                    <span style="font-size: 0.85rem; color: #64748b; font-style: italic;">
+                                        No capabilities selected yet. Click any card above to include it in your project scope.
+                                    </span>
+                                </div>
                             </div>
 
                             <div class="spatial-form-group">
                                 <label class="spatial-form-label" for="special_requirements">Special Brief / Custom Notes</label>
-                                <textarea id="special_requirements" name="special_requirements" rows="3" class="spatial-form-control" placeholder="Specify any unique joinery requirements, soundproofing, smart home requests, or architectural priorities..."></textarea>
+                                <textarea id="special_requirements" name="special_requirements" rows="3" class="spatial-form-control" placeholder="Specify any unique joinery requirements, soundproofing, smart home requests, or architectural priorities..."><?php echo htmlspecialchars($_POST['special_requirements'] ?? ''); ?></textarea>
                             </div>
 
                             <div class="spatial-wizard-nav">
@@ -948,6 +1049,16 @@ include 'includes/header.php';
                                     <div><span style="color:#64748b;">Material Tier:</span> <strong style="color:#0f172a;" id="rev_pkg">Standard Luxury</strong></div>
                                     <div><span style="color:#64748b;">Architectural Style:</span> <strong style="color:#0f172a;" id="rev_style">Modern Luxury</strong></div>
                                     <div><span style="color:#64748b;">Estimated Budget:</span> <strong style="color:#0f172a;" id="rev_budget">₹10L – ₹25L</strong></div>
+                                </div>
+                                
+                                <!-- Stage 06 Selected Capability Scope List (v2.4.0) -->
+                                <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px dashed #cbd5e1;">
+                                    <div style="font-size: 0.85rem; font-weight: 700; color: #1e293b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.65rem;">
+                                        Capability Scope (<span id="rev_capabilities_count">0</span>):
+                                    </div>
+                                    <div id="rev_capabilities" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                                        <span style="color: #64748b; font-style: italic; font-size: 0.88rem;">None selected (Base space turnkey execution only)</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1186,6 +1297,10 @@ include 'includes/header.php';
                         "Not decided yet": 'Not decided yet'
                     };
                     document.getElementById('rev_budget').textContent = bMap[bVal] || bVal;
+                }
+
+                if (typeof window.__syncCapabilitySelections === 'function') {
+                    window.__syncCapabilitySelections();
                 }
             });
         });

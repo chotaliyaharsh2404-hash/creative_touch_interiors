@@ -1253,6 +1253,349 @@
                 }
             });
         }
+
+        // =====================================================================
+        // Stage 05 Smart Typology-Based Capability Scope Controller (v2.4.0)
+        // =====================================================================
+        const stage5Pane = wizard.querySelector('#wizard-pane-5');
+        if (stage5Pane) {
+            const stage5Heading = stage5Pane.querySelector('#stage5_heading');
+            const stage5Subheading = stage5Pane.querySelector('#stage5_subheading');
+            const typologyChangeAlert = stage5Pane.querySelector('#capability_typology_change_alert');
+            const typologyChangeText = stage5Pane.querySelector('#capability_typology_change_text');
+            const dismissTypologyAlertBtn = stage5Pane.querySelector('#dismiss_typology_alert_btn');
+            const selectedCountBadge = stage5Pane.querySelector('#capability_selected_count_badge');
+            const selectAllBtn = stage5Pane.querySelector('#capability_select_all_btn');
+            const clearAllBtn = stage5Pane.querySelector('#capability_clear_all_btn');
+            const searchInput = stage5Pane.querySelector('#capability_search_input');
+            const searchEmptyState = stage5Pane.querySelector('#capability_search_empty');
+            const summaryBox = stage5Pane.querySelector('#capability_summary_box');
+            const summaryCount = stage5Pane.querySelector('#capability_summary_count');
+            const summaryList = stage5Pane.querySelector('#capability_summary_list');
+            const allCapabilityCards = stage5Pane.querySelectorAll('.capability-item-card');
+            const revCapabilities = wizard.querySelector('#rev_capabilities');
+            const revCapabilitiesCount = wizard.querySelector('#rev_capabilities_count');
+
+            const typologyConfig = {
+                residential: {
+                    title: 'CAPABILITY SCOPE — RESIDENTIAL',
+                    subtitle: 'Select the design and execution capabilities required for your project.',
+                    label: 'Residential Estate',
+                    groups: {
+                        'RESIDENTIAL DESIGN': ['Complete Home Interior Design', 'Luxury Villa Interiors', 'Apartment Space Optimization'],
+                        'ROOM-SPECIFIC': ['Living Room Styling', 'Master Bedroom Planning', 'Kids Room Design'],
+                        'KITCHEN & BATH': ['Modular Kitchen Installation', 'Bathroom Makeover'],
+                        'VISUALIZATION': ['3D Interior Visualization']
+                    }
+                },
+                commercial: {
+                    title: 'CAPABILITY SCOPE — COMMERCIAL & RETAIL',
+                    subtitle: 'Select the design and execution capabilities required for your project.',
+                    label: 'Commercial / Retail',
+                    groups: {
+                        'COMMERCIAL & HOSPITALITY': ['Café Interior Design', 'Restaurant Interior Planning', 'Salon & Beauty Studio Design'],
+                        'RETAIL': ['Retail Store Fit-Out', 'Fashion Boutique Design', 'Jewellery Store Interiors', 'Electronics Showroom Planning'],
+                        'VISUALIZATION': ['3D Interior Visualization']
+                    }
+                },
+                office: {
+                    title: 'CAPABILITY SCOPE — EXECUTIVE OFFICE',
+                    subtitle: 'Select the design and execution capabilities required for your project.',
+                    label: 'Executive Office',
+                    groups: {
+                        'OFFICE PLANNING': ['Corporate Office Design', 'Executive Office Design'],
+                        'WORKSPACE': ['Open Workspace Planning'],
+                        'MEETING & CLIENT AREAS': ['Meeting / Boardroom Planning'],
+                        'VISUALIZATION': ['3D Interior Visualization']
+                    }
+                }
+            };
+
+            function getActiveTypology() {
+                const checkedRadio = wizard.querySelector('input[name="project_type"]:checked');
+                if (checkedRadio) {
+                    const rawVal = (checkedRadio.getAttribute('data-typology') || checkedRadio.value || '').toLowerCase();
+                    if (rawVal.includes('residen')) return 'residential';
+                    if (rawVal.includes('commerc')) return 'commercial';
+                    if (rawVal.includes('office') || rawVal.includes('execut')) return 'office';
+                }
+                const selectedCard = wizard.querySelector('.spatial-choice-card.selected[data-choice-group="proj_type"]');
+                if (selectedCard) {
+                    const rawCard = (selectedCard.getAttribute('data-typology') || selectedCard.textContent || '').toLowerCase();
+                    if (rawCard.includes('residen')) return 'residential';
+                    if (rawCard.includes('commerc')) return 'commercial';
+                    if (rawCard.includes('office') || rawCard.includes('execut')) return 'office';
+                }
+                return 'residential';
+            }
+
+            function resolveGroupBadge(title, category, typoKey) {
+                const cfg = typologyConfig[typoKey];
+                if (cfg && cfg.groups) {
+                    for (const [groupName, titles] of Object.entries(cfg.groups)) {
+                        if (titles.includes(title)) {
+                            return groupName;
+                        }
+                    }
+                }
+                if (title.includes('3D') || category === 'Design Service') return 'VISUALIZATION';
+                return category.toUpperCase();
+            }
+
+            function updateRecommendations(typoKey) {
+                const propTypeSelect = wizard.querySelector('#property_type');
+                const propVal = (propTypeSelect ? propTypeSelect.value : '').toLowerCase();
+
+                allCapabilityCards.forEach(card => {
+                    const id = card.dataset.serviceId;
+                    const title = card.dataset.title || '';
+                    const badge = card.querySelector('#rec_badge_' + id);
+                    if (!badge) return;
+
+                    let isRec = false;
+                    if (typoKey === 'residential') {
+                        if (propVal.includes('villa') && title === 'Luxury Villa Interiors') isRec = true;
+                        else if ((propVal.includes('apartment') || propVal.includes('bhk') || propVal.includes('penthouse')) && title === 'Apartment Space Optimization') isRec = true;
+                        else if (!propVal && title === 'Complete Home Interior Design') isRec = true;
+                        else if (title === '3D Interior Visualization') isRec = true;
+                    } else if (typoKey === 'commercial') {
+                        if ((propVal.includes('cafe') || propVal.includes('restaurant')) && (title === 'Café Interior Design' || title === 'Restaurant Interior Planning')) isRec = true;
+                        else if ((propVal.includes('retail') || propVal.includes('showroom') || propVal.includes('boutique')) && title === 'Retail Store Fit-Out') isRec = true;
+                        else if (title === '3D Interior Visualization') isRec = true;
+                    } else if (typoKey === 'office') {
+                        if (propVal.includes('co-working') && title === 'Open Workspace Planning') isRec = true;
+                        else if ((propVal.includes('corporate') || propVal.includes('suite') || propVal.includes('floor')) && (title === 'Corporate Office Design' || title === 'Executive Office Design')) isRec = true;
+                        else if (title === '3D Interior Visualization') isRec = true;
+                    }
+
+                    badge.style.display = isRec ? 'inline-flex' : 'none';
+                });
+            }
+
+            let previousTypology = null;
+
+            function syncCapabilitySelections() {
+                const selectedCards = [];
+                allCapabilityCards.forEach(card => {
+                    if (!card.classList.contains('typology-visible')) return;
+                    const cb = card.querySelector('input[type="checkbox"]');
+                    if (cb && cb.checked) {
+                        card.classList.add('selected');
+                        card.setAttribute('aria-checked', 'true');
+                        selectedCards.push({
+                            id: card.dataset.serviceId,
+                            title: card.dataset.title || 'Capability',
+                            price: card.dataset.price || ''
+                        });
+                    } else {
+                        card.classList.remove('selected');
+                        card.setAttribute('aria-checked', 'false');
+                    }
+                });
+
+                const count = selectedCards.length;
+
+                // Live selection counter
+                if (selectedCountBadge) {
+                    selectedCountBadge.textContent = count === 1 ? '1 CAPABILITY SELECTED' : `${count} CAPABILITIES SELECTED`;
+                }
+
+                // Stage 05 summary box
+                if (summaryCount) {
+                    summaryCount.textContent = count === 1 ? '1 capability selected' : `${count} capabilities selected`;
+                }
+                if (summaryList) {
+                    if (count === 0) {
+                        summaryList.innerHTML = '<span style="font-size: 0.85rem; color: #64748b; font-style: italic;">No capabilities selected yet. Click any card above to include it in your project scope.</span>';
+                    } else {
+                        summaryList.innerHTML = selectedCards.map(item => `
+                            <span class="capability-summary-chip">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="color: #0057FF;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                <span>${item.title}</span>
+                            </span>
+                        `).join('');
+                    }
+                }
+
+                // Stage 06 Review
+                if (revCapabilitiesCount) {
+                    revCapabilitiesCount.textContent = count;
+                }
+                if (revCapabilities) {
+                    if (count === 0) {
+                        revCapabilities.innerHTML = '<span style="color: #64748b; font-style: italic; font-size: 0.88rem;">None selected (Base space turnkey execution only)</span>';
+                    } else {
+                        revCapabilities.innerHTML = selectedCards.map((item, idx) => `
+                            <span style="display: inline-flex; align-items: center; gap: 0.35rem; background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; padding: 0.3rem 0.65rem; border-radius: 6px; font-size: 0.82rem; font-weight: 600;">
+                                <span style="color: #2563eb; font-weight: 700;">${idx + 1}.</span>
+                                <span>${item.title}</span>
+                            </span>
+                        `).join('');
+                    }
+                }
+            }
+
+            function refreshCapabilities(isTypologySwitch = false) {
+                const activeTypo = getActiveTypology();
+                const meta = typologyConfig[activeTypo] || typologyConfig['residential'];
+
+                if (stage5Heading) stage5Heading.textContent = meta.title;
+                if (stage5Subheading) stage5Subheading.textContent = meta.subtitle;
+
+                let clearedIncompatibleCount = 0;
+                const searchQuery = (searchInput ? searchInput.value : '').trim().toLowerCase();
+                let matchingSearchCount = 0;
+
+                allCapabilityCards.forEach(card => {
+                    const typosAttr = (card.dataset.typologies || '').toLowerCase();
+                    const typosList = typosAttr.split(',').map(s => s.trim());
+                    const isCompatible = typosList.includes(activeTypo) || 
+                        ((activeTypo === 'office' || activeTypo === 'executive') && (typosList.includes('office') || typosList.includes('executive'))) || 
+                        typosList.includes('all');
+
+                    const checkbox = card.querySelector('input[type="checkbox"]');
+                    const id = card.dataset.serviceId;
+                    const title = card.dataset.title || '';
+                    const category = card.dataset.category || '';
+
+                    const groupBadge = card.querySelector('#group_badge_' + id);
+                    if (groupBadge) {
+                        groupBadge.textContent = resolveGroupBadge(title, category, activeTypo);
+                    }
+
+                    if (!isCompatible) {
+                        if (checkbox && checkbox.checked) {
+                            checkbox.checked = false;
+                            card.classList.remove('selected');
+                            card.setAttribute('aria-checked', 'false');
+                            clearedIncompatibleCount++;
+                        }
+                        card.style.display = 'none';
+                        card.classList.remove('typology-visible');
+                    } else {
+                        card.classList.add('typology-visible');
+                        const matchesSearch = !searchQuery || 
+                            title.toLowerCase().includes(searchQuery) || 
+                            category.toLowerCase().includes(searchQuery) ||
+                            (groupBadge && groupBadge.textContent.toLowerCase().includes(searchQuery));
+
+                        if (matchesSearch) {
+                            card.style.display = 'flex';
+                            matchingSearchCount++;
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    }
+                });
+
+                if (isTypologySwitch && clearedIncompatibleCount > 0 && previousTypology && previousTypology !== activeTypo) {
+                    if (typologyChangeAlert && typologyChangeText) {
+                        typologyChangeText.textContent = `Your project type was changed to ${meta.label}. ${clearedIncompatibleCount} previously selected capability${clearedIncompatibleCount > 1 ? 'ies were' : ' was'} incompatible and removed from scope.`;
+                        typologyChangeAlert.style.display = 'flex';
+                    }
+                }
+                previousTypology = activeTypo;
+
+                if (searchEmptyState) {
+                    searchEmptyState.style.display = (searchQuery && matchingSearchCount === 0) ? 'block' : 'none';
+                }
+
+                updateRecommendations(activeTypo);
+                syncCapabilitySelections();
+            }
+
+            // Interactive card selection
+            allCapabilityCards.forEach(card => {
+                const cb = card.querySelector('input[type="checkbox"]');
+
+                function toggleCard(e) {
+                    if (e && e.target === cb) {
+                        syncCapabilitySelections();
+                        return;
+                    }
+                    if (cb) {
+                        cb.checked = !cb.checked;
+                        syncCapabilitySelections();
+                    }
+                }
+
+                card.addEventListener('click', toggleCard);
+
+                card.addEventListener('keydown', function(e) {
+                    if (e.key === ' ' || e.key === 'Enter' || e.keyCode === 32 || e.keyCode === 13) {
+                        e.preventDefault();
+                        toggleCard();
+                    }
+                });
+
+                if (cb) {
+                    cb.addEventListener('change', () => syncCapabilitySelections());
+                }
+            });
+
+            // Select All (visible & allowed only)
+            if (selectAllBtn) {
+                selectAllBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    allCapabilityCards.forEach(card => {
+                        if (card.classList.contains('typology-visible') && card.style.display !== 'none') {
+                            const cb = card.querySelector('input[type="checkbox"]');
+                            if (cb) cb.checked = true;
+                        }
+                    });
+                    syncCapabilitySelections();
+                });
+            }
+
+            // Clear All (Stage 05 only)
+            if (clearAllBtn) {
+                clearAllBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    allCapabilityCards.forEach(card => {
+                        if (card.classList.contains('typology-visible')) {
+                            const cb = card.querySelector('input[type="checkbox"]');
+                            if (cb) cb.checked = false;
+                        }
+                    });
+                    syncCapabilitySelections();
+                });
+            }
+
+            // Search filter
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    refreshCapabilities(false);
+                });
+            }
+
+            // Typology listeners
+            wizard.querySelectorAll('input[name="project_type"]').forEach(radio => {
+                radio.addEventListener('change', () => refreshCapabilities(true));
+            });
+            wizard.querySelectorAll('.spatial-choice-card[data-choice-group="proj_type"]').forEach(card => {
+                card.addEventListener('click', () => {
+                    setTimeout(() => refreshCapabilities(true), 60);
+                });
+            });
+
+            const propSelect = wizard.querySelector('#property_type');
+            if (propSelect) {
+                propSelect.addEventListener('change', () => {
+                    updateRecommendations(getActiveTypology());
+                });
+            }
+
+            if (dismissTypologyAlertBtn && typologyChangeAlert) {
+                dismissTypologyAlertBtn.addEventListener('click', () => {
+                    typologyChangeAlert.style.display = 'none';
+                });
+            }
+
+            // Initial load
+            refreshCapabilities(false);
+            window.__refreshCapabilityScope = refreshCapabilities;
+            window.__syncCapabilitySelections = syncCapabilitySelections;
+        }
     }
 
     /* ==========================================================================
