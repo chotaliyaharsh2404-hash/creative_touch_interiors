@@ -6,14 +6,32 @@ An enterprise-grade interior design, architectural management, and spatial visua
 
 ## 🚀 Version & Release History
 
-- **Current Stable Version**: **v2.2.3** — *Room Dimension Calculator UX Polish*
+- **Current Stable Version**: **v2.3.1** — *Quotation PDF Visual & Brand System Alignment*
+- **Previous Minor Release**: **v2.3.0** — *Smart Budget & Design Preferences*
+- **Previous Minor Release**: **v2.2.3** — *Room Dimension Calculator UX Polish*
 - **Previous Patch Release**: **v2.2.2** — *Project Category Badge UI Polish*
 - **Previous Patch Release**: **v2.2.1** — *Announcement Bell Interaction Fix*
 - **Previous Minor Release**: **v2.2.0** — *Public Announcement & Promotion System*
 - **Changelog**: See [CHANGELOG.md](CHANGELOG.md) for full historical changes.
 - **Release Notes**: See [docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md) for version release summaries and Semantic Versioning rules.
 
-### 📐 Latest in Version 2.2.3 (Room Dimension Calculator UX Polish)
+### 📄 Latest in Version 2.3.1 (Quotation PDF Visual & Brand System Alignment)
+1. **Brand System Alignment**: Full visual transformation of the client quotation PDF docket (`quote_pdf.php`) aligned with the `#0057FF` brand palette and `#F8F7F4` ivory backdrop.
+2. **Modern Card-Based Parameter Architecture**: Dual rounded cards for Client Details and Project Parameters with clean key-value rows and soft status pills.
+3. **Executive Summary with Grand Total Highlight**: Financial breakdown card with prominent `#0057FF` Grand Investment Total highlight banner.
+4. **Clean Scope Rendering**: Corrected HTML entity decoding ensuring project scopes render clean UTF-8 em dashes (e.g., `Residential — Villa / Independent House`) without raw `&mdash;` tokens.
+5. **Customer-Facing Package Tiers**: Automatically translates internal identifiers to canonical customer-friendly labels (`Standard Luxury`, `Signature Premium`, `Ultra Palatial`).
+6. **Print-Friendly A4 Layout**: Designed for optimal print and PDF output with zero horizontal overflow and clean page break boundaries.
+
+### 💰 Previous in Version 2.3.0 (Smart Budget & Design Preferences)
+1. **Visual Budget Selection Grid**: Replaced standard dropdown with 8 discrete glassmorphic cards starting from ₹1 Lakh (`₹1L – ₹3L`, `₹3L – ₹5L`, `₹5L – ₹10L`, `₹10L – ₹25L`, `₹25L – ₹50L`, `₹50L – ₹1Cr`, `₹1Cr+`, and `"I'm Not Sure Yet"`).
+2. **"I'm Not Sure Yet" Option**: Dedicated first-class handling for undecided clients without forcing a selection, avoiding artificial ₹0 entries, and providing supportive guidance.
+3. **Smart Material-Tier Guidance**: Contextual guidance dynamically suggesting harmonious finish tiers based on selected budget without ever forcing or altering user choices.
+4. **Live Design Preference Summary**: Instant real-time summary card updating as visitors toggle material finishes, architectural styles, or budget ranges.
+5. **Review Stage Integration**: Connected selected preferences directly into the Stage 06 Review card (`#rev_pkg`, `#rev_style`, `#rev_budget`), cleanly displaying `"Not decided yet"` when undecided.
+6. **Accessible & Responsive**: 4-column desktop to 2-column mobile responsive grid, with full keyboard ARIA radio accessibility.
+
+### 📐 Previous in Version 2.2.3 (Room Dimension Calculator UX Polish)
 1. **Unified Room-Add Action**: Refactored to a single primary bottom action (`+ ADD ANOTHER ROOM`) and removed redundant competing top buttons.
 2. **Fixed Duplicate Plus Icon**: Resolved the duplicate plus icon markup bug (`+ + ADD ROOM` / `+ + ADD ANOTHER ROOM`) by cleaning up button markup.
 3. **Dynamic Area Summary**: Real-time room breakdown with dashed leaders and dynamic total area sum.

@@ -107,49 +107,57 @@ $stmt_hist->execute();
 $status_history = $stmt_hist->get_result()->fetch_all(MYSQLI_ASSOC);
 
 // Calculate estimate formula breakdown for display from quote record
+$approx_area = (float)($quote['approx_area'] ?? ($quote['carpet_area'] ?? 0));
 $base_cost = (float)($quote['base_cost'] ?? 0);
-if ($base_cost <= 0 && $quote['carpet_area'] > 0) {
+if ($base_cost <= 0 && $approx_area > 0) {
     $rate = (float)($quote['base_rate_per_sqft'] ?? 0);
     if ($rate <= 0) {
         $pt = strtolower($quote['project_type'] ?? '');
         $rate = (strpos($pt, 'commercial') !== false || strpos($pt, 'office') !== false) ? 2200.0 : ((strpos($pt, 'hospitality') !== false) ? 2500.0 : 1800.0);
     }
-    $base_cost = $quote['carpet_area'] * $rate;
+    $base_cost = round($approx_area * $rate, 2);
 }
 
 $services_total = (float)($quote['service_cost'] ?? 0);
 if ($services_total <= 0 && !empty($selected_services)) {
     foreach ($selected_services as $s) {
-        $services_total += (float)($s['service_rate'] ?? ($s['service_price'] ?? 0));
+        $services_total += (float)($s['final_service_amount'] ?? ($s['service_rate'] ?? ($s['service_price'] ?? 0)));
     }
 }
 
-$material_multiplier = 1.0;
-$matPref = strtolower($quote['material_preference'] ?? '');
-if (strpos($matPref, 'ultra') !== false || strpos($matPref, 'italian') !== false || strpos($matPref, 'luxury') !== false) {
-    $material_multiplier = 1.25;
-} elseif (strpos($matPref, 'premium') !== false || strpos($matPref, 'teak') !== false) {
-    $material_multiplier = 1.15;
+$package_multiplier = (float)($quote['package_multiplier'] ?? ($quote['material_multiplier'] ?? 1.0));
+if ($package_multiplier <= 0) {
+    $package_multiplier = 1.0;
 }
+$package_type = !empty($quote['package_type']) ? ucwords(str_replace('_', ' ', $quote['package_type'])) : 'Standard';
 
-$subtotal = $base_cost + $services_total + (float)($quote['material_cost'] ?? 0) + (float)($quote['additional_cost'] ?? 0) - (float)($quote['discount_amount'] ?? 0);
-$tax_percent = isset($quote['tax_percentage']) ? (float)$quote['tax_percentage'] : 18.00;
+$material_cost = (float)($quote['material_cost'] ?? 0);
+$additional_cost = (float)($quote['additional_cost'] ?? 0);
+$discount_amount = (float)($quote['discount_amount'] ?? 0);
 
-$tax_amount = isset($quote['tax_amount']) ? (float)$quote['tax_amount'] : 0.0;
-if (!isset($quote['tax_amount']) && $subtotal > 0 && $tax_percent > 0) {
-    $tax_amount = ($subtotal * $tax_percent) / 100;
-}
+// Canonical quotation formula aligned with includes/quote_engine.php & quote_pdf.php
+$adjusted_base_cost = round($base_cost * $package_multiplier, 2);
+$gross_subtotal = round($adjusted_base_cost + $services_total + $material_cost, 2);
+$taxable_subtotal = max(0.0, round(($gross_subtotal + $additional_cost) - $discount_amount, 2));
+
+$tax_percent = isset($quote['tax_percentage']) && (float)$quote['tax_percentage'] > 0 ? (float)$quote['tax_percentage'] : 18.00;
+$tax_amount = isset($quote['tax_amount']) && (float)$quote['tax_amount'] > 0 ? (float)$quote['tax_amount'] : round(($taxable_subtotal * $tax_percent) / 100, 2);
 
 $est_total = (float)($quote['estimated_total'] ?? 0);
 if ($est_total <= 0) {
-    $est_total = $subtotal + $tax_amount;
+    $est_total = round($taxable_subtotal + $tax_amount, 2);
 }
 
 $pricing = [
+    'approx_area'         => $approx_area,
     'base_area_cost'      => round($base_cost, 2),
     'services_total'      => round($services_total, 2),
-    'material_multiplier' => $material_multiplier,
-    'subtotal'            => round($subtotal, 2),
+    'package_multiplier'  => $package_multiplier,
+    'package_type'        => $package_type,
+    'additional_cost'     => round($additional_cost, 2),
+    'discount_amount'     => round($discount_amount, 2),
+    'subtotal'            => round($taxable_subtotal, 2),
+    'tax_percent'         => $tax_percent,
     'tax_amount'          => round($tax_amount, 2),
     'estimated_total'     => round($est_total, 2)
 ];
@@ -164,9 +172,28 @@ $waText = urlencode("Hello Creative Touch Interiors, I am viewing quotation " . 
 .quote-view-hero {
     background: radial-gradient(circle at 50% 20%, #eff6ff 0%, #F8F7F4 85%);
     color: #0f172a;
-    padding: 3.5rem 0 2.5rem;
+    padding: 8rem 0 2.5rem;
     position: relative;
     border-bottom: 1px solid rgba(0, 87, 255, 0.1);
+}
+body.has-announcement-bar .quote-view-hero {
+    padding-top: 10.5rem;
+}
+@media (max-width: 991px) {
+    .quote-view-hero {
+        padding-top: 7.5rem;
+    }
+    body.has-announcement-bar .quote-view-hero {
+        padding-top: 10rem;
+    }
+}
+@media (max-width: 768px) {
+    .quote-view-hero {
+        padding: 7rem 0 2rem;
+    }
+    body.has-announcement-bar .quote-view-hero {
+        padding-top: 9.5rem;
+    }
 }
 .quote-card-box {
     background: rgba(255, 255, 255, 0.76);
@@ -361,7 +388,7 @@ $waText = urlencode("Hello Creative Touch Interiors, I am viewing quotation " . 
                     <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $quote['project_type']))); ?> Proposal
                 </h1>
                 <p style="color: #64748b; font-size: 0.875rem; margin: 0;">
-                    Submitted on <?php echo date('l, F j, Y \a\t h:i A', strtotime($quote['created_at'])); ?> • Prepared for <strong style="color: #0f172a;"><?php echo htmlspecialchars($quote['name']); ?></strong>
+                    Submitted on <?php echo date('l, F j, Y \a\t h:i A', strtotime($quote['created_at'])); ?> • Prepared for <strong style="color: #0f172a;"><?php echo htmlspecialchars(!empty($quote['customer_name']) ? $quote['customer_name'] : ($quote['name'] ?? 'Client')); ?></strong>
                 </p>
             </div>
 
@@ -529,7 +556,7 @@ $waText = urlencode("Hello Creative Touch Interiors, I am viewing quotation " . 
                             </div>
                             <div style="font-size: 0.7rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;">Carpet Area</div>
                             <div style="font-size: 0.95rem; font-weight: 600; color: #0f172a; margin-top: 0.2rem;">
-                                <?php echo number_format($quote['carpet_area']); ?> sq. ft.
+                                <?php echo number_format($pricing['approx_area']); ?> sq. ft.
                             </div>
                         </div>
 
@@ -559,7 +586,17 @@ $waText = urlencode("Hello Creative Touch Interiors, I am viewing quotation " . 
                             </div>
                             <div style="font-size: 0.7rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;">Material Grade</div>
                             <div style="font-size: 0.95rem; font-weight: 600; color: #0f172a; margin-top: 0.2rem; text-transform: capitalize;">
-                                <?php echo htmlspecialchars(ucwords($quote['material_quality'] ?? 'Premium')); ?>
+                                <?php echo htmlspecialchars(ucwords($quote['material_preference'] ?? ($quote['material_quality'] ?? 'Premium'))); ?>
+                            </div>
+                        </div>
+
+                        <div class="spec-tile">
+                            <div class="spec-tile-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0057FF" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                            </div>
+                            <div style="font-size: 0.7rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;">Estimated Budget</div>
+                            <div style="font-size: 0.95rem; font-weight: 600; color: #0057FF; margin-top: 0.2rem;">
+                                <?php echo htmlspecialchars(formatBudgetDisplay($quote['budget_range'] ?? '')); ?>
                             </div>
                         </div>
 
@@ -778,7 +815,7 @@ $waText = urlencode("Hello Creative Touch Interiors, I am viewing quotation " . 
                     <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.875rem; border-bottom: 1px solid rgba(0, 87, 255, 0.1); padding-bottom: 1.25rem; margin-bottom: 1.25rem;">
                         
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="color: #64748b;">Base Floor Work (<?php echo number_format($quote['carpet_area']); ?> sq.ft):</span>
+                            <span style="color: #64748b;">Base Floor Work (<?php echo number_format($pricing['approx_area']); ?> sq.ft):</span>
                             <span style="font-weight: 600; color: #0f172a; font-family: monospace;">₹<?php echo number_format($pricing['base_area_cost'], 2); ?></span>
                         </div>
 
@@ -787,19 +824,34 @@ $waText = urlencode("Hello Creative Touch Interiors, I am viewing quotation " . 
                             <span style="font-weight: 600; color: #0f172a; font-family: monospace;">₹<?php echo number_format($pricing['services_total'], 2); ?></span>
                         </div>
 
+                        <?php if ($pricing['package_multiplier'] != 1.0): ?>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="color: #64748b;">Material Multiplier:</span>
-                            <span style="font-weight: 600; color: #0f172a; font-family: monospace;"><?php echo $pricing['material_multiplier']; ?>x</span>
+                            <span style="color: #64748b;">Package Multiplier (<?php echo htmlspecialchars($pricing['package_type']); ?>):</span>
+                            <span style="font-weight: 600; color: #0f172a; font-family: monospace;"><?php echo number_format($pricing['package_multiplier'], 2); ?>x</span>
                         </div>
+                        <?php endif; ?>
+
+                        <?php if ($pricing['additional_cost'] > 0): ?>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: #64748b;">Additional Structural / Site Fees:</span>
+                            <span style="font-weight: 600; color: #0f172a; font-family: monospace;">₹<?php echo number_format($pricing['additional_cost'], 2); ?></span>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if ($pricing['discount_amount'] > 0): ?>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: #16A34A; font-weight: 500;">Promotional Studio Discount:</span>
+                            <span style="font-weight: 600; color: #16A34A; font-family: monospace;">- ₹<?php echo number_format($pricing['discount_amount'], 2); ?></span>
+                        </div>
+                        <?php endif; ?>
 
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="color: #64748b;">Subtotal:</span>
+                            <span style="color: #64748b;">Taxable Subtotal:</span>
                             <span style="font-weight: 600; color: #0f172a; font-family: monospace;">₹<?php echo number_format($pricing['subtotal'], 2); ?></span>
                         </div>
 
-                        <!-- GST (18%) strictly clean, standard typography with NO red circle, NO marker, NO annotation, NO scribble, NO unwanted highlight -->
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="color: #64748b;">GST (18%):</span>
+                            <span style="color: #64748b;">GST (<?php echo number_format($pricing['tax_percent'], (floor($pricing['tax_percent']) == $pricing['tax_percent'] ? 0 : 1)); ?>%):</span>
                             <span style="font-weight: 600; color: #0f172a; font-family: monospace;">₹<?php echo number_format($pricing['tax_amount'], 2); ?></span>
                         </div>
 
@@ -809,7 +861,7 @@ $waText = urlencode("Hello Creative Touch Interiors, I am viewing quotation " . 
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding: 0.75rem 1rem; background: rgba(0, 87, 255, 0.05); border-radius: 10px; border: 1px solid rgba(0, 87, 255, 0.1);">
                         <span style="font-size: 0.95rem; font-weight: 600; color: #0f172a;">Estimated Total:</span>
                         <span style="font-family: var(--font-heading); font-size: 1.6rem; font-weight: 700; color: #0057FF;">
-                            ₹<?php echo number_format($quote['estimated_total'], 2); ?>
+                            ₹<?php echo number_format($pricing['estimated_total'], 2); ?>
                         </span>
                     </div>
 
@@ -841,7 +893,7 @@ $waText = urlencode("Hello Creative Touch Interiors, I am viewing quotation " . 
 
                     <!-- Client Information -->
                     <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid rgba(0, 87, 255, 0.1); font-size: 0.825rem; color: #64748b; line-height: 1.7;">
-                        <div><strong style="color: #0f172a;">Client:</strong> <?php echo htmlspecialchars($quote['name']); ?></div>
+                        <div><strong style="color: #0f172a;">Client:</strong> <?php echo htmlspecialchars(!empty($quote['customer_name']) ? $quote['customer_name'] : ($quote['name'] ?? 'Client')); ?></div>
                         <div><strong style="color: #0f172a;">Email:</strong> <?php echo htmlspecialchars($quote['email']); ?></div>
                         <div><strong style="color: #0f172a;">Phone:</strong> <?php echo htmlspecialchars($quote['phone']); ?></div>
                         <div><strong style="color: #0f172a;">Location:</strong> <?php echo htmlspecialchars($quote['address'] ? $quote['address'] . ', ' . $quote['city'] : $quote['city']); ?></div>
@@ -855,5 +907,23 @@ $waText = urlencode("Hello Creative Touch Interiors, I am viewing quotation " . 
 
     </div>
 </div>
+
+<script>
+// Dynamically adjust hero top spacing to guarantee zero overlap with fixed floating navigation
+function adjustQuoteHeroTopSpacing() {
+    const nav = document.querySelector('.spatial-nav');
+    const hero = document.querySelector('.quote-view-hero');
+    if (nav && hero) {
+        const navRect = nav.getBoundingClientRect();
+        const navBottom = navRect.bottom + 24; // 24px comfortable breathing room
+        if (navBottom > 0) {
+            hero.style.paddingTop = Math.max(navBottom, 120) + 'px';
+        }
+    }
+}
+window.addEventListener('DOMContentLoaded', adjustQuoteHeroTopSpacing);
+window.addEventListener('resize', adjustQuoteHeroTopSpacing);
+window.addEventListener('load', adjustQuoteHeroTopSpacing);
+</script>
 
 <?php include 'includes/footer.php'; ?>

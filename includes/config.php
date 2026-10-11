@@ -29,7 +29,7 @@ define('BASE_URL', (isset($_SERVER['HTTP_HOST']) ? ((!empty($_SERVER['HTTPS']) &
 define('SITE_NAME', 'Creative Touch Interiors');
 define('SITE_EMAIL', 'harshchotaliya@gmail.com');
 define('SITE_PHONE', '+91 9316856961');
-define('APP_VERSION', '2.2.3');
+define('APP_VERSION', '2.3.1');
 
 // Timezone Configuration
 date_default_timezone_set('Asia/Kolkata');
@@ -211,6 +211,94 @@ function validate_csrf() {
         }
     }
     return true;
+}
+
+// Helper function to format and standardize customer-facing budget range labels
+if (!function_exists('formatBudgetDisplay')) {
+    function formatBudgetDisplay($rawBudget) {
+        if (empty($rawBudget) || strtolower(trim($rawBudget)) === 'null' || strtolower(trim($rawBudget)) === 'invalid') {
+            return 'Flexible / Custom';
+        }
+        $raw = trim($rawBudget);
+        $lower = strtolower($raw);
+
+        if ($lower === 'budget_not_sure' || stripos($raw, 'not sure') !== false || stripos($raw, 'not decided') !== false) {
+            return 'Not decided yet';
+        }
+
+        $map = [
+            'budget_1_3'          => '₹1 Lakh – ₹3 Lakhs',
+            '1_3'                 => '₹1 Lakh – ₹3 Lakhs',
+            '₹1l – ₹3l'           => '₹1 Lakh – ₹3 Lakhs',
+            '₹1l - ₹3l'           => '₹1 Lakh – ₹3 Lakhs',
+            '₹1 lakh – ₹3 lakhs'  => '₹1 Lakh – ₹3 Lakhs',
+            '₹1 lakh - ₹3 lakhs'  => '₹1 Lakh – ₹3 Lakhs',
+
+            'budget_3_5'          => '₹3 Lakhs – ₹5 Lakhs',
+            '3_5'                 => '₹3 Lakhs – ₹5 Lakhs',
+            '₹3l – ₹5l'           => '₹3 Lakhs – ₹5 Lakhs',
+            '₹3l - ₹5l'           => '₹3 Lakhs – ₹5 Lakhs',
+            '₹3 lakhs – ₹5 lakhs' => '₹3 Lakhs – ₹5 Lakhs',
+            '₹3 lakhs - ₹5 lakhs' => '₹3 Lakhs – ₹5 Lakhs',
+
+            'budget_5_10'         => '₹5 Lakhs – ₹10 Lakhs',
+            '5_10'                => '₹5 Lakhs – ₹10 Lakhs',
+            '₹5l – ₹10l'          => '₹5 Lakhs – ₹10 Lakhs',
+            '₹5l - ₹10l'          => '₹5 Lakhs – ₹10 Lakhs',
+            '₹5 lakhs – ₹10 lakhs'=> '₹5 Lakhs – ₹10 Lakhs',
+            '₹5 lakhs - ₹10 lakhs'=> '₹5 Lakhs – ₹10 Lakhs',
+
+            'budget_10_25'        => '₹10 Lakhs – ₹25 Lakhs',
+            '10_25'               => '₹10 Lakhs – ₹25 Lakhs',
+            '₹10l – ₹25l'         => '₹10 Lakhs – ₹25 Lakhs',
+            '₹10l - ₹25l'         => '₹10 Lakhs – ₹25 Lakhs',
+            '₹10 lakhs – ₹25 lakhs'=> '₹10 Lakhs – ₹25 Lakhs',
+            '₹10 lakhs - ₹25 lakhs'=> '₹10 Lakhs – ₹25 Lakhs',
+
+            'budget_25_50'        => '₹25 Lakhs – ₹50 Lakhs',
+            '25_50'               => '₹25 Lakhs – ₹50 Lakhs',
+            '₹25l – ₹50l'         => '₹25 Lakhs – ₹50 Lakhs',
+            '₹25l - ₹50l'         => '₹25 Lakhs – ₹50 Lakhs',
+            '₹25 lakhs – ₹50 lakhs'=> '₹25 Lakhs – ₹50 Lakhs',
+            '₹25 lakhs - ₹50 lakhs'=> '₹25 Lakhs – ₹50 Lakhs',
+
+            'budget_50_100'       => '₹50 Lakhs – ₹1 Crore',
+            '50_100'              => '₹50 Lakhs – ₹1 Crore',
+            '₹50l – ₹1cr'         => '₹50 Lakhs – ₹1 Crore',
+            '₹50l - ₹1cr'         => '₹50 Lakhs – ₹1 Crore',
+            '₹50 lakhs – ₹1 crore'=> '₹50 Lakhs – ₹1 Crore',
+            '₹50 lakhs - ₹1 crore'=> '₹50 Lakhs – ₹1 Crore',
+
+            'budget_100_plus'     => '₹1 Crore+',
+            '100_plus'            => '₹1 Crore+',
+            '₹1cr+'               => '₹1 Crore+',
+            '₹1 crore+'           => '₹1 Crore+',
+            '₹1 crore+ (bespoke unlimited)' => '₹1 Crore+'
+        ];
+
+        return $map[$lower] ?? ($map[$raw] ?? $raw);
+    }
+}
+
+// Helper function to format and standardize customer-facing package/material tier labels
+if (!function_exists('formatPackageTierDisplay')) {
+    function formatPackageTierDisplay($rawTier) {
+        if (empty($rawTier)) {
+            return 'Standard Luxury';
+        }
+        $raw = trim((string)$rawTier);
+        $lower = strtolower($raw);
+        $map = [
+            'basic'             => 'Standard Luxury',
+            'standard'          => 'Standard Luxury',
+            'standard luxury'   => 'Standard Luxury',
+            'premium'           => 'Signature Premium',
+            'signature premium' => 'Signature Premium',
+            'luxury'            => 'Ultra Palatial',
+            'ultra palatial'    => 'Ultra Palatial'
+        ];
+        return $map[$lower] ?? ucwords(str_replace('_', ' ', $raw));
+    }
 }
 
 // Helper function to resolve team member photo with automatic extension matching and cache-busting

@@ -1892,6 +1892,13 @@ body.cursor-view .spatial-cursor-ring::after {
     background: #10b981;
     border-color: #10b981;
     color: #ffffff;
+    font-size: 0 !important;
+}
+
+.spatial-wizard-step-node.completed .spatial-wizard-step-circle::after {
+    content: '✓';
+    font-size: 0.88rem;
+    font-weight: 800;
 }
 
 .spatial-wizard-step-label {
@@ -2004,6 +2011,205 @@ body.cursor-view .spatial-cursor-ring::after {
     border-color: var(--color-bronze);
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
     color: var(--color-bronze-dark);
+}
+
+/* Material Tier Supporting Badges (v2.3.0) */
+.tier-badge {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.22rem 0.55rem;
+    border-radius: 9999px;
+    line-height: 1;
+}
+.tier-badge-value {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+.tier-badge-popular {
+    background: #0057FF;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 87, 255, 0.28);
+}
+.tier-badge-luxury {
+    background: #0f172a;
+    color: #f8fafc;
+}
+
+/* Visual Budget Card Grid (v2.3.0) */
+.spatial-budget-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.85rem;
+    margin-bottom: 1.25rem;
+}
+@media (max-width: 991px) {
+    .spatial-budget-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+@media (max-width: 640px) {
+    .spatial-budget-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.65rem;
+    }
+}
+
+.spatial-budget-card {
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: var(--radius-md, 12px);
+    padding: 1.15rem 0.85rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    color: #1e293b;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 72px;
+    user-select: none;
+    outline: none;
+}
+.spatial-budget-card:focus-visible {
+    outline: 2px solid #0057FF;
+    outline-offset: 2px;
+}
+.spatial-budget-card:hover {
+    border-color: #0057FF;
+    background: #eff6ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 87, 255, 0.08);
+}
+.spatial-budget-card.selected {
+    background: #eff6ff;
+    border-color: #0057FF;
+    box-shadow: 0 0 0 2px rgba(0, 87, 255, 0.25), 0 4px 12px rgba(0, 87, 255, 0.12);
+    color: #0057FF;
+}
+.spatial-budget-card .budget-card-amount {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+    display: block;
+    line-height: 1.25;
+}
+.spatial-budget-card.selected .budget-card-amount {
+    color: #0057FF;
+}
+.spatial-budget-card .budget-card-check {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #0057FF;
+    color: #fff;
+    font-size: 10px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+}
+.spatial-budget-card.selected .budget-card-check {
+    display: flex;
+}
+.spatial-budget-card.is-not-sure .budget-card-amount {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #475569;
+}
+.spatial-budget-card.is-not-sure.selected .budget-card-amount {
+    color: #0057FF;
+}
+
+/* Smart Recommendation Pill (v2.3.0) */
+.spatial-budget-recommendation {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: var(--radius-md, 10px);
+    padding: 0.75rem 1.15rem;
+    margin-bottom: 1.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.86rem;
+    color: #1e40af;
+    transition: all 0.25s ease;
+}
+.spatial-budget-recommendation.notice-mode {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #475569;
+}
+.recommendation-badge {
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.recommendation-highlight {
+    font-weight: 800;
+    color: #0057FF;
+}
+
+/* Live Design Preference Summary (v2.3.0) */
+.spatial-preference-summary {
+    background: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: var(--radius-lg, 14px);
+    padding: 1.25rem 1.5rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+}
+.preference-summary-header {
+    font-size: 0.74rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #0057FF;
+    margin-bottom: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+.preference-summary-body {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+@media (max-width: 640px) {
+    .preference-summary-body {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+}
+.preference-summary-item .pref-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+}
+.preference-summary-item .pref-value {
+    color: #0f172a;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+#pref_summary_budget {
+    color: #0057FF;
 }
 
 /* Wizard Navigation Footer */

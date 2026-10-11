@@ -18,8 +18,44 @@ Creative Touch Interiors adheres to Semantic Versioning (`MAJOR.MINOR.PATCH`):
 
 ## Release History
 
-### [v2.2.3] — Room Dimension Calculator UX Polish
+### [v2.3.1] — Quotation PDF Visual & Brand System Alignment
 **Status:** Current Stable Release
+
+#### Summary
+Delivers a comprehensive visual redesign of the quotation PDF docket (`quote_pdf.php`), bringing it into complete alignment with the Creative Touch Interiors website visual identity and design system (#0057FF primary brand palette, #F8F7F4 ivory document backdrop, modern rounded cards, clean typography, and print-ready aesthetics).
+
+#### Key Features & Improvements
+- **Website-Aligned Visual Identity**: Full aesthetic transition from traditional corporate formatting to Creative Touch Interiors' luxury architectural identity.
+- **Brand Palette & Emblem**: Native inclusion of primary `#0057FF` accents, architectural diamond emblems, and modern sans-serif typography (`Plus Jakarta Sans` / `Inter`).
+- **Modern Card-Based Architecture**: Redesigned Client Details and Project Parameters into dual rounded white cards with soft blue borders and status pills.
+- **Executive Quotation Summary**: Polished financial breakdown card featuring a high-impact `#0057FF` Grand Investment Total highlight banner.
+- **Scope Em Dash & Entity Fix**: Corrected HTML entity handling so project scopes render clean UTF-8 em dashes (e.g., `Residential — Villa / Independent House`) without raw `&mdash;` tokens.
+- **Canonical Package Tier Labels**: Standardized customer-facing material tier labels (`Standard Luxury`, `Signature Premium`, `Ultra Palatial`) instead of internal technical identifiers.
+- **Turnkey Milestones & Signatures**: Clean modern 4-stage turnkey payment schedule and dual architectural/client signature verification blocks.
+- **Print & A4 Optimization**: Zero-overflow A4 print styling, solid white surfaces, clean borders, and non-blocking print styles.
+
+---
+
+### [v2.3.0] — Smart Budget & Design Preferences
+**Status:** Previous Release
+
+#### Summary
+Upgrades Stage 04 of the public Get a Quote flow (`consultation.php`). Expands budget exploration starting from ₹1 Lakh across eight standard visual cards, adds dedicated handling for undecided clients ("I'm Not Sure Yet"), provides dynamic budget-based finish recommendations without forcing choices, implements a live design preference summary, and connects selected preferences seamlessly to Stage 06 Review and quote dockets.
+
+#### Key Features & Improvements
+- **Expanded Budget Accessibility**: Lowered minimum budget bracket from ₹10 Lakhs down to ₹1 Lakh, supporting compact projects and broad client profiles.
+- **Eight Selectable Budget Cards**: `₹1L – ₹3L`, `₹3L – ₹5L`, `₹5L – ₹10L`, `₹10L – ₹25L`, `₹25L – ₹50L`, `₹50L – ₹1Cr`, `₹1Cr+`, and `"I'm Not Sure Yet"`.
+- **"I'm Not Sure Yet" State**: Stores distinct database value without assigning an artificial ₹0 amount, providing friendly consultation reassurance.
+- **Visual Responsive Card Grid**: Replaced standard select box with a 4-column desktop / 2-column mobile card grid featuring `#0057FF` brand styling and checkmarks.
+- **Smart Material-Tier Guidance**: Contextually suggests harmonious finish tiers (`Standard Luxury`, `Signature Premium`, or `Ultra Palatial`) dynamically without locking or overriding client selection.
+- **Live Design Preference Summary**: Displays real-time updates for Material Tier, Architectural Style, and Estimated Budget as selections change.
+- **Review Stage Synchronization**: Carries user selections forward into Stage 06 Review, displaying `"Not decided yet"` when the budget is undecided.
+- **Server-Side Validation**: Whitelist validation secures submitted budget ranges while maintaining complete backward compatibility with historical submissions.
+
+---
+
+### [v2.2.3] — Room Dimension Calculator UX Polish
+**Status:** Previous Release
 
 #### Summary
 Polishes the Room Dimension Calculator in the public quotation estimation wizard (`consultation.php`). Enhances the room calculation flow, adds a dynamic Area Summary with live breakdown, introduces a dynamic Apply button (e.g., `APPLY 420 SQ.FT →`), preserves manual override behavior with contextual status indicators, improves client- and server-side dimension validation, supports decimal dimensions, resolves a duplicate plus icon display bug, and eliminates sticky header overlap clipping.

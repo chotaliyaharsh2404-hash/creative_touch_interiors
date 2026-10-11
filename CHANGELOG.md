@@ -9,6 +9,57 @@ The project follows [Semantic Versioning](https://semver.org/):
 
 ---
 
+## [v2.3.1] — Quotation PDF Visual & Brand System Alignment
+
+Patch release delivering a comprehensive visual redesign of the quotation PDF docket (`quote_pdf.php`), seamlessly aligning it with Creative Touch Interiors' primary `#0057FF` brand system and ivory `#F8F7F4` architectural aesthetic.
+
+### Added
+- **Creative Touch Interiors Website-Aligned Quotation PDF Design**: Fully transformed the quotation docket to reflect the studio's contemporary architectural identity.
+- **Blue #0057FF Brand System**: Integrated brand `#0057FF` accents, architectural diamond emblems, and modern typography (`Plus Jakarta Sans` / `Inter`).
+- **Ivory #F8F7F4 Document Styling**: Applied `#F8F7F4` page backdrop with clean, print-friendly white surface cards and subtle blue borders.
+- **Modern Card-Based Information Sections**: Redesigned Client Details and Project Parameters into dual rounded glass-inspired cards.
+- **Improved Quotation Summary Presentation**: Designed an executive financial breakdown card featuring a prominent `#0057FF` Grand Investment Total highlight.
+- **Brand-Consistent Tables and Status Badges**: Upgraded Room Schedule and Itemized Services tables with `#0057FF` headers and soft status pills.
+
+### Fixed
+- **Raw `&mdash;` Entity Display**: Fixed entity escaping so project scopes render clean UTF-8 em dashes (e.g., `Residential — Villa / Independent House`) without raw HTML entities.
+- **Package Tier Display Mapping**: Replaced raw internal technical identifiers (e.g., `basic (1.00x)`) with canonical customer-friendly labels (`Standard Luxury`, `Signature Premium`, `Ultra Palatial`).
+- **Inconsistent Visual Identity**: Eliminated legacy serif fonts (`Playfair Display`), brown/bronze accents (`#8B7355`), and heavy black tables in favor of modern brand-consistent elements.
+
+### Preserved
+- **Quotation Calculations & Math**: All base calculations, service fees, package multipliers, promotional discounts, GST, and final investment totals remain 100% intact.
+- **Estimated Budget Integration**: Preserved customer-selected Estimated Budget across all 8 tiers and historical quotes.
+- **Admin Workflow & Security**: Admin Quotes, Quote Details, RBAC, session guards, and CSRF protections remain unchanged.
+
+---
+
+## [v2.3.0] — Smart Budget & Design Preferences
+
+Minor feature release upgrading Stage 04 of the public Get a Quote flow (`consultation.php`). Enhances budget exploration starting from ₹1 Lakh, introduces selectable visual budget cards, dynamic budget-to-finish guidance, a live design preference summary, and seamless synchronization into Stage 06 Review and executive proposal dockets.
+
+### Added & New Features
+- **Budget Window Starting from ₹1 Lakh**: Expanded client accessibility by establishing standard budget tiers starting from ₹1 Lakh rather than the previous ₹10 Lakhs threshold.
+- **Eight Visual Budget Cards**: Added standard selectable budget cards: `₹1L – ₹3L`, `₹3L – ₹5L`, `₹5L – ₹10L`, `₹10L – ₹25L`, `₹25L – ₹50L`, `₹50L – ₹1Cr`, `₹1Cr+`, and `"I'm Not Sure Yet"`.
+- **"I'm Not Sure Yet" Option**: Added first-class handling for undecided clients without forcing a selection, avoiding artificial ₹0 entries, and rendering supportive consultation guidance.
+- **Visual Glassmorphic Budget Card Grid**: Built a multi-column responsive selector utilizing brand `#0057FF` active outlines, glassmorphic card surfaces, and SVG checkmark confirmations.
+- **Smart Material-Tier Guidance**: Added real-time non-intrusive recommendation banner linking selected budget range to harmonious finish tiers (`Standard Luxury`, `Signature Premium`, or `Ultra Palatial`) without ever forcing or overwriting user choices.
+- **Live Design Preference Summary**: Implemented a compact live preference card at the base of Stage 04 displaying Material Tier, Architectural Style, and Estimated Budget in real time.
+- **Review Stage Synchronization**: Connected selected preferences directly into the Stage 06 Review card (`#rev_pkg`, `#rev_style`, `#rev_budget`), displaying `"Not decided yet"` when the client is undecided.
+
+### Changed & Improved
+- **Updated Stage 04 Title & Subtitle**: Renamed header to *"Material & Design Preferences"* with subtitle *"Choose your preferred finish level, design style, and budget range."* while keeping the `STAGE 04` eyebrow intact.
+- **Refined Material Tier Presentation**: Streamlined tier descriptions removing technical internal jargon ("material multiplier", etc.) and added supporting badges: `Great Value` (Standard Luxury), `Most Popular` (Signature Premium), and `Luxury` (Ultra Palatial).
+- **Customer-Friendly Budget Labeling**: Changed *"Budget Window"* to *"Estimated Budget Range"* with explanatory helper text: *"This helps us recommend suitable materials and design solutions."*
+- **Quotation PDF Estimated Budget Display**: Updated formal quotation PDF generator (`quote_pdf.php`) to display the customer's selected Estimated Budget in the *Project Parameters* section (`Scope` &rarr; `Design Style` &rarr; `Package Tier` &rarr; `Estimated Budget` &rarr; `Status`), rendering canonical customer-friendly labels without modifying quotation math or totals.
+- **Quotation Calculation & Display Synchronization**: Audited and synchronized the quotation calculation breakdown across `quote_details.php`, `admin/quote_details.php`, and `quote_pdf.php`. Added display for studio promotional discounts, package multiplier adjustments, and standard 18% GST calculation matching the authoritative `includes/quote_engine.php` logic.
+- **Estimated Budget Integration in Project Specifications**: Added `Estimated Budget` spec tile in `quote_details.php` and admin views using canonical `formatBudgetDisplay()` with complete backward compatibility.
+- **Header Overlap & Viewport Spacing Fix**: Resolved fixed/sticky navigation overlap on the quote hero title ("Residential Proposal") by increasing base hero spacing and introducing an active JavaScript observer to dynamically offset the floating navbar across desktop, tablet, and mobile.
+- **Strict Server-Side Validation**: Enforced authoritative whitelist validation in `consultation.php` for all new budget options and legacy values while rejecting arbitrary inputs.
+- **Full Backward Compatibility**: Historical quotation submissions with previous budget strings remain 100% readable and intact across the client dashboard, admin quotes index, quotation details, and exported quotation PDFs.
+- **Accessibility & Keyboard Navigation**: Full compliance with ARIA radiogroups, radio roles, checked states, and Enter/Space keyboard selection.
+
+---
+
 ## [v2.2.3] — Room Dimension Calculator UX Polish
 
 Patch release improving the Room Dimension Calculator on the public Get a Quote page (`consultation.php`). Enhances calculation workflow, adds dynamic area summary, refines Apply button behavior, adds clear manual override handling, improves validation, and fixes duplicate plus icons and floating header overlap.

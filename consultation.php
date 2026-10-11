@@ -138,7 +138,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // 3. Interior Requirements & Preferences
         $design_style = sanitize($_POST['design_style'] ?? 'Modern Luxury');
         $preferred_theme = sanitize($_POST['preferred_theme'] ?? 'Warm Neutral & Oak');
-        $budget_range = sanitize($_POST['budget_range'] ?? '₹10L – ₹25L');
+        $raw_budget = trim(sanitize($_POST['budget_range'] ?? '₹10L – ₹25L'));
+        $allowed_budgets = [
+            '₹1L – ₹3L',
+            '₹3L – ₹5L',
+            '₹5L – ₹10L',
+            '₹10L – ₹25L',
+            '₹25L – ₹50L',
+            '₹50L – ₹1Cr',
+            '₹1Cr+',
+            "I'm Not Sure Yet",
+            // Technical form keys
+            'budget_1_3',
+            'budget_3_5',
+            'budget_5_10',
+            'budget_10_25',
+            'budget_25_50',
+            'budget_50_100',
+            'budget_100_plus',
+            'budget_not_sure',
+            // Full customer-facing labels & legacy formats
+            '₹1 Lakh – ₹3 Lakhs',
+            '₹3 Lakhs – ₹5 Lakhs',
+            '₹5 Lakhs – ₹10 Lakhs',
+            '₹10 Lakhs – ₹25 Lakhs',
+            '₹25 Lakhs – ₹50 Lakhs',
+            '₹50 Lakhs – ₹1 Crore',
+            '₹1 Crore+',
+            '₹1 Crore+ (Bespoke Unlimited)',
+            "I'm not sure yet",
+            "Not decided yet"
+        ];
+
+        $is_budget_valid = in_array($raw_budget, $allowed_budgets, true);
+        $budget_range = $is_budget_valid ? formatBudgetDisplay($raw_budget) : $raw_budget;
+
         $package_type = sanitize($_POST['package_type'] ?? 'Standard');
         $package_multiplier = getPackageMultiplier($package_type);
 
@@ -168,8 +202,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = "Please enter a valid 10-digit mobile number.";
             } elseif (empty($city)) {
                 $error = "Please specify your project city.";
-            } elseif (empty($budget_range)) {
-                $error = "Please select an estimated budget range.";
+            } elseif (!$is_budget_valid || empty($raw_budget)) {
+                $error = "Please select a valid estimated budget range.";
             }
         }
 
@@ -393,7 +427,7 @@ include 'includes/header.php';
                             <div><strong style="color:#334155;">Carpet Area:</strong> <span style="color:#0f172a; font-weight:600;"><?php echo number_format($success_quote['approx_area']); ?> sq.ft</span></div>
                             <div><strong style="color:#334155;">Package Tier:</strong> <span style="color:#0f172a; font-weight:600;"><?php echo htmlspecialchars($success_quote['package_type']); ?></span></div>
                             <div><strong style="color:#334155;">Itemized Services:</strong> <span style="color:#0f172a; font-weight:600;"><?php echo $success_quote['services_count']; ?> services</span></div>
-                            <div><strong style="color:#334155;">Budget Window:</strong> <span style="color:#0f172a; font-weight:600;"><?php echo htmlspecialchars($success_quote['budget_range']); ?></span></div>
+                            <div><strong style="color:#334155;">Estimated Budget:</strong> <span style="color:#0f172a; font-weight:600;"><?php echo ($success_quote['budget_range'] === "I'm Not Sure Yet") ? 'Not decided yet' : htmlspecialchars($success_quote['budget_range']); ?></span></div>
                         </div>
 
                         <?php if ($success_quote['estimated_total'] > 0): ?>
@@ -741,51 +775,118 @@ include 'includes/header.php';
                             </div>
                         </div>
 
-                        <!-- STEP 4: Budget & Requirements -->
+                        <!-- STEP 4: Material & Design Preferences (v2.3.0) -->
                         <div class="spatial-wizard-pane" id="wizard-pane-4">
                             <span class="spatial-section-eyebrow" style="color: #2563eb; font-weight: 700; text-transform: uppercase; font-size: 0.78rem; letter-spacing: 0.12em; display: inline-block; margin-bottom: 0.35rem;">Stage 04</span>
-                            <h3 style="font-size: 1.75rem; color: #0f172a; margin-bottom: 0.5rem; font-weight: 800;">Material Tier &amp; Aesthetic Preferences</h3>
+                            <h3 style="font-size: 1.75rem; color: #0f172a; margin-bottom: 0.5rem; font-weight: 800;">Material &amp; Design Preferences</h3>
                             <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 2rem;">
-                                Select design tier and budget range to calibrate material multipliers.
+                                Choose your preferred finish level, design style, and budget range.
                             </p>
 
-                            <div class="spatial-choice-grid" style="margin-bottom: 2rem;">
-                                <div class="spatial-choice-card selected" data-choice-group="pkg_type">
-                                    <input type="radio" name="package_type" value="Standard" checked style="display:none;">
-                                    <h4 style="color:#0f172a; margin-bottom:0.25rem; font-weight: 700;">Standard Luxury</h4>
+                            <?php
+                            $selected_pkg = $_POST['package_type'] ?? 'Standard';
+                            $selected_style = $_POST['design_style'] ?? 'Modern Luxury';
+                            $selected_budget = $_POST['budget_range'] ?? '₹10L – ₹25L';
+                            $budget_options = [
+                                '₹1L – ₹3L',
+                                '₹3L – ₹5L',
+                                '₹5L – ₹10L',
+                                '₹10L – ₹25L',
+                                '₹25L – ₹50L',
+                                '₹50L – ₹1Cr',
+                                '₹1Cr+',
+                                "I'm Not Sure Yet"
+                            ];
+                            ?>
+
+                            <!-- Material Tiers Selection -->
+                            <div class="spatial-choice-grid" style="margin-bottom: 2rem;" role="radiogroup" aria-label="Material Tier Selection">
+                                <div class="spatial-choice-card <?php echo ($selected_pkg === 'Standard') ? 'selected' : ''; ?>" data-choice-group="pkg_type" role="radio" tabindex="0" aria-checked="<?php echo ($selected_pkg === 'Standard') ? 'true' : 'false'; ?>" aria-label="Standard Luxury - Great Value">
+                                    <span class="tier-badge tier-badge-value">Great Value</span>
+                                    <input type="radio" name="package_type" value="Standard" <?php echo ($selected_pkg === 'Standard') ? 'checked' : ''; ?> style="display:none;">
+                                    <h4 style="color:#0f172a; margin-bottom:0.25rem; font-weight: 700; margin-top: 0.4rem;">Standard Luxury</h4>
                                     <p style="font-size:0.8rem; color:#64748b;">High-grade laminates, premium hardware &amp; ambient LED layers</p>
                                 </div>
-                                <div class="spatial-choice-card" data-choice-group="pkg_type">
-                                    <input type="radio" name="package_type" value="Premium" style="display:none;">
-                                    <h4 style="color:#0f172a; margin-bottom:0.25rem; font-weight: 700;">Signature Premium</h4>
-                                    <p style="font-size:0.8rem; color:#64748b;">Natural veneers, German Blum fittings &amp; fluted acoustic panels</p>
+                                <div class="spatial-choice-card <?php echo ($selected_pkg === 'Premium') ? 'selected' : ''; ?>" data-choice-group="pkg_type" role="radio" tabindex="0" aria-checked="<?php echo ($selected_pkg === 'Premium') ? 'true' : 'false'; ?>" aria-label="Signature Premium - Most Popular">
+                                    <span class="tier-badge tier-badge-popular">Most Popular</span>
+                                    <input type="radio" name="package_type" value="Premium" <?php echo ($selected_pkg === 'Premium') ? 'checked' : ''; ?> style="display:none;">
+                                    <h4 style="color:#0f172a; margin-bottom:0.25rem; font-weight: 700; margin-top: 0.4rem;">Signature Premium</h4>
+                                    <p style="font-size:0.8rem; color:#64748b;">Natural veneers, premium fittings &amp; fluted acoustic panels</p>
                                 </div>
-                                <div class="spatial-choice-card" data-choice-group="pkg_type">
-                                    <input type="radio" name="package_type" value="Luxury" style="display:none;">
-                                    <h4 style="color:#0f172a; margin-bottom:0.25rem; font-weight: 700;">Ultra Palatial</h4>
-                                    <p style="font-size:0.8rem; color:#64748b;">Italian marble, solid CP teakwood &amp; home automation integration</p>
+                                <div class="spatial-choice-card <?php echo ($selected_pkg === 'Luxury') ? 'selected' : ''; ?>" data-choice-group="pkg_type" role="radio" tabindex="0" aria-checked="<?php echo ($selected_pkg === 'Luxury') ? 'true' : 'false'; ?>" aria-label="Ultra Palatial - Luxury">
+                                    <span class="tier-badge tier-badge-luxury">Luxury</span>
+                                    <input type="radio" name="package_type" value="Luxury" <?php echo ($selected_pkg === 'Luxury') ? 'checked' : ''; ?> style="display:none;">
+                                    <h4 style="color:#0f172a; margin-bottom:0.25rem; font-weight: 700; margin-top: 0.4rem;">Ultra Palatial</h4>
+                                    <p style="font-size:0.8rem; color:#64748b;">Italian marble, solid CP teakwood &amp; smart-home integration</p>
                                 </div>
                             </div>
 
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                                <div class="spatial-form-group">
-                                    <label class="spatial-form-label" for="design_style">Architectural Style</label>
-                                    <select id="design_style" name="design_style" class="spatial-form-control">
-                                        <option value="Modern Luxury">Modern Luxury</option>
-                                        <option value="Minimalist Contemporary">Minimalist Contemporary</option>
-                                        <option value="Scandinavian Warmth">Scandinavian Warmth</option>
-                                        <option value="Industrial Architectural">Industrial Architectural</option>
-                                        <option value="Classic Heritage Fusion">Classic Heritage Fusion</option>
-                                    </select>
+                            <!-- Architectural Style Dropdown -->
+                            <div class="spatial-form-group" style="margin-bottom: 2rem;">
+                                <label class="spatial-form-label" for="design_style">Architectural Style</label>
+                                <select id="design_style" name="design_style" class="spatial-form-control" style="max-width: 480px;">
+                                    <option value="Modern Luxury" <?php echo ($selected_style === 'Modern Luxury') ? 'selected' : ''; ?>>Modern Luxury</option>
+                                    <option value="Minimalist Contemporary" <?php echo ($selected_style === 'Minimalist Contemporary') ? 'selected' : ''; ?>>Minimalist Contemporary</option>
+                                    <option value="Scandinavian Warmth" <?php echo ($selected_style === 'Scandinavian Warmth') ? 'selected' : ''; ?>>Scandinavian Warmth</option>
+                                    <option value="Industrial Architectural" <?php echo ($selected_style === 'Industrial Architectural') ? 'selected' : ''; ?>>Industrial Architectural</option>
+                                    <option value="Classic Heritage Fusion" <?php echo ($selected_style === 'Classic Heritage Fusion') ? 'selected' : ''; ?>>Classic Heritage Fusion</option>
+                                </select>
+                            </div>
+
+                            <!-- Estimated Budget Range Visual Selection -->
+                            <div class="spatial-form-group" style="margin-bottom: 1.25rem;">
+                                <label class="spatial-form-label" style="display: block; margin-bottom: 0.25rem;">
+                                    Estimated Budget Range <span class="req">*</span>
+                                </label>
+                                <span style="font-size: 0.82rem; color: #64748b; display: block; margin-bottom: 0.85rem;">
+                                    This helps us recommend suitable materials and design solutions.
+                                </span>
+
+                                <div class="spatial-budget-grid" role="radiogroup" aria-label="Estimated Budget Range">
+                                    <?php foreach ($budget_options as $bOption): 
+                                        $isBSelected = ($selected_budget === $bOption);
+                                        $isNotSure = ($bOption === "I'm Not Sure Yet");
+                                    ?>
+                                        <div class="spatial-budget-card <?php echo $isBSelected ? 'selected' : ''; ?> <?php echo $isNotSure ? 'is-not-sure' : ''; ?>" 
+                                             data-choice-group="budget_range" 
+                                             data-budget="<?php echo htmlspecialchars($bOption); ?>"
+                                             role="radio" 
+                                             tabindex="0" 
+                                             aria-checked="<?php echo $isBSelected ? 'true' : 'false'; ?>"
+                                             aria-label="Budget range: <?php echo htmlspecialchars($bOption); ?>">
+                                            <input type="radio" name="budget_range" value="<?php echo htmlspecialchars($bOption); ?>" <?php echo $isBSelected ? 'checked' : ''; ?> required style="display:none;">
+                                            <span class="budget-card-amount"><?php echo htmlspecialchars($bOption); ?></span>
+                                            <span class="budget-card-check" aria-hidden="true">✓</span>
+                                        </div>
+                                    <?php endforeach; ?>
                                 </div>
-                                <div class="spatial-form-group">
-                                    <label class="spatial-form-label" for="budget_range">Budget Window <span class="req">*</span></label>
-                                    <select id="budget_range" name="budget_range" class="spatial-form-control" required>
-                                        <option value="₹10L – ₹25L">₹10 Lakhs – ₹25 Lakhs</option>
-                                        <option value="₹25L – ₹50L" selected>₹25 Lakhs – ₹50 Lakhs</option>
-                                        <option value="₹50L – ₹1Cr">₹50 Lakhs – ₹1 Crore</option>
-                                        <option value="₹1Cr+">₹1 Crore+ (Bespoke Unlimited)</option>
-                                    </select>
+                            </div>
+
+                            <!-- Dynamic Material Recommendation Box -->
+                            <div id="budget_recommendation_box" class="spatial-budget-recommendation" role="status" aria-live="polite">
+                                <span class="recommendation-badge">⭐ Recommended for your budget:</span>
+                                <strong id="budget_recommendation_text" class="recommendation-highlight">Signature Premium</strong>
+                            </div>
+
+                            <!-- Live Design Preference Summary -->
+                            <div id="stage4_preference_summary" class="spatial-preference-summary" aria-label="Your Design Preferences Summary">
+                                <div class="preference-summary-header">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    YOUR DESIGN PREFERENCES
+                                </div>
+                                <div class="preference-summary-body">
+                                    <div class="preference-summary-item">
+                                        <span class="pref-label">Material Tier:</span>
+                                        <strong id="pref_summary_tier" class="pref-value">Standard Luxury</strong>
+                                    </div>
+                                    <div class="preference-summary-item">
+                                        <span class="pref-label">Architectural Style:</span>
+                                        <strong id="pref_summary_style" class="pref-value">Modern Luxury</strong>
+                                    </div>
+                                    <div class="preference-summary-item">
+                                        <span class="pref-label">Estimated Budget:</span>
+                                        <strong id="pref_summary_budget" class="pref-value">₹10L – ₹25L</strong>
+                                    </div>
                                 </div>
                             </div>
 
@@ -844,6 +945,9 @@ include 'includes/header.php';
                                     <div><span style="color:#64748b;">Email:</span> <strong style="color:#0f172a;" id="rev_email">--</strong></div>
                                     <div><span style="color:#64748b;">Project Scope:</span> <strong style="color:#0f172a;" id="rev_type">--</strong></div>
                                     <div><span style="color:#64748b;">Specified Area:</span> <strong style="color:#0f172a;" id="rev_area">--</strong></div>
+                                    <div><span style="color:#64748b;">Material Tier:</span> <strong style="color:#0f172a;" id="rev_pkg">Standard Luxury</strong></div>
+                                    <div><span style="color:#64748b;">Architectural Style:</span> <strong style="color:#0f172a;" id="rev_style">Modern Luxury</strong></div>
+                                    <div><span style="color:#64748b;">Estimated Budget:</span> <strong style="color:#0f172a;" id="rev_budget">₹10L – ₹25L</strong></div>
                                 </div>
                             </div>
 
@@ -1036,6 +1140,52 @@ include 'includes/header.php';
                     const propTypeSelect = document.getElementById('property_type');
                     const propVal = propTypeSelect ? propTypeSelect.value : '';
                     document.getElementById('rev_type').textContent = projTypeInp.value + (propVal ? ' (' + propVal + ')' : '');
+                }
+
+                const pkgTypeInp = document.querySelector('input[name="package_type"]:checked');
+                const designStyleSelect = document.getElementById('design_style');
+                const budgetRangeInp = document.querySelector('input[name="budget_range"]:checked');
+
+                if (pkgTypeInp && document.getElementById('rev_pkg')) {
+                    const tierMap = {
+                        'Standard': 'Standard Luxury',
+                        'Premium': 'Signature Premium',
+                        'Luxury': 'Ultra Palatial'
+                    };
+                    document.getElementById('rev_pkg').textContent = tierMap[pkgTypeInp.value] || pkgTypeInp.value;
+                }
+                if (designStyleSelect && document.getElementById('rev_style')) {
+                    document.getElementById('rev_style').textContent = designStyleSelect.value || 'Modern Luxury';
+                }
+                if (budgetRangeInp && document.getElementById('rev_budget')) {
+                    const bVal = budgetRangeInp.value;
+                    const bMap = {
+                        'budget_1_3': '₹1 Lakh – ₹3 Lakhs',
+                        '₹1L – ₹3L': '₹1 Lakh – ₹3 Lakhs',
+                        '₹1 Lakh – ₹3 Lakhs': '₹1 Lakh – ₹3 Lakhs',
+                        'budget_3_5': '₹3 Lakhs – ₹5 Lakhs',
+                        '₹3L – ₹5L': '₹3 Lakhs – ₹5 Lakhs',
+                        '₹3 Lakhs – ₹5 Lakhs': '₹3 Lakhs – ₹5 Lakhs',
+                        'budget_5_10': '₹5 Lakhs – ₹10 Lakhs',
+                        '₹5L – ₹10L': '₹5 Lakhs – ₹10 Lakhs',
+                        '₹5 Lakhs – ₹10 Lakhs': '₹5 Lakhs – ₹10 Lakhs',
+                        'budget_10_25': '₹10 Lakhs – ₹25 Lakhs',
+                        '₹10L – ₹25L': '₹10 Lakhs – ₹25 Lakhs',
+                        '₹10 Lakhs – ₹25 Lakhs': '₹10 Lakhs – ₹25 Lakhs',
+                        'budget_25_50': '₹25 Lakhs – ₹50 Lakhs',
+                        '₹25L – ₹50L': '₹25 Lakhs – ₹50 Lakhs',
+                        '₹25 Lakhs – ₹50 Lakhs': '₹25 Lakhs – ₹50 Lakhs',
+                        'budget_50_100': '₹50 Lakhs – ₹1 Crore',
+                        '₹50L – ₹1Cr': '₹50 Lakhs – ₹1 Crore',
+                        '₹50 Lakhs – ₹1 Crore': '₹50 Lakhs – ₹1 Crore',
+                        'budget_100_plus': '₹1 Crore+',
+                        '₹1Cr+': '₹1 Crore+',
+                        '₹1 Crore+': '₹1 Crore+',
+                        'budget_not_sure': 'Not decided yet',
+                        "I'm Not Sure Yet": 'Not decided yet',
+                        "Not decided yet": 'Not decided yet'
+                    };
+                    document.getElementById('rev_budget').textContent = bMap[bVal] || bVal;
                 }
             });
         });

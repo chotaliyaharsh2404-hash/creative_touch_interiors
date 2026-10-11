@@ -170,12 +170,12 @@ $page_title = 'Website Content & Configuration — Executive Suite';
                     </div>
                 </div>
 
-                <!-- Professional What's New Section (v2.2.3 Current Release) -->
+                <!-- Professional What's New Section (v2.3.0 Current Release) -->
                 <div style="margin-top: 2rem; border-top: 1px solid #e2e8f0; padding-top: 1.5rem;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
                         <h3 style="font-family: var(--font-heading); font-size: 1.15rem; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
                             <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #0057FF;"></span>
-                            <span>What's New in v2.2.3 &bull; Room Dimension Calculator UX Polish</span>
+                            <span>What's New in v2.3.0 &bull; Smart Budget &amp; Design Preferences</span>
                         </h3>
                         <span style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; background: rgba(0, 87, 255, 0.1); color: #0057FF; padding: 0.25rem 0.75rem; border-radius: 9999px;">
                             Current Release
@@ -186,41 +186,42 @@ $page_title = 'Website Content & Configuration — Executive Suite';
                         <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem;">
                             <div style="font-weight: 800; font-size: 0.8rem; text-transform: uppercase; color: #0057FF; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                <span>CALCULATOR UX POLISH</span>
+                                <span>VISUAL BUDGET SELECTION</span>
                             </div>
                             <ul style="margin: 0; padding-left: 1.1rem; font-size: 0.825rem; color: #334155; line-height: 1.65;">
-                                <li>Single primary bottom action: "+ ADD ANOTHER ROOM"</li>
-                                <li>Eliminated duplicate plus icon markup bug from room buttons</li>
-                                <li>Clean room hierarchy with editable identifiers &amp; sequential defaults</li>
-                                <li>Real-time input validation rejecting non-numeric, 0, or negative inputs</li>
-                                <li>Full decimal dimension support (e.g., 12.5 &times; 10.5 = 131.25 sq.ft)</li>
+                                <li>Budget ranges starting from ₹1 Lakh (starting at ₹1L &ndash; ₹3L)</li>
+                                <li>8 discrete selectable cards: ₹1L&ndash;₹3L up to ₹1Cr+ and "I'm Not Sure Yet"</li>
+                                <li>Touch-friendly responsive grid (4 cols desktop, 2 cols mobile)</li>
+                                <li>Distinct storage for unknown budget without treating as ₹0</li>
+                                <li>Fully keyboard accessible with standard ARIA radio semantics</li>
                             </ul>
                         </div>
 
                         <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem;">
                             <div style="font-weight: 800; font-size: 0.8rem; text-transform: uppercase; color: #059669; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20V10"></path><path d="M18 20V4"></path><path d="M6 20v-4"></path></svg>
-                                <span>AREA SUMMARY &amp; APPLY</span>
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                                <span>SMART RECOMMENDATIONS</span>
                             </div>
                             <ul style="margin: 0; padding-left: 1.1rem; font-size: 0.825rem; color: #334155; line-height: 1.65;">
-                                <li>Dynamic Area Summary with live room-by-room area breakdown</li>
-                                <li>Informative empty state when dimensions are not yet entered</li>
-                                <li>Dynamic Apply button (e.g., "APPLY 420 SQ.FT &rarr;") matching current total</li>
-                                <li>Contextual status badge: "✓ Auto-filled from Room Dimension Calculator"</li>
-                                <li>Clear manual override preservation without automatic overwrites</li>
+                                <li>Dynamic material-tier guidance based on selected budget range</li>
+                                <li>Guidance only &mdash; never forces or overrides visitor's chosen tier</li>
+                                <li>Supportive feedback for "I'm Not Sure Yet" without fake suggestions</li>
+                                <li>Clearer customer-friendly tier descriptions without technical jargon</li>
+                                <li>Supporting tier badges: "Great Value", "Most Popular", and "Luxury"</li>
                             </ul>
                         </div>
 
                         <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem;">
                             <div style="font-weight: 800; font-size: 0.8rem; text-transform: uppercase; color: #7c3aed; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                <span>HEADER CLEARANCE &amp; RESET</span>
+                                <span>LIVE SUMMARY &amp; REVIEW</span>
                             </div>
                             <ul style="margin: 0; padding-left: 1.1rem; font-size: 0.825rem; color: #334155; line-height: 1.65;">
-                                <li>Smart "CLEAR ALL" action with safe reset of dimensions and extra rooms</li>
-                                <li>Fixed floating header overlap ensuring quote instructions remain visible</li>
-                                <li>Full responsive layout adapting seamlessly on mobile, tablet, and desktop</li>
-                                <li>Zero regression across quotation processing and database submissions</li>
+                                <li>Compact live summary of tier, style &amp; estimated budget</li>
+                                <li>Instant real-time updates as visitor modifies selections</li>
+                                <li>Seamless flow into Stage 06 Review stage &amp; authoritative docket</li>
+                                <li>Displays "Not decided yet" when budget preference is unknown</li>
+                                <li>Full backward compatibility with historical quote submissions</li>
                             </ul>
                         </div>
                     </div>
@@ -244,10 +245,26 @@ $page_title = 'Website Content & Configuration — Executive Suite';
                     <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                         <div style="padding: 0.85rem 1.25rem; background: #ffffff; border: 1px solid #0057FF; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                             <div>
-                                <span style="font-family: monospace; font-weight: 800; color: #0057FF; font-size: 0.95rem;">v2.2.3</span>
-                                <strong style="margin-left: 0.75rem; color: #0f172a; font-size: 0.9rem;">Room Dimension Calculator UX Polish</strong>
+                                <span style="font-family: monospace; font-weight: 800; color: #0057FF; font-size: 0.95rem;">v2.3.1</span>
+                                <strong style="margin-left: 0.75rem; color: #0f172a; font-size: 0.9rem;">Quotation PDF Visual &amp; Brand System Alignment</strong>
                             </div>
                             <span style="background: #0057FF; color: #ffffff; font-size: 0.7rem; font-weight: 800; padding: 0.2rem 0.6rem; border-radius: 9999px;">CURRENT RELEASE</span>
+                        </div>
+
+                        <div style="padding: 0.85rem 1.25rem; background: #F8F7F4; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                            <div>
+                                <span style="font-family: monospace; font-weight: 700; color: #475569; font-size: 0.95rem;">v2.3.0</span>
+                                <strong style="margin-left: 0.75rem; color: #334155; font-size: 0.9rem;">Smart Budget &amp; Design Preferences</strong>
+                            </div>
+                            <span style="color: #64748b; font-size: 0.75rem; font-weight: 600;">Previous Minor Release</span>
+                        </div>
+
+                        <div style="padding: 0.85rem 1.25rem; background: #F8F7F4; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                            <div>
+                                <span style="font-family: monospace; font-weight: 700; color: #475569; font-size: 0.95rem;">v2.2.3</span>
+                                <strong style="margin-left: 0.75rem; color: #334155; font-size: 0.9rem;">Room Dimension Calculator UX Polish</strong>
+                            </div>
+                            <span style="color: #64748b; font-size: 0.75rem; font-weight: 600;">Previous Minor Release</span>
                         </div>
 
                         <div style="padding: 0.85rem 1.25rem; background: #F8F7F4; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">

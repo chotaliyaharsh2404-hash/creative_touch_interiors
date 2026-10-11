@@ -664,22 +664,159 @@
             });
         });
 
-        // Choice Card Selection
-        wizard.querySelectorAll('.spatial-choice-card').forEach(card => {
-            card.addEventListener('click', function () {
-                const group = this.getAttribute('data-choice-group');
+        // Choice & Budget Card Selection with Full Accessibility (v2.3.0)
+        wizard.querySelectorAll('.spatial-choice-card, .spatial-budget-card').forEach(card => {
+            function activateCard() {
+                const group = card.getAttribute('data-choice-group');
                 if (group) {
-                    wizard.querySelectorAll(`.spatial-choice-card[data-choice-group="${group}"]`).forEach(c => c.classList.remove('selected'));
+                    wizard.querySelectorAll(`[data-choice-group="${group}"]`).forEach(c => {
+                        c.classList.remove('selected');
+                        c.setAttribute('aria-checked', 'false');
+                    });
                 }
-                this.classList.add('selected');
-                const radioOrCheckbox = this.querySelector('input[type="radio"], input[type="checkbox"]');
+                card.classList.add('selected');
+                card.setAttribute('aria-checked', 'true');
+                const radioOrCheckbox = card.querySelector('input[type="radio"], input[type="checkbox"]');
                 if (radioOrCheckbox) {
                     radioOrCheckbox.checked = true;
-                    // Trigger change event for dynamic price calculators
+                    // Trigger change event for dynamic price calculators and preference summary
                     radioOrCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+
+            card.addEventListener('click', activateCard);
+            card.addEventListener('keydown', function (e) {
+                if (e.key === ' ' || e.key === 'Enter' || e.keyCode === 32 || e.keyCode === 13) {
+                    e.preventDefault();
+                    activateCard();
                 }
             });
         });
+
+        // =====================================================================
+        // Stage 04 Smart Budget & Design Preferences Controller (v2.3.0)
+        // =====================================================================
+        const stage4Pane = wizard.querySelector('#wizard-pane-4');
+        if (stage4Pane) {
+            const recommendationBox = stage4Pane.querySelector('#budget_recommendation_box');
+            const prefSummaryTier = stage4Pane.querySelector('#pref_summary_tier');
+            const prefSummaryStyle = stage4Pane.querySelector('#pref_summary_style');
+            const prefSummaryBudget = stage4Pane.querySelector('#pref_summary_budget');
+            const styleSelect = stage4Pane.querySelector('#design_style');
+
+            const tierNames = {
+                'Standard': 'Standard Luxury',
+                'Premium': 'Signature Premium',
+                'Luxury': 'Ultra Palatial'
+            };
+
+            const budgetRecommendations = {
+                '₹1L – ₹3L': { text: 'Standard Luxury', isNotice: false, label: '₹1 Lakh – ₹3 Lakhs' },
+                '₹1 Lakh – ₹3 Lakhs': { text: 'Standard Luxury', isNotice: false, label: '₹1 Lakh – ₹3 Lakhs' },
+                'budget_1_3': { text: 'Standard Luxury', isNotice: false, label: '₹1 Lakh – ₹3 Lakhs' },
+
+                '₹3L – ₹5L': { text: 'Standard Luxury', isNotice: false, label: '₹3 Lakhs – ₹5 Lakhs' },
+                '₹3 Lakhs – ₹5 Lakhs': { text: 'Standard Luxury', isNotice: false, label: '₹3 Lakhs – ₹5 Lakhs' },
+                'budget_3_5': { text: 'Standard Luxury', isNotice: false, label: '₹3 Lakhs – ₹5 Lakhs' },
+
+                '₹5L – ₹10L': { text: 'Standard Luxury / Signature Premium', isNotice: false, label: '₹5 Lakhs – ₹10 Lakhs' },
+                '₹5 Lakhs – ₹10 Lakhs': { text: 'Standard Luxury / Signature Premium', isNotice: false, label: '₹5 Lakhs – ₹10 Lakhs' },
+                'budget_5_10': { text: 'Standard Luxury / Signature Premium', isNotice: false, label: '₹5 Lakhs – ₹10 Lakhs' },
+
+                '₹10L – ₹25L': { text: 'Signature Premium', isNotice: false, label: '₹10 Lakhs – ₹25 Lakhs' },
+                '₹10 Lakhs – ₹25 Lakhs': { text: 'Signature Premium', isNotice: false, label: '₹10 Lakhs – ₹25 Lakhs' },
+                'budget_10_25': { text: 'Signature Premium', isNotice: false, label: '₹10 Lakhs – ₹25 Lakhs' },
+
+                '₹25L – ₹50L': { text: 'Signature Premium', isNotice: false, label: '₹25 Lakhs – ₹50 Lakhs' },
+                '₹25 Lakhs – ₹50 Lakhs': { text: 'Signature Premium', isNotice: false, label: '₹25 Lakhs – ₹50 Lakhs' },
+                'budget_25_50': { text: 'Signature Premium', isNotice: false, label: '₹25 Lakhs – ₹50 Lakhs' },
+
+                '₹50L – ₹1Cr': { text: 'Ultra Palatial', isNotice: false, label: '₹50 Lakhs – ₹1 Crore' },
+                '₹50 Lakhs – ₹1 Crore': { text: 'Ultra Palatial', isNotice: false, label: '₹50 Lakhs – ₹1 Crore' },
+                'budget_50_100': { text: 'Ultra Palatial', isNotice: false, label: '₹50 Lakhs – ₹1 Crore' },
+
+                '₹1Cr+': { text: 'Ultra Palatial', isNotice: false, label: '₹1 Crore+' },
+                '₹1 Crore+': { text: 'Ultra Palatial', isNotice: false, label: '₹1 Crore+' },
+                'budget_100_plus': { text: 'Ultra Palatial', isNotice: false, label: '₹1 Crore+' },
+
+                "I'm Not Sure Yet": {
+                    text: "That's okay — we'll help you determine a suitable budget during your consultation.",
+                    isNotice: true,
+                    label: 'Not decided yet'
+                },
+                'budget_not_sure': {
+                    text: "That's okay — we'll help you determine a suitable budget during your consultation.",
+                    isNotice: true,
+                    label: 'Not decided yet'
+                }
+            };
+
+            function getBudgetDisplayLabel(val) {
+                if (!val) return 'Not decided yet';
+                const rec = budgetRecommendations[val];
+                return rec ? rec.label : val;
+            }
+
+            function updateStage4Preferences() {
+                // 1. Get currently selected material tier
+                const selectedTierRadio = stage4Pane.querySelector('input[name="package_type"]:checked');
+                const tierVal = selectedTierRadio ? selectedTierRadio.value : 'Standard';
+                const tierDisplayName = tierNames[tierVal] || tierVal;
+
+                // 2. Get currently selected architectural style
+                const styleVal = styleSelect ? styleSelect.value : 'Modern Luxury';
+
+                // 3. Get currently selected budget range
+                const selectedBudgetRadio = stage4Pane.querySelector('input[name="budget_range"]:checked');
+                const budgetVal = selectedBudgetRadio ? selectedBudgetRadio.value : '₹10L – ₹25L';
+                const budgetDisplayLabel = getBudgetDisplayLabel(budgetVal);
+
+                // Update Live Preference Summary
+                if (prefSummaryTier) prefSummaryTier.textContent = tierDisplayName;
+                if (prefSummaryStyle) prefSummaryStyle.textContent = styleVal;
+                if (prefSummaryBudget) {
+                    prefSummaryBudget.textContent = budgetDisplayLabel;
+                }
+
+                // Update Recommendation UI
+                if (recommendationBox) {
+                    const rec = budgetRecommendations[budgetVal];
+                    if (rec) {
+                        if (rec.isNotice) {
+                            recommendationBox.className = 'spatial-budget-recommendation notice-mode';
+                            recommendationBox.innerHTML = `<span>${rec.text}</span>`;
+                        } else {
+                            recommendationBox.className = 'spatial-budget-recommendation';
+                            recommendationBox.innerHTML = `<span class="recommendation-badge">⭐ Recommended for your budget:</span> <strong id="budget_recommendation_text" class="recommendation-highlight">${rec.text}</strong>`;
+                        }
+                    }
+                }
+
+                // Synchronize Review Stage (Stage 06) fields
+                const revPkg = wizard.querySelector('#rev_pkg');
+                const revStyle = wizard.querySelector('#rev_style');
+                const revBudget = wizard.querySelector('#rev_budget');
+                if (revPkg) revPkg.textContent = tierDisplayName;
+                if (revStyle) revStyle.textContent = styleVal;
+                if (revBudget) {
+                    revBudget.textContent = budgetDisplayLabel;
+                }
+            }
+
+            // Listeners
+            stage4Pane.querySelectorAll('input[name="package_type"]').forEach(r => {
+                r.addEventListener('change', updateStage4Preferences);
+            });
+            stage4Pane.querySelectorAll('input[name="budget_range"]').forEach(r => {
+                r.addEventListener('change', updateStage4Preferences);
+            });
+            if (styleSelect) {
+                styleSelect.addEventListener('change', updateStage4Preferences);
+            }
+
+            // Initial execution
+            updateStage4Preferences();
+        }
 
         // =====================================================================
         // Multi-Room Dimension Calculator Live Engine (v2.2.3 Polish)

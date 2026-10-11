@@ -323,13 +323,14 @@ if ($quotes_res) {
                             <?php if (!empty($all_quotes)): ?>
                                 <?php foreach ($all_quotes as $q): 
                                     $statusInfo = getQuoteStatusInfo($q['status']);
-                                    $qSearch = strtolower($q['quote_number'] . ' ' . $q['customer_name'] . ' ' . $q['email'] . ' ' . $q['phone'] . ' ' . $q['city'] . ' ' . $q['project_type'] . ' ' . $q['status']);
+                                    $formattedBudget = formatBudgetDisplay($q['budget_range']);
+                                    $qSearch = strtolower($q['quote_number'] . ' ' . $q['customer_name'] . ' ' . $q['email'] . ' ' . $q['phone'] . ' ' . $q['city'] . ' ' . $q['project_type'] . ' ' . $formattedBudget . ' ' . $q['budget_range'] . ' ' . $q['status']);
                                 ?>
                                     <tr class="quote-row" 
                                         data-status="<?php echo htmlspecialchars($q['status']); ?>"
                                         data-search="<?php echo htmlspecialchars($qSearch); ?>"
                                         style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
-                                                                           <!-- Quote ID -->
+                                                                            <!-- Quote ID -->
                                         <td style="padding: 0.75rem 0.85rem; white-space: nowrap; vertical-align: middle;">
                                             <span class="quote-ref-tag" style="font-size: 0.78rem;"><?php echo htmlspecialchars($q['quote_number']); ?></span>
                                             <div style="font-size: 0.725rem; color: #94a3b8; margin-top: 0.2rem;">
@@ -375,7 +376,7 @@ if ($quotes_res) {
                                         <!-- Services & Budget -->
                                         <td style="padding: 0.75rem 0.85rem; vertical-align: middle;">
                                             <div style="font-weight: 700; color: #2563eb; font-size: 0.825rem;">
-                                                <?php echo htmlspecialchars($q['budget_range']); ?>
+                                                <?php echo htmlspecialchars($formattedBudget); ?>
                                             </div>
                                             <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.15rem;">
                                                 <?php if ($q['services_count'] > 0): ?>

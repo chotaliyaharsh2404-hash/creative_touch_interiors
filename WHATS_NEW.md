@@ -1,5 +1,43 @@
 # What's New in Creative Touch Interiors
 
+## Version 2.3.1 — Quotation PDF Visual & Brand System Alignment
+
+This release delivers a comprehensive visual redesign of the quotation PDF docket (`quote_pdf.php`), bringing it into complete alignment with the Creative Touch Interiors website visual identity and design system (#0057FF primary brand palette, #F8F7F4 ivory document backdrop, modern rounded cards, clean typography, and print-ready aesthetics).
+
+### NEW & IMPROVED:
+- **Creative Touch Interiors Website-Aligned Quotation PDF**: Redesigned the quotation proposal docket to mirror the website's clean, modern architectural look and feel.
+- **Brand Palette & Emblem Integration**: Featuring primary `#0057FF` accents, architectural diamond emblems, and modern sans-serif typography (`Plus Jakarta Sans` / `Inter`).
+- **Modern Card-Based Information Sections**: Client Details and Project Parameters rendered in dual rounded white cards with soft blue borders and status pills.
+- **Executive Quotation Summary**: Financial breakdown card with prominent `#0057FF` Grand Investment Total highlight banner.
+- **Clean Scope Rendering**: Corrected HTML entity decoding ensuring project scopes render clean UTF-8 em dashes (e.g., `Residential — Villa / Independent House`) without raw `&mdash;` tokens.
+- **Customer-Facing Package Tiers**: Automatically translates internal identifiers to canonical customer-friendly labels (`Standard Luxury`, `Signature Premium`, `Ultra Palatial`).
+- **Turnkey Milestones & Signatures**: Clean modern 4-stage turnkey payment schedule and dual architectural/client signature verification blocks.
+- **Print-Friendly A4 Layout**: Designed for optimal print and PDF output with zero horizontal overflow and clean page break boundaries.
+
+---
+
+## Version 2.3.0 — Smart Budget & Design Preferences
+
+This feature release significantly upgrades Stage 04 of the public Get a Quote flow (`consultation.php`). It transforms budget selection from a basic dropdown starting at ₹10 Lakhs into an accessible, visual, customer-friendly interface starting from ₹1 Lakh, intelligently interconnected with material finishes and live design preferences while preserving the authoritative `#0057FF`, `#F8F7F4`, and glassmorphism design system.
+
+### NEW:
+- **Budget Ranges Starting from ₹1 Lakh**: Upgraded the budget entry barrier down to ₹1 Lakh, expanding accessibility for diverse spatial scopes.
+- **Eight Discrete Budget Options**: Added `₹1L – ₹3L`, `₹3L – ₹5L`, `₹5L – ₹10L`, `₹10L – ₹25L`, `₹25L – ₹50L`, `₹50L – ₹1Cr`, `₹1Cr+`, and `"I'm Not Sure Yet"` options.
+- **"I'm Not Sure Yet" Preference Handling**: Added dedicated option for undecided visitors, safely stored as a distinct state without treating budget as ₹0 or generating fake quotes.
+- **Visual Budget Selection Interface**: Replaced standard select dropdown with a responsive, glassmorphic card grid featuring brand `#0057FF` active states and checkmark confirmation.
+- **Budget-Based Material-Tier Recommendations**: Dynamic guidance that suggests harmonious finish tiers (e.g. `Standard Luxury`, `Signature Premium`, or `Ultra Palatial`) based on selected budget.
+- **Live Design Preference Summary**: Real-time summary card updating instantaneously as the visitor toggles material tiers, architectural styles, or budget preferences.
+- **Connected Preferences to Final Review**: Seamlessly synchronized selected material tier, architectural style, and estimated budget range into Stage 06 Review and proposal dockets.
+
+### IMPROVED:
+- **Clearer Stage 04 Wording**: Re-titled to "Material & Design Preferences" with the customer-oriented subtitle: *"Choose your preferred finish level, design style, and budget range."*
+- **More Customer-Friendly Budget Selection**: Renamed section to "Estimated Budget Range" with clear helper copy: *"This helps us recommend suitable materials and design solutions."*
+- **Better Responsive Experience**: Multi-column desktop grid smoothly transitions to comfortable 2-column mobile layout with zero horizontal overflow.
+- **Better Relationship Between Budget and Material Tier**: Contextual guidance helps clients discover optimal finishes without restricting or forcing their tier selection.
+- **Accessibility & Keyboard Support**: Full ARIA `role="radiogroup"`, `role="radio"`, `aria-checked`, and Enter/Space keyboard selection support.
+
+---
+
 ## Version 2.2.3 — Room Dimension Calculator UX Polish
 
 This patch release improves the existing Room Dimension Calculator in the Creative Touch Interiors public Get a Quote / quotation form (`consultation.php`). It provides a clearer, cleaner, and more professional calculation workflow while preserving the established primary `#0057FF`, `#F8F7F4`, and glassmorphism design system.

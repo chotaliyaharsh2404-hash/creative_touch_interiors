@@ -424,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const rooms = quoteForm.querySelector('input[name="rooms_count"]')?.value || '1';
             const designStyle = quoteForm.querySelector('select[name="design_style"]')?.value || 'Modern Luxury';
             const theme = quoteForm.querySelector('input[name="preferred_theme"]')?.value || 'Standard';
-            const budget = quoteForm.querySelector('select[name="budget_range"]')?.value || 'Not specified';
+            const budget = quoteForm.querySelector('input[name="budget_range"]:checked')?.value || quoteForm.querySelector('select[name="budget_range"]')?.value || 'Not specified';
             const name = quoteForm.querySelector('input[name="customer_name"]')?.value || '';
             const email = quoteForm.querySelector('input[name="email"]')?.value || '';
             const phone = quoteForm.querySelector('input[name="phone"]')?.value || '';

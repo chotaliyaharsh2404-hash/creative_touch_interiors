@@ -315,7 +315,7 @@ $statusInfo = getQuoteStatusInfo($quote['status']);
                     </a>
                     <div style="display: flex; align-items: center; gap: 0.85rem; margin-top: 0.45rem;">
                         <h1 style="font-family: var(--font-heading); font-size: 1.95rem; color: #0f172a; font-weight: 700; margin: 0;">
-                            Quote <?php echo htmlspecialchars($quote['quote_number']); ?>
+                            Quote <?php echo htmlspecialchars($quote['quote_number']); ?> &bull; <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', $quote['project_type']))); ?> Proposal
                         </h1>
                         <span style="display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.35rem 0.95rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 700; background: <?php echo $statusInfo['bg']; ?>; color: <?php echo $statusInfo['color']; ?>; border: 1px solid <?php echo $statusInfo['border']; ?>;">
                             <span><?php echo $statusInfo['icon']; ?></span>
@@ -447,9 +447,9 @@ $statusInfo = getQuoteStatusInfo($quote['status']);
                                 <div class="info-grid-value" style="color: #0f172a;"><?php echo $quote['rooms_count']; ?> BHK • <?php echo $quote['floors_count']; ?> Floor(s)</div>
                             </div>
                             <div>
-                                <div class="info-grid-label">Budget Range</div>
+                                <div class="info-grid-label">Estimated Budget</div>
                                 <div class="info-grid-value" style="color: #2563eb; font-weight: 700;">
-                                    <?php echo htmlspecialchars($quote['budget_range'] ?: 'Flexible / Custom'); ?>
+                                    <?php echo htmlspecialchars(formatBudgetDisplay($quote['budget_range'])); ?>
                                 </div>
                             </div>
                         </div>
