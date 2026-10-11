@@ -18,8 +18,27 @@ Creative Touch Interiors adheres to Semantic Versioning (`MAJOR.MINOR.PATCH`):
 
 ## Release History
 
-### [v2.2.2] — Project Category Badge UI Polish
+### [v2.2.3] — Room Dimension Calculator UX Polish
 **Status:** Current Stable Release
+
+#### Summary
+Polishes the Room Dimension Calculator in the public quotation estimation wizard (`consultation.php`). Enhances the room calculation flow, adds a dynamic Area Summary with live breakdown, introduces a dynamic Apply button (e.g., `APPLY 420 SQ.FT →`), preserves manual override behavior with contextual status indicators, improves client- and server-side dimension validation, supports decimal dimensions, resolves a duplicate plus icon display bug, and eliminates sticky header overlap clipping.
+
+#### Key Improvements & Polishes
+- **Unified Add Action**: Replaced ambiguous dual room-add buttons with a single primary "+ ADD ANOTHER ROOM" action at the bottom of the list.
+- **Root-Cause Icon Fix**: Removed duplicate literal plus text prefix preceding SVG icons to display a clean single plus icon.
+- **Dynamic Area Summary**: Provides a clear room-by-room breakdown (Room Name ........ X sq.ft) with dynamic total area and empty state support.
+- **Dynamic Apply Area**: Displays real-time total in button label and copies values instantly to the Total Approximate Carpet Area field.
+- **Intelligent Carpet Area Field**: Detects when values are auto-filled from the calculator ("✓ Auto-filled from Room Dimension Calculator") and marks manual overrides ("Manually adjusted") without overwriting user input.
+- **Strict Dimension Validation**: Restricts non-numeric, 0, and negative dimensions with immediate inline feedback while allowing decimals (e.g. 12.5 × 10.5 = 131.25 sq.ft).
+- **Safe Reset Action**: Features a "CLEAR ALL" button resetting rooms and dimensions safely without wiping unrelated quotation fields.
+- **Floating Header Clearance**: Configured scroll margins and navbar offset logic to ensure quotation step headers and instructions are never obscured behind the floating navigation bar.
+- **Responsive Layout**: Designed room rows and summaries to wrap seamlessly on mobile and tablet without horizontal overflow.
+
+---
+
+### [v2.2.2] — Project Category Badge UI Polish
+**Status:** Previous Patch Release
 
 #### Summary
 Replaces the former heavy dark/black project category badges on project cards with a light, translucent glassmorphism pill badge that seamlessly fits the `#0057FF` brand palette and `#F8F7F4` architectural design language. Features `rgba(255, 255, 255, 0.88)` / `rgba(0, 87, 255, 0.08)` backdrop, `1px solid rgba(0, 87, 255, 0.20)` border, `10px` backdrop blur, primary `#0057FF` text, and smooth hover illumination. Tested for high contrast across all project categories and image backgrounds.

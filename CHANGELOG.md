@@ -9,6 +9,30 @@ The project follows [Semantic Versioning](https://semver.org/):
 
 ---
 
+## [v2.2.3] — Room Dimension Calculator UX Polish
+
+Patch release improving the Room Dimension Calculator on the public Get a Quote page (`consultation.php`). Enhances calculation workflow, adds dynamic area summary, refines Apply button behavior, adds clear manual override handling, improves validation, and fixes duplicate plus icons and floating header overlap.
+
+### Improved & Polish
+- **Single Primary Add Room Action**: Simplified room creation to a single primary "+ ADD ANOTHER ROOM" action at the bottom of the calculator, eliminating redundant competing buttons.
+- **Fixed Duplicate Plus Icon**: Resolved the duplicate plus icon display bug caused by literal "+" text preceding SVG plus icons in button markup.
+- **Dynamic Area Summary**: Added an executive Area Summary card presenting real-time room-by-room area breakdown and dynamic grand total.
+- **Dynamic Apply Area Action**: Upgraded the Apply button to display the exact live calculated area (e.g., `APPLY 420 SQ.FT →`) and apply values instantly to the carpet area field without reloading.
+- **Manual Override Preservation**: Preserved independent manual adjustments on the Total Carpet Area field, adding contextual status pills ("✓ Auto-filled from Room Dimension Calculator" vs "Manually adjusted") and preventing automatic overwrites.
+- **Room Dimension Validation**: Added live client-side and server-side validation rejecting non-numeric, 0, or negative dimensions with clean inline error notifications.
+- **Decimal Dimension Support**: Enabled calculation for decimal room dimensions (e.g., 12.5 × 10.5 = 131.25 sq.ft).
+- **Clear All Reset**: Added a dedicated "CLEAR ALL" action visible when dimensions exist, cleanly resetting the calculator without clearing unrelated form fields.
+- **Empty State UX**: Implemented a clean empty state ("No room dimensions added yet. Add a room to calculate your approximate area.") when dimensions are unpopulated.
+- **Floating Header Clearance**: Added scroll margin and dynamic navbar height calculation to ensure quotation step headers and instructions are never obscured behind the floating navigation bar.
+- **Responsive Stacking**: Engineered room dimension grids and summary breakdowns to stack gracefully on tablet and mobile viewports with zero horizontal overflow.
+
+### Compatibility & Regressions
+- **Authoritative Server Validation**: Server-side validation in `includes/quote_engine.php` continues to authoritatively enforce positive numeric dimension constraints.
+- **Quotation Form Integrity**: Full quote submission, turnkey estimation multipliers, PDF docket generation, and database insertions remain completely intact.
+- **Zero Design System Regressions**: Preserved `#0057FF` primary palette, `#F8F7F4` background, glassmorphism cards, and typography.
+
+---
+
 ## [v2.2.2] — Project Category Badge UI Polish
 
 Patch release refining the visual styling of project category badges across project cards to seamlessly align with Creative Touch Interiors' light glassmorphic architectural aesthetic.

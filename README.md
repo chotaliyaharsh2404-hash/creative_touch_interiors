@@ -6,13 +6,23 @@ An enterprise-grade interior design, architectural management, and spatial visua
 
 ## 🚀 Version & Release History
 
-- **Current Stable Version**: **v2.2.2** — *Project Category Badge UI Polish*
+- **Current Stable Version**: **v2.2.3** — *Room Dimension Calculator UX Polish*
+- **Previous Patch Release**: **v2.2.2** — *Project Category Badge UI Polish*
 - **Previous Patch Release**: **v2.2.1** — *Announcement Bell Interaction Fix*
 - **Previous Minor Release**: **v2.2.0** — *Public Announcement & Promotion System*
 - **Changelog**: See [CHANGELOG.md](CHANGELOG.md) for full historical changes.
 - **Release Notes**: See [docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md) for version release summaries and Semantic Versioning rules.
 
-### 🎨 Latest in Version 2.2.2 (Project Category Badge UI Polish)
+### 📐 Latest in Version 2.2.3 (Room Dimension Calculator UX Polish)
+1. **Unified Room-Add Action**: Refactored to a single primary bottom action (`+ ADD ANOTHER ROOM`) and removed redundant competing top buttons.
+2. **Fixed Duplicate Plus Icon**: Resolved the duplicate plus icon markup bug (`+ + ADD ROOM` / `+ + ADD ANOTHER ROOM`) by cleaning up button markup.
+3. **Dynamic Area Summary**: Real-time room breakdown with dashed leaders and dynamic total area sum.
+4. **Interactive Apply Button**: Live dynamic button label (`APPLY 420 SQ.FT →`) instantly synchronizing to the Total Carpet Area input without reloading.
+5. **Intelligent Carpet Area Field**: Added contextual status badges (`✓ Auto-filled from Room Dimension Calculator` vs `Manually adjusted`) ensuring manual overrides remain completely preserved.
+6. **Robust Validation & Decimals**: Rejects non-numeric, 0, or negative dimensions with clean inline errors while fully supporting decimal inputs (e.g., 12.5 × 10.5 = 131.25 sq.ft).
+7. **Clear All & Header Clearance**: Added a safe "CLEAR ALL" action and resolved floating header overlap so quotation form instructions are never covered.
+
+### 🎨 Previous in Version 2.2.2 (Project Category Badge UI Polish)
 1. **Light Glassmorphic Badges**: Replaced heavy dark/black category badges on project cards with sleek, light translucent glassmorphism pills (`rgba(255, 255, 255, 0.88)` / `rgba(0, 87, 255, 0.08)` backdrop, `10px` blur, `999px` radius).
 2. **Brand Typography & Color**: Rendered category tags in signature `#0057FF` with bold weight (`700`) and refined architectural tracking.
 3. **Elevated Visibility**: Engineered for high contrast and readability over both bright and dark architectural project photography.

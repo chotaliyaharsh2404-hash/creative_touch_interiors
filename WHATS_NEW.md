@@ -1,5 +1,24 @@
 # What's New in Creative Touch Interiors
 
+## Version 2.2.3 — Room Dimension Calculator UX Polish
+
+This patch release improves the existing Room Dimension Calculator in the Creative Touch Interiors public Get a Quote / quotation form (`consultation.php`). It provides a clearer, cleaner, and more professional calculation workflow while preserving the established primary `#0057FF`, `#F8F7F4`, and glassmorphism design system.
+
+### IMPROVED:
+- **Cleaner Room Dimension Calculator Workflow**: Established a clear visual hierarchy with one primary "+ ADD ANOTHER ROOM" action at the bottom of the room list.
+- **Clear Dynamic Area Summary**: Introduced a real-time Area Summary displaying room-by-room area breakdown and dynamic grand total.
+- **Improved Apply Area Action**: Enhanced the Apply button to display live calculated values (e.g. `APPLY 420 SQ.FT →`) and seamlessly transfer totals to the main carpet area field without reloading.
+- **Better Connection Between Calculated Area and Carpet Area**: Provided a clear, direct transfer between the dimension calculator and the authoritative carpet area input.
+- **Added Clearer Manual Override Behavior**: Main carpet area displays contextual status ("✓ Auto-filled from Room Dimension Calculator" vs "Manually adjusted") and prevents accidental calculator overwrites when manually edited.
+- **Improved Room Validation**: Added live client-side and server-side validation rejecting non-numeric, 0, or negative dimensions with clear inline error messages.
+- **Decimal Values Support**: Enabled accurate calculation for reasonable decimal dimensions (e.g., 12.5 × 10.5 = 131.25 sq.ft).
+- **Clear All Functionality**: Added a dedicated "CLEAR ALL" action that resets room dimensions and removes extra rooms while safely preserving other quotation form fields.
+- **Fixed Duplicate Room Action Icon**: Eliminated the redundant literal plus prefix from button labels, resolving the "+ + ADD ROOM" / "+ + ADD ANOTHER ROOM" duplicate icon display bug.
+- **Improved Responsive Behavior**: Room dimension fields and summary elements stack cleanly on tablet and mobile viewports with zero horizontal overflow.
+- **Improved Quotation Form Spacing Around Sticky Header**: Added appropriate top clearance and scroll offset ensuring stage headers, instructions, and calculator inputs never sit underneath the floating/sticky header.
+
+---
+
 ## Version 2.2.2 — Project Category Badge UI Polish
 
 This patch release refines the visual styling of project category badges across project cards to seamlessly harmonize with the primary `#0057FF` and `#F8F7F4` glassmorphism architectural design system. The previous heavy dark/black badge styling is replaced with a refined, light translucent glassmorphic pill badge with crisp brand typography.

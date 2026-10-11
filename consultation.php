@@ -584,7 +584,7 @@ include 'includes/header.php';
                             </p>
 
                             <!-- Modern Executive Blue & White Room Dimension Calculator Box -->
-                            <div style="background: #f8fafc; border: 1px solid #bfdbfe; border-radius: var(--radius-xl); padding: 1.75rem; margin-bottom: 2rem; box-shadow: 0 4px 16px rgba(37, 99, 235, 0.05);">
+                            <div class="calculator-card-container" style="background: #f8fafc; border: 1px solid #bfdbfe; border-radius: var(--radius-xl); padding: 1.75rem; margin-bottom: 2rem; box-shadow: 0 4px 16px rgba(37, 99, 235, 0.05);">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
                                     <div style="display: flex; align-items: center; gap: 0.65rem;">
                                         <div style="width: 34px; height: 34px; border-radius: 8px; background: #eff6ff; border: 1px solid #bfdbfe; display: flex; align-items: center; justify-content: center; color: #1d4ed8;">
@@ -592,19 +592,13 @@ include 'includes/header.php';
                                         </div>
                                         <div>
                                             <h4 style="color: #0f172a; margin: 0; font-size: 1.15rem; font-weight: 700;">Room Dimension Calculator</h4>
-                                            <span style="font-size: 0.75rem; color: #64748b;">Live area estimation tool</span>
+                                            <span style="font-size: 0.75rem; color: #64748b;">Calculate your approximate area room by room.</span>
                                         </div>
                                     </div>
                                     <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                                        <button type="button" id="add_room_btn" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 9999px; padding: 0.4rem 0.85rem; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.35rem;" title="Add another room">
-                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                                            <span>+ ADD ROOM</span>
-                                        </button>
-                                        <div style="font-size: 0.9rem; color: #1d4ed8; font-weight: 700; background: #dbeafe; padding: 0.4rem 1rem; border-radius: 9999px; border: 1px solid #bfdbfe; display: inline-flex; align-items: center; gap: 0.35rem;" id="calc_area_display">
-                                            300.00 sq.ft
-                                        </div>
-                                        <button type="button" id="apply_room_area_btn" style="background: #2563eb; color: #ffffff; border: none; border-radius: 9999px; padding: 0.4rem 0.85rem; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.25rem;" title="Copy to Total Carpet Area">
-                                            <span>Apply to Area &darr;</span>
+                                        <button type="button" id="clear_all_rooms_btn" class="calculator-clear-btn" style="background: #ffffff; color: #64748b; border: 1px solid #cbd5e1; border-radius: 9999px; padding: 0.38rem 0.85rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.35rem;" title="Reset calculator to initial state">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                            <span>CLEAR ALL</span>
                                         </button>
                                     </div>
                                 </div>
@@ -613,6 +607,16 @@ include 'includes/header.php';
                                 $renderedRooms = !empty($_POST['rooms']) && is_array($_POST['rooms']) ? array_values($_POST['rooms']) : [
                                     ['name' => 'Living Room', 'length' => 20, 'width' => 15]
                                 ];
+                                $initGrandTotal = 0;
+                                foreach ($renderedRooms as $rI) {
+                                    $len = (float)($rI['length'] ?? 0);
+                                    $wid = (float)($rI['width'] ?? 0);
+                                    if ($len > 0 && $wid > 0) {
+                                        $initGrandTotal += ($len * $wid);
+                                    }
+                                }
+                                $initGrandTotalText = $initGrandTotal > 0 ? (fmod($initGrandTotal, 1) == 0 ? number_format($initGrandTotal, 0) . ' sq.ft' : number_format($initGrandTotal, 2) . ' sq.ft') : '0 sq.ft';
+                                $initApplyText = $initGrandTotal > 0 ? (fmod($initGrandTotal, 1) == 0 ? number_format($initGrandTotal, 0) : number_format($initGrandTotal, 2)) . ' SQ.FT' : 'AREA';
                                 ?>
                                 <div id="rooms_container" style="display: flex; flex-direction: column; gap: 1rem;">
                                     <?php foreach ($renderedRooms as $idx => $rItem): 
@@ -620,12 +624,14 @@ include 'includes/header.php';
                                         $rLen = isset($rItem['length']) && $rItem['length'] !== '' ? (float)$rItem['length'] : 0;
                                         $rWid = isset($rItem['width']) && $rItem['width'] !== '' ? (float)$rItem['width'] : 0;
                                         $rArea = ($rLen > 0 && $rWid > 0) ? ($rLen * $rWid) : 0;
-                                        $rAreaText = ($rArea > 0) ? number_format($rArea, 2, '.', '') . ' sq.ft' : '0.00 sq.ft';
+                                        $rAreaText = ($rArea > 0) ? (fmod($rArea, 1) == 0 ? number_format($rArea, 0) . ' sq.ft' : number_format($rArea, 2) . ' sq.ft') : '—';
+                                        $rName = !empty($rItem['name']) ? $rItem['name'] : ($idx === 0 ? 'Living Room' : 'Room ' . $displayNum);
                                     ?>
                                         <div class="calculator-room-row" data-room-index="<?php echo $idx; ?>" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.15rem 1.25rem; transition: all 0.2s;">
                                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
                                                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                                                     <span class="room-number-tag" style="font-size: 0.75rem; font-weight: 700; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 0.2rem 0.55rem; border-radius: 6px; text-transform: uppercase;">Room <?php echo $displayNum; ?></span>
+                                                    <span class="room-title-display" style="font-size: 0.95rem; font-weight: 700; color: #0f172a;"><?php echo htmlspecialchars($rName); ?></span>
                                                 </div>
                                                 <div style="display: flex; align-items: center; gap: 0.65rem;">
                                                     <div style="font-size: 0.82rem; font-weight: 700; color: #0f172a; background: #f8fafc; border: 1px solid #cbd5e1; padding: 0.25rem 0.65rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem;">
@@ -633,7 +639,7 @@ include 'includes/header.php';
                                                         <span class="room-individual-area"><?php echo $rAreaText; ?></span>
                                                     </div>
                                                     <?php if ($idx > 0): ?>
-                                                        <button type="button" class="remove-room-btn" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 6px; padding: 0.3rem 0.65rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.3rem;" title="Remove Room">
+                                                        <button type="button" class="remove-room-btn" aria-label="Remove Room <?php echo $displayNum; ?>" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 6px; padding: 0.3rem 0.65rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.3rem;" title="Remove Room">
                                                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                                                             <span>Remove</span>
                                                         </button>
@@ -643,34 +649,88 @@ include 'includes/header.php';
 
                                             <div class="room-fields-grid" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1.25rem;">
                                                 <div class="spatial-form-group" style="margin-bottom:0;">
-                                                    <label class="spatial-form-label" style="color: #334155; font-weight: 600;">Room Identifier</label>
-                                                    <input type="text" name="rooms[<?php echo $idx; ?>][name]" class="spatial-form-control room-name" value="<?php echo htmlspecialchars($rItem['name'] ?? 'Room ' . $displayNum); ?>" placeholder="e.g. Master Suite" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;">
+                                                    <label class="spatial-form-label" for="room_name_<?php echo $idx; ?>" style="color: #334155; font-weight: 600;">Room Identifier</label>
+                                                    <input type="text" id="room_name_<?php echo $idx; ?>" name="rooms[<?php echo $idx; ?>][name]" class="spatial-form-control room-name" value="<?php echo htmlspecialchars($rName); ?>" placeholder="e.g. Living Room" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;">
                                                 </div>
                                                 <div class="spatial-form-group" style="margin-bottom:0;">
-                                                    <label class="spatial-form-label" style="color: #334155; font-weight: 600;">Length (ft)</label>
-                                                    <input type="number" step="0.1" min="0.1" <?php if ($idx === 0) echo 'id="room_length"'; ?> name="rooms[<?php echo $idx; ?>][length]" class="spatial-form-control room-length" value="<?php echo htmlspecialchars($rItem['length'] ?? ''); ?>" placeholder="<?php echo $idx === 0 ? '20' : 'e.g. 12'; ?>" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;">
+                                                    <label class="spatial-form-label" for="room_length_<?php echo $idx; ?>" style="color: #334155; font-weight: 600;">Length (ft)</label>
+                                                    <input type="number" step="any" min="0.1" id="room_length_<?php echo $idx; ?>" name="rooms[<?php echo $idx; ?>][length]" class="spatial-form-control room-length" value="<?php echo htmlspecialchars($rItem['length'] ?? ''); ?>" placeholder="<?php echo $idx === 0 ? '20' : 'e.g. 12'; ?>" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;">
+                                                    <span class="room-dimension-error room-length-error" role="alert" style="display: none; font-size: 0.74rem; color: #dc2626; margin-top: 0.3rem; font-weight: 600;"></span>
                                                 </div>
                                                 <div class="spatial-form-group" style="margin-bottom:0;">
-                                                    <label class="spatial-form-label" style="color: #334155; font-weight: 600;">Width (ft)</label>
-                                                    <input type="number" step="0.1" min="0.1" <?php if ($idx === 0) echo 'id="room_width"'; ?> name="rooms[<?php echo $idx; ?>][width]" class="spatial-form-control room-width" value="<?php echo htmlspecialchars($rItem['width'] ?? ''); ?>" placeholder="<?php echo $idx === 0 ? '15' : 'e.g. 10'; ?>" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;">
+                                                    <label class="spatial-form-label" for="room_width_<?php echo $idx; ?>" style="color: #334155; font-weight: 600;">Width (ft)</label>
+                                                    <input type="number" step="any" min="0.1" id="room_width_<?php echo $idx; ?>" name="rooms[<?php echo $idx; ?>][width]" class="spatial-form-control room-width" value="<?php echo htmlspecialchars($rItem['width'] ?? ''); ?>" placeholder="<?php echo $idx === 0 ? '15' : 'e.g. 10'; ?>" style="background: #ffffff; border: 1px solid #cbd5e1; color: #0f172a;">
+                                                    <span class="room-dimension-error room-width-error" role="alert" style="display: none; font-size: 0.74rem; color: #dc2626; margin-top: 0.3rem; font-weight: 600;"></span>
                                                 </div>
                                             </div>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
 
-                                <div style="margin-top: 1rem; display: flex; justify-content: flex-end;">
-                                    <button type="button" id="add_room_btn_footer" style="background: #ffffff; color: #2563eb; border: 1px dashed #93c5fd; border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; width: 100%; justify-content: center;">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                                        <span>+ ADD ANOTHER ROOM</span>
+                                <!-- Primary Add Another Room Action (Bottom) -->
+                                <div style="margin-top: 1.25rem;">
+                                    <button type="button" id="add_room_btn_footer" style="background: #ffffff; color: #0057FF; border: 1.5px dashed #93c5fd; border-radius: 10px; padding: 0.75rem 1.25rem; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.45rem; width: 100%; justify-content: center; box-shadow: 0 1px 3px rgba(0, 87, 255, 0.05);" title="Add another room row">
+                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                        <span>ADD ANOTHER ROOM</span>
                                     </button>
+                                </div>
+
+                                <!-- Clean Dynamic Area Summary Section -->
+                                <div class="calculator-area-summary" id="calculator_area_summary" aria-live="polite" style="margin-top: 1.5rem; background: #ffffff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 1.35rem 1.5rem; box-shadow: 0 2px 12px rgba(37, 99, 235, 0.06);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e2e8f0;">
+                                        <span style="font-size: 0.78rem; font-weight: 800; color: #1e40af; text-transform: uppercase; letter-spacing: 0.08em; display: inline-flex; align-items: center; gap: 0.45rem;">
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                                            AREA SUMMARY
+                                        </span>
+                                        <span id="summary_room_count" style="font-size: 0.74rem; font-weight: 700; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 0.2rem 0.65rem; border-radius: 9999px;">
+                                            <?php echo count($renderedRooms); ?> Room<?php echo count($renderedRooms) > 1 ? 's' : ''; ?>
+                                        </span>
+                                    </div>
+
+                                    <!-- Empty state when no valid dimensions exist -->
+                                    <div id="summary_empty_state" style="<?php echo ($initGrandTotal > 0) ? 'display: none;' : ''; ?> padding: 1.25rem 0.5rem; text-align: center; color: #64748b;">
+                                        <div style="font-weight: 700; color: #334155; margin-bottom: 0.25rem; font-size: 0.9rem;">No room dimensions added yet.</div>
+                                        <div style="font-size: 0.8rem; color: #94a3b8;">Add a room to calculate your approximate area.</div>
+                                    </div>
+
+                                    <!-- Dynamic breakdown list -->
+                                    <div id="summary_breakdown_list" style="<?php echo ($initGrandTotal > 0) ? '' : 'display: none;'; ?> display: flex; flex-direction: column; gap: 0.55rem; margin-bottom: 1rem;">
+                                        <?php foreach ($renderedRooms as $idx => $rItem): 
+                                            $rLen = isset($rItem['length']) && $rItem['length'] !== '' ? (float)$rItem['length'] : 0;
+                                            $rWid = isset($rItem['width']) && $rItem['width'] !== '' ? (float)$rItem['width'] : 0;
+                                            $rArea = ($rLen > 0 && $rWid > 0) ? ($rLen * $rWid) : 0;
+                                            if ($rArea <= 0) continue;
+                                            $rAreaDisplay = (fmod($rArea, 1) == 0 ? number_format($rArea, 0) : number_format($rArea, 2)) . ' sq.ft';
+                                            $rName = !empty($rItem['name']) ? $rItem['name'] : 'Room ' . ($idx + 1);
+                                        ?>
+                                            <div class="summary-breakdown-row" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.86rem; color: #334155;">
+                                                <span class="summary-room-label" style="font-weight: 600;"><?php echo htmlspecialchars($rName); ?></span>
+                                                <span class="summary-room-leader" style="flex: 1; border-bottom: 1px dotted #cbd5e1; margin: 0 0.75rem; height: 1px;"></span>
+                                                <span class="summary-room-val" style="font-weight: 700; color: #0f172a; font-family: monospace; font-size: 0.9rem;"><?php echo $rAreaDisplay; ?></span>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+
+                                    <!-- Divider & Total -->
+                                    <div id="summary_total_section" style="<?php echo ($initGrandTotal > 0) ? '' : 'display: none;'; ?> border-top: 1.5px dashed #cbd5e1; padding-top: 0.85rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                                        <span style="font-size: 0.86rem; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em;">TOTAL</span>
+                                        <span id="summary_total_display" style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: #0057FF;"><?php echo $initGrandTotalText; ?></span>
+                                    </div>
+
+                                    <!-- Dynamic Apply Button -->
+                                    <div style="display: flex; justify-content: flex-end;">
+                                        <button type="button" id="apply_room_area_btn" class="btn-apply-area" style="background: #0057FF; color: #ffffff; border: none; border-radius: 9999px; padding: 0.6rem 1.4rem; font-size: 0.84rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.45rem; box-shadow: 0 4px 14px rgba(0, 87, 255, 0.25);" title="Copy calculated total into Total Carpet Area">
+                                            <span id="apply_btn_label">APPLY <?php echo $initApplyText; ?> &rarr;</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
                             <div class="spatial-form-group">
                                 <label class="spatial-form-label" for="approx_area">Total Approximate Carpet Area (sq.ft) <span class="req">*</span></label>
-                                <input type="number" id="approx_area" name="approx_area" class="spatial-form-control" required value="<?php echo htmlspecialchars($_POST['approx_area'] ?? '1850'); ?>" placeholder="1850">
-                                <span style="font-size: 0.75rem; color: var(--color-stone);">If exact dimensions are unknown, enter estimated total floor area.</span>
+                                <input type="number" step="any" min="1" id="approx_area" name="approx_area" class="spatial-form-control" required value="<?php echo htmlspecialchars($_POST['approx_area'] ?? '1850'); ?>" placeholder="1850">
+                                <div id="approx_area_status" class="carpet-area-status" role="status" aria-live="polite" style="display: none; margin-top: 0.45rem; font-size: 0.78rem; font-weight: 600; align-items: center; gap: 0.35rem;"></div>
+                                <span style="font-size: 0.75rem; color: var(--color-stone); display: block; margin-top: 0.25rem;">If exact dimensions are unknown, enter estimated total floor area.</span>
                             </div>
 
                             <div class="spatial-wizard-nav">

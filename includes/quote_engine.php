@@ -38,9 +38,12 @@ if (!defined('QUOTE_ENGINE_LOADED')) {
         $l = (float)$length;
         $w = (float)$width;
 
-        // Reject zero or negative
-        if ($l <= 0 || $w <= 0) {
-            return ['valid' => false, 'error' => 'Length and width must be strictly greater than zero.', 'area' => 0.00];
+        // Reject zero or negative with specific descriptive messages
+        if ($l <= 0) {
+            return ['valid' => false, 'error' => 'Please enter a valid room length.', 'area' => 0.00];
+        }
+        if ($w <= 0) {
+            return ['valid' => false, 'error' => 'Please enter a valid room width.', 'area' => 0.00];
         }
 
         // Reject unrealistic/malicious inputs (e.g. > 500 ft for interior spaces)
