@@ -361,7 +361,7 @@ if ($quotes_res) {
                                                     <span style="background: #fef3c7; color: #d97706; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.68rem; font-weight: 700; border: 1px solid #fde68a;">Survey Req.</span>
                                                 <?php endif; ?>
                                                 <?php if (!empty($q['package_type'])): ?>
-                                                    <span style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.68rem; font-weight: 700;"><?php echo ucfirst($q['package_type']); ?></span>
+                                                    <span style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.68rem; font-weight: 700;"><?php echo htmlspecialchars(formatPackageTierDisplay($q['package_type'])); ?> (<?php echo number_format((float)($q['package_multiplier'] ?? 1.0), 2); ?>×)</span>
                                                 <?php endif; ?>
                                             </div>
                                             <div style="font-size: 0.78rem; color: #64748b; margin-top: 0.2rem; display: flex; align-items: center; gap: 0.3rem;">
@@ -369,7 +369,10 @@ if ($quotes_res) {
                                                 <span>Area: <strong style="color: #0f172a;"><?php echo ($q['measurement_status'] ?? 'known') === 'unknown' ? 'Unknown' : number_format($q['approx_area']) . ' sq.ft'; ?></strong> • <?php echo $q['rooms_count']; ?> BHK</span>
                                             </div>
                                             <div style="font-size: 0.74rem; color: #64748b; margin-top: 0.1rem;">
-                                                Style: <?php echo htmlspecialchars($q['design_style'] ?: 'Modern'); ?>
+                                                <?php 
+                                                $qRate = (float)($q['base_rate_per_sqft'] > 0 ? $q['base_rate_per_sqft'] : ((float)$q['approx_area'] > 0 && (float)$q['base_cost'] > 0 ? round((float)$q['base_cost'] / (float)$q['approx_area'], 2) : getBaseSpatialRate()));
+                                                ?>
+                                                Base Rate: <strong style="color: #0f172a;">₹<?php echo number_format($qRate); ?>/sq.ft</strong> • Style: <?php echo htmlspecialchars($q['design_style'] ?: 'Modern'); ?>
                                             </div>
                                         </td>
 
@@ -378,6 +381,17 @@ if ($quotes_res) {
                                             <div style="font-weight: 700; color: #2563eb; font-size: 0.825rem;">
                                                 <?php echo htmlspecialchars($formattedBudget); ?>
                                             </div>
+                                            <?php 
+                                            $preGstRow = ((float)($q['tax_amount'] ?? 0) > 0) ? ((float)$q['estimated_total'] - (float)$q['tax_amount']) : round((float)$q['base_cost'] * (float)($q['package_multiplier'] ?? 1.0) + (float)($q['service_cost'] ?? 0) - (float)($q['discount_amount'] ?? 0), 2);
+                                            $bEvalRow = evaluateQuoteBudget($preGstRow, $q['budget_range']);
+                                            if ($bEvalRow['status'] !== 'unspecified'): ?>
+                                                <div style="margin-top: 0.2rem;">
+                                                    <span style="display: inline-flex; align-items: center; gap: 0.2rem; padding: 0.1rem 0.45rem; border-radius: 9999px; font-size: 0.68rem; font-weight: 700; background: <?php echo htmlspecialchars($bEvalRow['badge_bg']); ?>; color: <?php echo htmlspecialchars($bEvalRow['badge_color']); ?>; border: 1px solid <?php echo htmlspecialchars($bEvalRow['badge_border']); ?>;">
+                                                        <?php echo ($bEvalRow['status'] === 'within') ? '✓' : (($bEvalRow['status'] === 'near') ? '⚠️' : '🔴'); ?>
+                                                        <?php echo htmlspecialchars($bEvalRow['status_label']); ?>
+                                                    </span>
+                                                </div>
+                                            <?php endif; ?>
                                             <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.15rem;">
                                                 <?php if ($q['services_count'] > 0): ?>
                                                     <span style="background: #f1f5f9; border: 1px solid #e2e8f0; color: #334155; padding: 0.12rem 0.45rem; border-radius: 4px; font-weight: 600;">

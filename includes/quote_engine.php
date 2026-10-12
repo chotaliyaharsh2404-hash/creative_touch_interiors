@@ -62,6 +62,27 @@ if (!defined('QUOTE_ENGINE_LOADED')) {
     }
 
     /**
+     * 1B. BASE SPATIAL EXECUTION RATE & COST CALCULATION
+     * Authoritative single source of truth: BASE_SPATIAL_RATE (₹500.00/sq.ft)
+     */
+    if (!function_exists('getBaseSpatialRate')) {
+        function getBaseSpatialRate() {
+            if (defined('BASE_SPATIAL_RATE')) {
+                return (float)BASE_SPATIAL_RATE;
+            }
+            return 500.00;
+        }
+    }
+
+    if (!function_exists('calculateBaseSpatialCost')) {
+        function calculateBaseSpatialCost($approxArea, $baseRate = null) {
+            $area = max(0.0, (float)$approxArea);
+            $rate = ($baseRate !== null && (float)$baseRate > 0) ? (float)$baseRate : getBaseSpatialRate();
+            return round($area * $rate, 2);
+        }
+    }
+
+    /**
      * 2. MATERIAL MULTIPLIER VALIDATION
      * Validates and normalizes material multipliers.
      * Rejects 0, negative, NULL, invalid text, or out-of-range multipliers.
@@ -176,15 +197,32 @@ if (!defined('QUOTE_ENGINE_LOADED')) {
 
     /**
      * 4. PACKAGE MULTIPLIER LOOKUP & VALIDATION
-     * Returns float multiplier (1.00, 1.25, 1.50)
+     * Customer selects one design level:
+     * - Essential Economy: 1.00×
+     * - Signature Premium: 1.35×
+     * - Ultra Palatial: 1.75×
      */
     function getPackageMultiplier($packageType) {
         $p = strtolower(trim((string)$packageType));
         $packages = [
-            'basic' => 1.00,
-            'standard' => 1.00,
-            'premium' => 1.25,
-            'luxury' => 1.50
+            'essential economy' => 1.00,
+            'essential'         => 1.00,
+            'economy'           => 1.00,
+            'basic'             => 1.00,
+            'standard'          => 1.00,
+            'standard luxury'   => 1.00,
+            '1.00'              => 1.00,
+            '1.0'               => 1.00,
+            '1'                 => 1.00,
+            'signature premium' => 1.35,
+            'signature'         => 1.35,
+            'premium'           => 1.35,
+            '1.35'              => 1.35,
+            'ultra palatial'    => 1.75,
+            'ultra'             => 1.75,
+            'palatial'          => 1.75,
+            'luxury'            => 1.75,
+            '1.75'              => 1.75
         ];
 
         if (!isset($packages[$p])) {
@@ -197,17 +235,42 @@ if (!defined('QUOTE_ENGINE_LOADED')) {
     function validatePackage($packageType) {
         $p = strtolower(trim((string)$packageType));
         $packages = [
-            'basic' => 1.00,
-            'standard' => 1.00,
-            'premium' => 1.25,
-            'luxury' => 1.50
+            'essential economy' => ['multiplier' => 1.00, 'name' => 'Essential Economy'],
+            'essential'         => ['multiplier' => 1.00, 'name' => 'Essential Economy'],
+            'economy'           => ['multiplier' => 1.00, 'name' => 'Essential Economy'],
+            'basic'             => ['multiplier' => 1.00, 'name' => 'Essential Economy'],
+            'standard'          => ['multiplier' => 1.00, 'name' => 'Essential Economy'],
+            'standard luxury'   => ['multiplier' => 1.00, 'name' => 'Essential Economy'],
+            '1.00'              => ['multiplier' => 1.00, 'name' => 'Essential Economy'],
+            '1.0'               => ['multiplier' => 1.00, 'name' => 'Essential Economy'],
+            '1'                 => ['multiplier' => 1.00, 'name' => 'Essential Economy'],
+            'signature premium' => ['multiplier' => 1.35, 'name' => 'Signature Premium'],
+            'signature'         => ['multiplier' => 1.35, 'name' => 'Signature Premium'],
+            'premium'           => ['multiplier' => 1.35, 'name' => 'Signature Premium'],
+            '1.35'              => ['multiplier' => 1.35, 'name' => 'Signature Premium'],
+            'ultra palatial'    => ['multiplier' => 1.75, 'name' => 'Ultra Palatial'],
+            'ultra'             => ['multiplier' => 1.75, 'name' => 'Ultra Palatial'],
+            'palatial'          => ['multiplier' => 1.75, 'name' => 'Ultra Palatial'],
+            'luxury'            => ['multiplier' => 1.75, 'name' => 'Ultra Palatial'],
+            '1.75'              => ['multiplier' => 1.75, 'name' => 'Ultra Palatial']
         ];
 
         if (!isset($packages[$p])) {
-            return ['valid' => false, 'error' => 'Invalid or inactive package selected.', 'multiplier' => 1.00];
+            return [
+                'valid' => false,
+                'error' => 'Invalid Design Level. Please select Essential Economy (1.00×), Signature Premium (1.35×), or Ultra Palatial (1.75×).',
+                'multiplier' => 1.00,
+                'package' => 'Essential Economy'
+            ];
         }
 
-        return ['valid' => true, 'multiplier' => (float)$packages[$p], 'package' => ucfirst($p), 'error' => null];
+        return [
+            'valid' => true,
+            'multiplier' => (float)$packages[$p]['multiplier'],
+            'package' => $packages[$p]['name'],
+            'package_type' => $packages[$p]['name'],
+            'error' => null
+        ];
     }
 
     /**
@@ -625,6 +688,324 @@ if (!defined('QUOTE_ENGINE_LOADED')) {
             }
 
             return ['valid' => true, 'services' => $foundServices, 'valid_ids' => array_keys($foundServices), 'error' => null, 'errors' => []];
+        }
+    }
+
+    /**
+     * 13. BUDGET-AWARE QUOTATION & SCOPE EVALUATION ENGINE (v2.5.0)
+     */
+    if (!function_exists('parseBudgetRangeLimits')) {
+        function parseBudgetRangeLimits($rawBudget) {
+            $formatted = formatBudgetDisplay($rawBudget);
+            $lower = strtolower(trim((string)$rawBudget));
+
+            if ($formatted === 'Not decided yet' || $lower === 'budget_not_sure' || stripos($lower, 'not sure') !== false || stripos($lower, 'not decided') !== false || empty($rawBudget)) {
+                return [
+                    'key' => 'not_sure',
+                    'display' => 'Not decided yet',
+                    'min' => null,
+                    'max' => null,
+                    'is_unbounded' => false,
+                    'unbounded' => false,
+                    'is_flexible' => true,
+                    'unspecified' => true
+                ];
+            }
+
+            switch ($formatted) {
+                case '₹1 Lakh – ₹3 Lakhs':
+                    return [
+                        'key' => 'budget_1_3',
+                        'display' => '₹1 Lakh – ₹3 Lakhs',
+                        'min' => 100000.0,
+                        'max' => 300000.0,
+                        'is_unbounded' => false,
+                        'unbounded' => false,
+                        'is_flexible' => false,
+                        'unspecified' => false
+                    ];
+                case '₹3 Lakhs – ₹5 Lakhs':
+                    return [
+                        'key' => 'budget_3_5',
+                        'display' => '₹3 Lakhs – ₹5 Lakhs',
+                        'min' => 300000.0,
+                        'max' => 500000.0,
+                        'is_unbounded' => false,
+                        'unbounded' => false,
+                        'is_flexible' => false,
+                        'unspecified' => false
+                    ];
+                case '₹5 Lakhs – ₹10 Lakhs':
+                    return [
+                        'key' => 'budget_5_10',
+                        'display' => '₹5 Lakhs – ₹10 Lakhs',
+                        'min' => 500000.0,
+                        'max' => 1000000.0,
+                        'is_unbounded' => false,
+                        'unbounded' => false,
+                        'is_flexible' => false,
+                        'unspecified' => false
+                    ];
+                case '₹10 Lakhs – ₹25 Lakhs':
+                    return [
+                        'key' => 'budget_10_25',
+                        'display' => '₹10 Lakhs – ₹25 Lakhs',
+                        'min' => 1000000.0,
+                        'max' => 2500000.0,
+                        'is_unbounded' => false,
+                        'unbounded' => false,
+                        'is_flexible' => false,
+                        'unspecified' => false
+                    ];
+                case '₹25 Lakhs – ₹50 Lakhs':
+                    return [
+                        'key' => 'budget_25_50',
+                        'display' => '₹25 Lakhs – ₹50 Lakhs',
+                        'min' => 2500000.0,
+                        'max' => 5000000.0,
+                        'is_unbounded' => false,
+                        'unbounded' => false,
+                        'is_flexible' => false,
+                        'unspecified' => false
+                    ];
+                case '₹50 Lakhs – ₹1 Crore':
+                    return [
+                        'key' => 'budget_50_100',
+                        'display' => '₹50 Lakhs – ₹1 Crore',
+                        'min' => 5000000.0,
+                        'max' => 10000000.0,
+                        'is_unbounded' => false,
+                        'unbounded' => false,
+                        'is_flexible' => false,
+                        'unspecified' => false
+                    ];
+                case '₹1 Crore+':
+                    return [
+                        'key' => 'budget_100_plus',
+                        'display' => '₹1 Crore+',
+                        'min' => 10000000.0,
+                        'max' => null,
+                        'is_unbounded' => true,
+                        'unbounded' => true,
+                        'is_flexible' => false,
+                        'unspecified' => false
+                    ];
+                default:
+                    return [
+                        'key' => 'custom',
+                        'display' => $formatted ?: 'Flexible / Custom',
+                        'min' => null,
+                        'max' => null,
+                        'is_unbounded' => true,
+                        'unbounded' => true,
+                        'is_flexible' => true,
+                        'unspecified' => true
+                    ];
+            }
+        }
+    }
+
+    if (!function_exists('formatLakhsDisplay')) {
+        function formatLakhsDisplay($amount) {
+            $amount = (float)$amount;
+            if ($amount < 0) {
+                return '-' . formatLakhsDisplay(abs($amount));
+            }
+            if ($amount >= 10000000) {
+                $cr = $amount / 10000000;
+                return '₹' . (fmod($cr, 1) == 0 ? number_format($cr, 0) : number_format($cr, 2)) . ' Cr';
+            } elseif ($amount >= 100000) {
+                $lakh = $amount / 100000;
+                return '₹' . (fmod($lakh, 1) == 0 ? number_format($lakh, 0) : number_format($lakh, 2)) . ' Lakhs';
+            } else {
+                return formatIndianCurrency($amount, true, 0);
+            }
+        }
+    }
+
+    if (!function_exists('evaluateQuoteBudget')) {
+        function evaluateQuoteBudget($estimatedTotal, $rawBudget, array $context = []) {
+            $total = max(0.0, (float)$estimatedTotal);
+            $limits = parseBudgetRangeLimits($rawBudget);
+            $recommendations = [];
+
+            // 1. Flexible / Unconstrained ("I'm Not Sure Yet")
+            if ($limits['is_flexible'] || $limits['unspecified']) {
+                return [
+                    'status' => 'unspecified',
+                    'status_label' => 'Budget Not Specified',
+                    'status_badge' => 'Flexible Scope',
+                    'badge_color' => '#1d4ed8',
+                    'badge_bg' => '#eff6ff',
+                    'badge_border' => '#bfdbfe',
+                    'color' => '#1d4ed8',
+                    'bg' => '#eff6ff',
+                    'border' => '#bfdbfe',
+                    'icon' => 'ℹ️',
+                    'difference' => 0.0,
+                    'difference_display' => 'No budget constraint specified',
+                    'difference_text' => 'No budget constraint specified',
+                    'percentage_over' => 0.0,
+                    'budget_display' => 'Not decided yet',
+                    'estimated_total' => $total,
+                    'recommendations' => []
+                ];
+            }
+
+            // 2. Unbounded Upper Tier (₹1 Crore+)
+            if ($limits['is_unbounded'] && $limits['min'] !== null) {
+                $min = (float)$limits['min'];
+                if ($total >= $min) {
+                    return [
+                        'status' => 'within',
+                        'status_label' => 'Within Target Budget',
+                        'status_badge' => 'Target Achieved',
+                        'badge_color' => '#065f46',
+                        'badge_bg' => '#ecfdf5',
+                        'badge_border' => '#a7f3d0',
+                        'color' => '#065f46',
+                        'bg' => '#ecfdf5',
+                        'border' => '#a7f3d0',
+                        'icon' => '✅',
+                        'difference' => 0.0,
+                        'difference_display' => 'Meets ₹1 Crore+ bespoke allocation',
+                        'difference_text' => 'Meets ₹1 Crore+ bespoke allocation',
+                        'percentage_over' => 0.0,
+                        'budget_display' => $limits['display'],
+                        'estimated_total' => $total,
+                        'recommendations' => [
+                            'Project scope fully aligns with ultra-luxury bespoke architectural execution.'
+                        ]
+                    ];
+                } else {
+                    $diff = $min - $total;
+                    return [
+                        'status' => 'below',
+                        'status_label' => 'Below Target Budget',
+                        'status_badge' => 'Within Capacity',
+                        'badge_color' => '#1e40af',
+                        'badge_bg' => '#eff6ff',
+                        'badge_border' => '#bfdbfe',
+                        'color' => '#1e40af',
+                        'bg' => '#eff6ff',
+                        'border' => '#bfdbfe',
+                        'icon' => 'ℹ️',
+                        'difference' => 0.0,
+                        'difference_display' => 'Comfortably within capacity (' . formatLakhsDisplay($diff) . ' below target)',
+                        'difference_text' => 'Comfortably within capacity (' . formatLakhsDisplay($diff) . ' below target)',
+                        'percentage_over' => 0.0,
+                        'budget_display' => $limits['display'],
+                        'estimated_total' => $total,
+                        'recommendations' => [
+                            'Current specifications leave additional allocation available for bespoke artisan finishes or smart home automation.'
+                        ]
+                    ];
+                }
+            }
+
+            // 3. Bounded Ranges (₹1L–₹3L, ₹3L–₹5L, ₹5L–₹10L, ₹10L–₹25L, ₹25L–₹50L, ₹50L–₹1Cr)
+            $max = (float)$limits['max'];
+            $min = (float)$limits['min'];
+
+            if ($total <= $max) {
+                $status = 'within';
+                $statusLabel = 'Within Budget';
+                $statusBadge = 'Within Budget';
+                $badgeColor = '#065f46';
+                $badgeBg = '#ecfdf5';
+                $badgeBorder = '#a7f3d0';
+                $icon = '✅';
+                $difference = 0.0;
+                $diffDisplay = 'Within selected budget range';
+                $diffText = 'Within selected budget range';
+                $pctOver = 0.0;
+                $recommendations[] = 'Your project specifications and selected finishes fit comfortably within your allocated budget.';
+            } else {
+                $difference = round($total - $max, 2);
+                $pctOver = round(($difference / $max) * 100, 1);
+
+                if ($pctOver <= 15.0) {
+                    $status = 'near';
+                    $statusLabel = 'Slightly Above Budget';
+                    $statusBadge = 'Near Budget (+' . formatLakhsDisplay($difference) . ')';
+                    $badgeColor = '#92400e';
+                    $badgeBg = '#fffbeb';
+                    $badgeBorder = '#fde68a';
+                    $icon = '⚠️';
+                    $diffDisplay = formatLakhsDisplay($difference) . ' above selected maximum';
+                    $diffText = formatLakhsDisplay($difference) . ' above selected maximum';
+                } else {
+                    $status = 'over';
+                    $statusLabel = 'Over Selected Budget';
+                    $statusBadge = 'Over Budget (+' . formatLakhsDisplay($difference) . ')';
+                    $badgeColor = '#991b1b';
+                    $badgeBg = '#fef2f2';
+                    $badgeBorder = '#fecaca';
+                    $icon = '🔴';
+                    $diffDisplay = formatLakhsDisplay($difference) . ' above selected maximum';
+                    $diffText = formatLakhsDisplay($difference) . ' above selected maximum';
+                }
+
+                // Contextual recommendations
+                $pkgType = strtolower(trim((string)($context['package_type'] ?? 'standard')));
+                $areaSqft = (float)($context['approx_area'] ?? 0);
+                $servicesTotal = (float)($context['services_total'] ?? ($context['service_cost'] ?? 0));
+                $baseCost = (float)($context['base_cost'] ?? 0);
+                $servicesCount = (int)($context['services_count'] ?? 0);
+
+                $isPalatial = (stripos($pkgType, 'palatial') !== false || stripos($pkgType, 'luxury') !== false || ($context['package_multiplier'] ?? 0) >= 1.70);
+                $isSignature = (stripos($pkgType, 'signature') !== false || stripos($pkgType, 'premium') !== false || (($context['package_multiplier'] ?? 0) >= 1.30 && ($context['package_multiplier'] ?? 0) < 1.70));
+
+                if ($isPalatial) {
+                    $potentialSavings = round(($baseCost * 1.75) - ($baseCost * 1.35), 2);
+                    if ($potentialSavings > 0) {
+                        $recommendations[] = "Selecting 'Signature Premium' (1.35×) instead of 'Ultra Palatial' (1.75×) would reduce your pre-GST project cost by approx " . formatLakhsDisplay($potentialSavings) . ".";
+                    }
+                    $stdSavings = round(($baseCost * 1.75) - ($baseCost * 1.00), 2);
+                    if ($stdSavings > 0) {
+                        $recommendations[] = "Choosing 'Essential Economy' (1.00×) would reduce your pre-GST project cost by approx " . formatLakhsDisplay($stdSavings) . ".";
+                    }
+                } elseif ($isSignature) {
+                    $potentialSavings = round(($baseCost * 1.35) - ($baseCost * 1.00), 2);
+                    if ($potentialSavings > 0) {
+                        $recommendations[] = "Selecting 'Essential Economy' (1.00×) instead of 'Signature Premium' (1.35×) can save up to " . formatLakhsDisplay($potentialSavings) . " on pre-GST base execution.";
+                    }
+                }
+
+                if ($servicesTotal > 0 && $servicesCount > 0) {
+                    $recommendations[] = "Your {$servicesCount} selected capability module(s) contribute " . formatLakhsDisplay($servicesTotal) . " to the project subtotal. Reviewing or staging optional modules can help optimize costs.";
+                }
+
+                if ($areaSqft > 0 && $baseCost > $max) {
+                    $recommendations[] = "With a spatial footprint of " . number_format($areaSqft) . " sq.ft, turnkey execution can be phased room-by-room across milestones to spread the capital investment.";
+                }
+
+                if (empty($recommendations)) {
+                    $recommendations[] = "Consider adjusting your finishes or phasing the turnkey execution to align closer with your " . formatLakhsDisplay($max) . " target.";
+                }
+            }
+
+            return [
+                'status' => $status,
+                'status_label' => $statusLabel,
+                'status_badge' => $statusBadge,
+                'badge_color' => $badgeColor,
+                'badge_bg' => $badgeBg,
+                'badge_border' => $badgeBorder,
+                'color' => $badgeColor,
+                'bg' => $badgeBg,
+                'border' => $badgeBorder,
+                'icon' => $icon,
+                'difference' => $difference,
+                'difference_display' => $diffDisplay,
+                'difference_text' => $diffText,
+                'percentage_over' => $pctOver,
+                'budget_display' => $limits['display'],
+                'project_cost_before_gst' => $total,
+                'final_payable' => $context['final_payable'] ?? ($context['grand_total'] ?? round($total * 1.18, 2)),
+                'estimated_total' => $context['final_payable'] ?? ($context['grand_total'] ?? $total),
+                'recommendations' => $recommendations
+            ];
         }
     }
 }

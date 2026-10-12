@@ -75,6 +75,7 @@ $package_multiplier = (float)($quote['package_multiplier'] ?? 1.0);
 $budget_display = formatBudgetDisplay($quote['budget_range'] ?? '');
 
 // Financial breakdown calculation
+$approx_area = (float)($quote['approx_area'] ?? 0);
 $base_cost = (float)($quote['base_cost'] ?? 0);
 $service_cost = (float)($quote['service_cost'] ?? 0);
 $material_cost = (float)($quote['material_cost'] ?? 0);
@@ -83,9 +84,28 @@ $discount_amount = (float)($quote['discount_amount'] ?? 0);
 $tax_amount = (float)($quote['tax_amount'] ?? 0);
 $estimated_total = (float)($quote['estimated_total'] ?? 0);
 
-$gross_subtotal = $base_cost + $service_cost + $material_cost + $additional_cost;
-$netTaxable = max(0, $gross_subtotal - $discount_amount);
+$base_rate_sqft = (float)($quote['base_rate_per_sqft'] ?? 0);
+if ($base_rate_sqft <= 0) {
+    $base_rate_sqft = ($approx_area > 0 && $base_cost > 0) ? round($base_cost / $approx_area, 2) : getBaseSpatialRate();
+}
+if ($base_cost <= 0 && $approx_area > 0) {
+    $base_cost = calculateBaseSpatialCost($approx_area, $base_rate_sqft);
+}
+
+$gross_subtotal = round(($base_cost * $package_multiplier) + $service_cost + $material_cost + $additional_cost, 2);
+$netTaxable = max(0, round($gross_subtotal - $discount_amount, 2));
 $tax_percent = ($netTaxable > 0 && $tax_amount > 0) ? round(($tax_amount / $netTaxable) * 100) : 18;
+
+$preGstCost = ($tax_amount > 0 && $estimated_total > 0) ? round($estimated_total - $tax_amount, 2) : $netTaxable;
+if ($estimated_total <= 0) {
+    $tax_amount = round($preGstCost * 0.18, 2);
+    $estimated_total = round($preGstCost + $tax_amount, 2);
+}
+$budgetEval = evaluateQuoteBudget($preGstCost, $quote['budget_range'] ?? '', [
+    'package_type' => $quote['package_type'] ?? '',
+    'package_multiplier' => $package_multiplier,
+    'final_payable' => $estimated_total
+]);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -621,9 +641,9 @@ $tax_percent = ($netTaxable > 0 && $tax_amount > 0) ? round(($tax_amount / $netT
                         <span class="info-value"><?php echo htmlspecialchars($quote['design_style'] ?: 'Modern Luxury'); ?></span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">Package Tier:</span>
+                        <span class="info-label">Design Level:</span>
                         <span class="info-value">
-                            <strong><?php echo htmlspecialchars($package_tier_label); ?></strong> (<?php echo number_format($package_multiplier, 2); ?>x)
+                            <strong><?php echo htmlspecialchars($package_tier_label); ?></strong> (<?php echo number_format($package_multiplier, 2); ?>×)
                         </span>
                     </div>
                     <div class="info-row">
@@ -633,6 +653,16 @@ $tax_percent = ($netTaxable > 0 && $tax_amount > 0) ? round(($tax_amount / $netT
                             <strong><?php echo htmlspecialchars($budget_display); ?></strong>
                         </span>
                     </div>
+                    <?php if ($budgetEval['status'] !== 'unspecified'): ?>
+                        <div class="info-row">
+                            <span class="info-label">Budget Alignment:</span>
+                            <span class="info-value">
+                                <span class="status-pill" style="background: <?php echo htmlspecialchars($budgetEval['badge_bg']); ?>; color: <?php echo htmlspecialchars($budgetEval['badge_color']); ?>; border: 1px solid <?php echo htmlspecialchars($budgetEval['badge_border']); ?>;">
+                                    <?php echo htmlspecialchars($budgetEval['status_label']); ?>
+                                </span>
+                            </span>
+                        </div>
+                    <?php endif; ?>
                     <div class="info-row" style="margin-top: 0.5rem;">
                         <span class="info-label">Status:</span>
                         <span class="info-value">
@@ -751,7 +781,7 @@ $tax_percent = ($netTaxable > 0 && $tax_amount > 0) ? round(($tax_amount / $netT
                                         <?php if (($s['service_type'] ?? '') === 'area_based'): ?>
                                             ₹<?php echo number_format((float)$s['unit_rate'], 2); ?>/sq.ft
                                         <?php elseif (($s['service_type'] ?? '') === 'quantity_based'): ?>
-                                            ₹<?php echo number_format((float)$s['unit_rate'], 2); ?> &times; <?php echo (float)$s['quantity']; ?>
+                                            ₹<?php echo number_format((float)$s['unit_rate'], 2); ?> × <?php echo (float)$s['quantity']; ?>
                                         <?php else: ?>
                                             ₹<?php echo number_format((float)($s['unit_rate'] ?: $s['service_rate']), 2); ?>
                                         <?php endif; ?>
@@ -785,8 +815,15 @@ $tax_percent = ($netTaxable > 0 && $tax_amount > 0) ? round(($tax_amount / $netT
                 <table class="totals-table">
                     <?php if ($base_cost > 0): ?>
                         <tr>
-                            <td style="color: var(--text-muted);">Base Space Planning:</td>
-                            <td style="text-align: right; font-weight: 600;">₹<?php echo number_format($base_cost, 2); ?></td>
+                            <td style="color: var(--text-muted);">
+                                Base Spatial Execution<br>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">
+                                    <?php echo number_format($approx_area); ?> sq.ft × ₹<?php echo number_format($base_rate_sqft); ?>/sq.ft × <?php echo number_format($package_multiplier, 2); ?>×
+                                </span>
+                            </td>
+                            <td style="text-align: right; font-weight: 600; vertical-align: top;">
+                                ₹<?php echo number_format(round($base_cost * $package_multiplier, 2), 2); ?>
+                            </td>
                         </tr>
                     <?php endif; ?>
 
@@ -794,13 +831,6 @@ $tax_percent = ($netTaxable > 0 && $tax_amount > 0) ? round(($tax_amount / $netT
                         <tr>
                             <td style="color: var(--text-muted);">Selected Modules / Services:</td>
                             <td style="text-align: right; font-weight: 600;">₹<?php echo number_format($service_cost, 2); ?></td>
-                        </tr>
-                    <?php endif; ?>
-
-                    <?php if ($package_multiplier != 1.0): ?>
-                        <tr>
-                            <td style="color: var(--text-muted);"><?php echo htmlspecialchars($package_tier_label); ?> Multiplier:</td>
-                            <td style="text-align: right; font-weight: 600;"><?php echo number_format($package_multiplier, 2); ?>x</td>
                         </tr>
                     <?php endif; ?>
 
@@ -819,9 +849,9 @@ $tax_percent = ($netTaxable > 0 && $tax_amount > 0) ? round(($tax_amount / $netT
                     <?php endif; ?>
 
                     <tr class="total-divider">
-                        <td style="color: var(--text-muted); font-weight: 600;">Taxable Net Subtotal:</td>
+                        <td style="color: var(--text-muted); font-weight: 600;">Project Cost Before GST:</td>
                         <td style="text-align: right; font-weight: 700; color: var(--text-main);">
-                            ₹<?php echo number_format($netTaxable, 2); ?>
+                            ₹<?php echo number_format($preGstCost, 2); ?>
                         </td>
                     </tr>
 
@@ -831,7 +861,7 @@ $tax_percent = ($netTaxable > 0 && $tax_amount > 0) ? round(($tax_amount / $netT
                     </tr>
 
                     <tr class="grand-total-row">
-                        <td>GRAND INVESTMENT TOTAL:</td>
+                        <td>Final Payable:</td>
                         <td style="text-align: right;">
                             <?php echo formatIndianCurrency($estimated_total, true, 2); ?>
                         </td>

@@ -245,10 +245,34 @@ $page_title = 'Website Content & Configuration — Executive Suite';
                     <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                         <div style="padding: 0.85rem 1.25rem; background: #ffffff; border: 1px solid #0057FF; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
                             <div>
-                                <span style="font-family: monospace; font-weight: 800; color: #0057FF; font-size: 0.95rem;">v2.4.0</span>
-                                <strong style="margin-left: 0.75rem; color: #0f172a; font-size: 0.9rem;">Smart Capability Scope Selection</strong>
+                                <span style="font-family: monospace; font-weight: 800; color: #0057FF; font-size: 0.95rem;">v2.7.0</span>
+                                <strong style="margin-left: 0.75rem; color: #0f172a; font-size: 0.9rem;">Base Spatial Execution Rate Standardized to ₹500/sq.ft</strong>
                             </div>
                             <span style="background: #0057FF; color: #ffffff; font-size: 0.7rem; font-weight: 800; padding: 0.2rem 0.6rem; border-radius: 9999px;">CURRENT RELEASE</span>
+                        </div>
+
+                        <div style="padding: 0.85rem 1.25rem; background: #F8F7F4; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                            <div>
+                                <span style="font-family: monospace; font-weight: 700; color: #475569; font-size: 0.95rem;">v2.6.0</span>
+                                <strong style="margin-left: 0.75rem; color: #334155; font-size: 0.9rem;">User-Selectable Design Level / Multiplier System &amp; Pre-GST Budget Rule</strong>
+                            </div>
+                            <span style="color: #64748b; font-size: 0.75rem; font-weight: 600;">Previous Minor Release</span>
+                        </div>
+
+                        <div style="padding: 0.85rem 1.25rem; background: #F8F7F4; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                            <div>
+                                <span style="font-family: monospace; font-weight: 700; color: #475569; font-size: 0.95rem;">v2.5.0</span>
+                                <strong style="margin-left: 0.75rem; color: #334155; font-size: 0.9rem;">Budget-Aware Quotation &amp; Scope Guidance</strong>
+                            </div>
+                            <span style="color: #64748b; font-size: 0.75rem; font-weight: 600;">Previous Minor Release</span>
+                        </div>
+
+                        <div style="padding: 0.85rem 1.25rem; background: #F8F7F4; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                            <div>
+                                <span style="font-family: monospace; font-weight: 700; color: #475569; font-size: 0.95rem;">v2.4.0</span>
+                                <strong style="margin-left: 0.75rem; color: #334155; font-size: 0.9rem;">Smart Capability Scope Selection</strong>
+                            </div>
+                            <span style="color: #64748b; font-size: 0.75rem; font-weight: 600;">Previous Minor Release</span>
                         </div>
 
                         <div style="padding: 0.85rem 1.25rem; background: #F8F7F4; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">

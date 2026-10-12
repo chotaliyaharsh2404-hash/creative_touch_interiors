@@ -28,8 +28,10 @@ define('BASE_URL', (isset($_SERVER['HTTP_HOST']) ? ((!empty($_SERVER['HTTPS']) &
 // Site Configuration
 define('SITE_NAME', 'Creative Touch Interiors');
 define('SITE_EMAIL', 'harshchotaliya@gmail.com');
-define('SITE_PHONE', '+91 9316856961');
-define('APP_VERSION', '2.4.0');
+define('APP_VERSION', '2.7.0');
+
+// Authoritative Base Spatial Execution Rate Configuration (₹/sq.ft)
+define('BASE_SPATIAL_RATE', 500.00);
 
 // Timezone Configuration
 date_default_timezone_set('Asia/Kolkata');
@@ -284,17 +286,28 @@ if (!function_exists('formatBudgetDisplay')) {
 if (!function_exists('formatPackageTierDisplay')) {
     function formatPackageTierDisplay($rawTier) {
         if (empty($rawTier)) {
-            return 'Standard Luxury';
+            return 'Essential Economy';
         }
         $raw = trim((string)$rawTier);
         $lower = strtolower($raw);
         $map = [
-            'basic'             => 'Standard Luxury',
-            'standard'          => 'Standard Luxury',
-            'standard luxury'   => 'Standard Luxury',
+            '1.00'              => 'Essential Economy',
+            '1.0'               => 'Essential Economy',
+            '1'                 => 'Essential Economy',
+            'basic'             => 'Essential Economy',
+            'standard'          => 'Essential Economy',
+            'standard luxury'   => 'Essential Economy',
+            'economy'           => 'Essential Economy',
+            'essential'         => 'Essential Economy',
+            'essential economy' => 'Essential Economy',
+            '1.35'              => 'Signature Premium',
             'premium'           => 'Signature Premium',
+            'signature'         => 'Signature Premium',
             'signature premium' => 'Signature Premium',
+            '1.75'              => 'Ultra Palatial',
             'luxury'            => 'Ultra Palatial',
+            'ultra'             => 'Ultra Palatial',
+            'palatial'          => 'Ultra Palatial',
             'ultra palatial'    => 'Ultra Palatial'
         ];
         return $map[$lower] ?? ucwords(str_replace('_', ' ', $raw));

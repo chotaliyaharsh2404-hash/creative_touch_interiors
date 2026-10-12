@@ -7,6 +7,74 @@ The project follows [Semantic Versioning](https://semver.org/):
 - **MINOR (`vx.Y.0`)**: Significant new features or modules added in a backwards-compatible manner.
 - **PATCH (`vx.y.Z`)**: Backwards-compatible bug fixes, security patches, and minor UI enhancements.
 
+
+## [v2.7.0] — Base Spatial Execution Rate Standardized to ₹500/sq.ft
+
+Base spatial execution rate standardized to ₹500/sq.ft for new quotations while preserving budget-before-GST calculation and historical quotation values.
+
+### Changed
+- **Authoritative Base Spatial Execution Rate**: Standardized `BASE_SPATIAL_RATE = 500.00` (₹500/sq.ft) centrally in `includes/config.php` and calculation layer `getBaseSpatialRate()` / `calculateBaseSpatialCost()`.
+- **Single Source of Truth**: All new quotation calculations across consultation intake (`consultation.php`), client estimation JS (`window.BASE_SPATIAL_RATE`), client portal (`quote_details.php`), administrative pricing workbench (`admin/quote_details.php`, `admin/quotes.php`), and PDF quotation engine (`quote_pdf.php`) now read from this single authoritative rate.
+- **Stage 06 UI Breakdown**: Updated cost review components to clearly display Base Spatial Execution (`<Area> sq.ft × Base rate: ₹500/sq.ft = <Base Spatial Cost>`), Design Level (`<Name> (<Multiplier>×)`), Adjusted Spatial Cost, Selected Capability Modules, Project Cost Before GST, Statutory GST 18%, and Final Payable.
+- **Admin Workspace Calculation Transparency**: Admin Quote Details specifications grid and Quotes list display Area, Base Rate, Design Level, Multiplier, Adjusted Spatial Cost, Capability Cost, Project Cost Before GST, GST, Final Payable, and Budget Alignment.
+- **PDF Proposal Docket**: Updated `quote_pdf.php` to display Base Spatial Execution (`Area × Base Rate × Multiplier`) and sanitize literal HTML entities (`&times;` → `×`).
+
+### Preserved
+- **Historical Quotation Integrity**: Zero recalculation or alteration of existing finalized quotations. All historical quotations retain their original stored `base_rate_per_sqft`, `base_cost`, and `estimated_total`.
+- **Pre-GST Budget Rule**: Budget comparison logic strictly compares Project Cost Before GST against selected Budget Maximum. GST remains separate.
+- **User-Selectable Multipliers**: Full v2.6.0 design-level system (`Essential Economy 1.00×`, `Signature Premium 1.35×`, `Ultra Palatial 1.75×`) with strict zero-default enforcement and server whitelisting.
+- **Capability Pricing & Filtering**: Stage 05 capability module prices, typology filtering, and zero-default selection remain unchanged.
+- **Zero Database Schema Migrations**: Fully backwards-compatible; utilizes existing schema without destructive migrations.
+
+## [v2.6.0] — User-Selectable Design Level / Multiplier System & Pre-GST Budget Rule
+
+Implementation of explicit customer design level selection (`Essential Economy — 1.00×`, `Signature Premium — 1.35×`, `Ultra Palatial — 1.75×`) with strictly enforced zero-default selection, authoritative server-side multiplier whitelisting, and financial pre-GST budget comparison rules across the quotation flow (`consultation.php`), quotation engine (`includes/quote_engine.php`), administrator management workspace (`admin/quote_details.php`, `admin/quotes.php`), client portal (`quote_details.php`), and customer quotation PDF (`quote_pdf.php`).
+
+### Added
+- **Explicit 3-Tier Design Level Selection in Stage 04**:
+  - `Essential Economy — 1.00×`: Value-focused foundational spatial architecture.
+  - `Signature Premium — 1.35×`: Curated luxury finishes and enhanced artisan detailing.
+  - `Ultra Palatial — 1.75×`: Bespoke architectural execution with palatial materials and custom craftsmanship.
+- **Zero-Default Selection Enforcement**: No multiplier is pre-selected by default. The client-side wizard validation prevents proceeding from Stage 04 to Stage 05 until an explicit design level is chosen, highlighting the selection requirement badge.
+- **Strict Server-Side Multiplier Whitelist & Authoritative Recalculation**: Server rejects missing or unauthorized arbitrary multipliers (such as 2.50×) and strictly recalculates quotations using validated multipliers `1.00`, `1.35`, or `1.75`.
+- **Pre-GST Budget Target Rule**:
+  - Authoritative calculation order: `Base Spatial Cost → × selected multiplier → + selected capability costs = Project Cost Before GST → compare against selected Budget Maximum → calculate 18% GST → Final Payable = Project Cost Before GST + GST`.
+  - Selected budget is evaluated strictly as a Pre-GST project target (`Project Cost Before GST <= Budget Maximum`). GST is added afterward and does not cause a quote within budget to be falsely flagged as over budget.
+- **Real-Time Client Calculation & Stage 06 Review Sync**: Switching design levels instantly re-synthesizes pre-GST costs, tax, final payable, and budget alignment in Stage 06 review.
+- **Admin Workspace Design Level & Multiplier Display**: Admin Quote Details displays `Design Level: <Name>` (e.g. Ultra Palatial), `Multiplier: <Value>×` (e.g. 1.75×), and `Project Cost (Pre-GST)` in the specifications grid. Admin quotes table displays customer-friendly tier badges with exact multipliers.
+- **Quotation PDF Brand Alignment**: Displays `Design Level: <Name> (<Value>×)` and `Design Level Multiplier` breakdown row in official quotation PDF proposals without exposing technical identifiers.
+- **Comprehensive Automated Test Suite (`scratch/test_design_multiplier_system.php`)**: 87 test assertions validating multiplier whitelisting, boundary calculation order, 3×3 matrix across all budget brackets, E2E database submissions, admin details, client portal, and PDF output.
+
+### Preserved
+- **Typology Capability Scope System**: Stage 05 capability filtering and opt-in selection (0 selected by default) remain 100% intact from v2.4.0.
+- **Zero Database Schema Migrations**: Reused existing `package_type` and `package_multiplier` columns in `quote_requests` with zero breaking schema modifications.
+- **RBAC, Security & Existing Quotation Architecture**: Preserved all existing user roles, status history workflows, and mathematical truthfulness.
+
+## [v2.5.0] — Budget-Aware Quotation & Scope Guidance
+
+Comprehensive calculation audit, budget-awareness engine, and transparent scope guidance system across the entire Get a Quote flow (`consultation.php`), quotation engine (`includes/quote_engine.php`), client portal (`quote_details.php`), administrator management workspace (`admin/quote_details.php`, `admin/quotes.php`), and official PDF proposals (`quote_pdf.php`). Resolves budget misalignment transparently without artificial price caps, preserving mathematical truthfulness while providing intelligent scope optimization recommendations.
+
+### Added
+- **Authoritative Budget Evaluation Engine (`evaluateQuoteBudget`)**: Centralized backend function in `includes/quote_engine.php` evaluating true mathematical estimates against customer budget windows with sensible thresholds (within budget, near budget within 15%, over budget, below target, unspecified).
+- **Budget Range Limit Parser (`parseBudgetRangeLimits`)**: Standardized parser resolving min/max numerical bounds and flexibility flags across all 8 supported budget ranges.
+- **Stage 06 Live Architectural Estimation & Budget Alignment Card**: Added real-time mathematical cost breakdown card in Stage 06 Review displaying Selected Budget Target, Estimated Project Cost, Target Variance, Subtotal breakdown, and dynamic Scope Guidance.
+- **Dynamic Scope Guidance & Recommendations**: Provides intelligent, data-driven suggestions based on actual selections (potential savings from switching package tiers, staging non-essential capability modules, or phased spatial execution).
+- **Client-Side Live Calculation Synthesis (`updateStage6BudgetReview`)**: Synthesizes area, base rates, material multipliers, package multipliers, and selected capability costs directly on the client, matching backend calculations down to the exact rupee without backend duplication.
+- **Confirmation Screen Budget Alignment Capsule**: Submission docket screen evaluates budget alignment and provides consultative advisory notes for over-budget selections.
+- **Admin Quote Details & Quotes List Alignment Indicators**: Displays budget alignment badges, variances, and target budget comparison rows in admin workspace.
+- **Client Portal & Quotation PDF Budget Alignment**: Shows customer estimated budget and alignment badge without altering the authoritative grand investment total or visual brand system.
+
+### Improved
+- **Stage 04 Guidance Copy**: Refined explanatory text clarifying that budget selections guide scope tailoring while final estimates depend mathematically on area, finishes, packages, and capabilities.
+- **Capability Cards Data Attributes**: Added `data-service-type`, `data-unit-rate`, `data-min-charge`, and `data-wastage` attributes to `.capability-item-card` elements for unified client/server calculation fidelity.
+- **Design System Consistency**: Budget status pills (`#ecfdf5` green, `#fffbeb` amber, `#fef2f2` red, `#eff6ff` blue) strictly adhere to Creative Touch Interiors premium glassmorphic visual language.
+
+### Preserved
+- **Mathematical Integrity**: Absolutely NO artificial price capping or suppression of calculated totals; quotations remain 100% mathematically and financially truthful.
+- **Authoritative Backend**: Central calculation formula in `includes/quote_engine.php` remains authoritative single source of truth.
+- **Database Schema**: Reused existing `budget_range` and `estimated_total` columns with zero breaking migrations.
+- **Typology Filtering & 0-Default**: Preserved v2.4.0 capability filtering and opt-in selection.
+
 ## [v2.4.0] — Smart Typology-Based Capability Scope Selection
 
 Minor feature release upgrading Stage 05 (Capability Scope Selection) of the public Get a Quote flow (`consultation.php`). Dynamically filters design and execution capabilities strictly by project typology (`Residential Estate`, `Commercial / Retail`, `Executive Office`), establishes explicit opt-in selection (0 capabilities preselected by default), adds live counters and scope summaries, and enforces authoritative server-side validation.

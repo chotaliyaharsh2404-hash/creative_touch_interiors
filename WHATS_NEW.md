@@ -1,5 +1,64 @@
 # What's New in Creative Touch Interiors
 
+## Version 2.7.0 — Base Spatial Execution Rate Standardized to ₹500/sq.ft
+
+Base spatial execution rate standardized to ₹500/sq.ft for new quotations while preserving budget-before-GST calculation and historical quotation values.
+
+### KEY HIGHLIGHTS:
+- **Authoritative Base Spatial Execution Rate**: Standardized `BASE_SPATIAL_RATE = 500.00` (₹500/sq.ft) centrally in `includes/config.php` and accessed via `getBaseSpatialRate()` and `calculateBaseSpatialCost()`.
+- **Single Source of Truth**: All new quotation calculations across consultation intake (`consultation.php`), live estimation JS (`window.BASE_SPATIAL_RATE`), client portal (`quote_details.php`), administrative pricing workbench (`admin/quote_details.php`, `admin/quotes.php`), and PDF quotation engine (`quote_pdf.php`) read from this single authoritative rate.
+- **Stage 06 UI Breakdown**: Cost breakdown explicitly itemizes:
+  - Base Spatial Execution (`<Area> sq.ft × Base rate: ₹500/sq.ft = <Base Spatial Cost>`)
+  - Design Level (`<Name> (<Multiplier>×)`)
+  - Adjusted Spatial Cost
+  - Selected Capability Modules
+  - Project Cost Before GST
+  - Statutory GST 18%
+  - Final Payable
+- **Admin Panel Transparency**: Specifications grid and Quotes list display Area, Base Rate, Design Level, Multiplier, Adjusted Spatial Cost, Capability Cost, Project Cost Before GST, GST, Final Payable, and Budget Alignment.
+- **Historical Quotation Preservation**: Historical quotes created under prior rates (₹1,800/sq.ft or ₹1,200/sq.ft) retain their stored historical rates, base costs, and grand totals with zero destructive database updates.
+- **Pre-GST Budget Rule Intact**: Budget comparison logic strictly compares Project Cost Before GST against the selected Budget Maximum.
+
+---
+
+## Version 2.6.0 — User-Selectable Design Level / Multiplier System & Pre-GST Budget Rule
+
+This feature release implements an explicit, customer-selected design level system (`Essential Economy — 1.00×`, `Signature Premium — 1.35×`, `Ultra Palatial — 1.75×`) across the entire quotation lifecycle. It enforces zero pre-selected defaults, strict server-side multiplier whitelisting, and financial pre-GST budget comparison rules across the quotation flow (`consultation.php`), quotation engine (`includes/quote_engine.php`), client portal (`quote_details.php`), administrative management (`admin/quote_details.php`, `admin/quotes.php`), and quotation PDF proposals (`quote_pdf.php`).
+
+### KEY HIGHLIGHTS:
+- **Explicit 3-Tier Design Level Cards in Stage 04**:
+  - **Essential Economy — 1.00×**: Foundational spatial architecture and value-focused execution.
+  - **Signature Premium — 1.35×**: Curated luxury finishes, elevated materials, and artisan accents.
+  - **Ultra Palatial — 1.75×**: Bespoke architectural execution, rare stones, and grand craftsmanship.
+- **Zero Default Multiplier Selection**: Multipliers are never pre-selected by default. Customers must deliberately choose one design level before proceeding from Stage 04 to Stage 05.
+- **Authoritative Server-Side Whitelist**: Multipliers submitted via JavaScript are strictly verified. Only `1.00`, `1.35`, and `1.75` are accepted; arbitrary or unauthorized multipliers (such as 2.50×) are rejected.
+- **Pre-GST Budget Target Rule**:
+  - `Base Spatial Cost → × selected multiplier → + selected capability costs = Project Cost Before GST → compare against selected Budget Maximum → calculate 18% GST → Final Payable = Project Cost Before GST + GST`.
+  - Budget comparison targets **Project Cost Before GST** (Subtotal). GST (18%) is calculated afterward so that projects within pre-GST budgets are never falsely marked as over-budget.
+- **Immediate Review & Synthesis**: Changing design levels re-calculates the estimate in real time across Stage 06 review.
+- **Admin Workspace Details**: Admin Quote Details displays `Design Level: <Name>` (e.g. Ultra Palatial), `Multiplier: <Value>×` (e.g. 1.75×), and `Project Cost (Pre-GST)`.
+- **Quotation PDF Proposals**: Customer PDF proposals display customer-friendly Design Level and Multiplier without internal technical jargon.
+- **100% Backwards Compatible**: Typology-based capability filtering (v2.4.0) and truth-in-pricing budget evaluation (v2.5.0) remain fully intact.
+
+---
+
+## Version 2.5.0 — Budget-Aware Quotation & Scope Guidance
+
+This major calculation audit and feature release resolves the budget alignment challenge across the entire Get a Quote flow (`consultation.php`), quotation engine (`includes/quote_engine.php`), client portal (`quote_details.php`), administrative quote management (`admin/quote_details.php`, `admin/quotes.php`), and PDF quotation proposals (`quote_pdf.php`). The system preserves mathematical and financial truthfulness without artificially capping or distorting actual costs, while giving customers and administrators full transparency over budget alignment, variance, and data-driven scope recommendations.
+
+### NEW & IMPROVED:
+- **Mathematical Truthfulness Guaranteed**: Never artificially reduces or caps calculated estimates. Actual investment figures reflect true architectural reality based on area, finish tiers, package multipliers, and selected capabilities.
+- **Authoritative Budget Evaluation Engine (`evaluateQuoteBudget`)**: Centralized calculation engine in `includes/quote_engine.php` comparing true costs against budget targets with sensible thresholds (`Within Budget`, `Slightly Above Budget` [≤ 15%], `Over Selected Budget` [> 15%], and `Budget Not Specified`).
+- **Live Estimation & Budget Alignment Card in Stage 06**: Interactive mathematical breakdown displayed in Stage 06 Review before submission, showing Selected Budget, Estimated Project Cost, Target Variance, Cost Components, and dynamic recommendations.
+- **Smart Scope Guidance**: Real-time actionable guidance suggesting package tier optimizations (e.g. savings from switching from Ultra Palatial to Signature Premium), staging of non-essential capability modules, and spatial milestone phasing.
+- **Client-Side Calculation Synthesis (`updateStage6BudgetReview`)**: Instant recalculation on the client matching the backend engine to the exact rupee without discrepancies.
+- **Refined Stage 04 Explanatory Guidance**: Communicates clearly to customers that budget choices guide scope tailoring while final estimates depend mathematically on specifications.
+- **Docket Confirmation Capsule**: Submission docket evaluates alignment and adds consultative guidance notes for over-budget selections.
+- **Admin Quotes & Details Integration**: Displays budget alignment badges, variances, and target budget comparison rows across admin quote workspaces.
+- **PDF Proposal Integration**: Official PDF proposals include budget alignment indicators without altering calculations or breaking v2.3.1 brand styling.
+
+---
+
 ## Version 2.4.0 — Smart Typology-Based Capability Scope Selection
 
 This feature release upgrades Stage 05 (Capability Scope Selection) of the public Get a Quote flow (`consultation.php`). It dynamically connects Stage 02's selected project typology (`Residential Estate`, `Commercial / Retail`, or `Executive Office`) with Stage 05 capability options, enforces an explicit 0-preselected default, adds live counters and scope summaries, introduces in-typology search, and secures the workflow with authoritative server-side validation.

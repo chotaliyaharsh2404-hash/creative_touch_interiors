@@ -109,13 +109,12 @@ $status_history = $stmt_hist->get_result()->fetch_all(MYSQLI_ASSOC);
 // Calculate estimate formula breakdown for display from quote record
 $approx_area = (float)($quote['approx_area'] ?? ($quote['carpet_area'] ?? 0));
 $base_cost = (float)($quote['base_cost'] ?? 0);
+$base_rate = (float)($quote['base_rate_per_sqft'] ?? 0);
+if ($base_rate <= 0) {
+    $base_rate = ($approx_area > 0 && $base_cost > 0) ? round($base_cost / $approx_area, 2) : getBaseSpatialRate();
+}
 if ($base_cost <= 0 && $approx_area > 0) {
-    $rate = (float)($quote['base_rate_per_sqft'] ?? 0);
-    if ($rate <= 0) {
-        $pt = strtolower($quote['project_type'] ?? '');
-        $rate = (strpos($pt, 'commercial') !== false || strpos($pt, 'office') !== false) ? 2200.0 : ((strpos($pt, 'hospitality') !== false) ? 2500.0 : 1800.0);
-    }
-    $base_cost = round($approx_area * $rate, 2);
+    $base_cost = calculateBaseSpatialCost($approx_area, $base_rate);
 }
 
 $services_total = (float)($quote['service_cost'] ?? 0);
@@ -129,7 +128,7 @@ $package_multiplier = (float)($quote['package_multiplier'] ?? ($quote['material_
 if ($package_multiplier <= 0) {
     $package_multiplier = 1.0;
 }
-$package_type = !empty($quote['package_type']) ? ucwords(str_replace('_', ' ', $quote['package_type'])) : 'Standard';
+$package_type = !empty($quote['package_type']) ? formatPackageTierDisplay($quote['package_type']) : 'Essential Economy';
 
 $material_cost = (float)($quote['material_cost'] ?? 0);
 $additional_cost = (float)($quote['additional_cost'] ?? 0);
@@ -150,6 +149,7 @@ if ($est_total <= 0) {
 
 $pricing = [
     'approx_area'         => $approx_area,
+    'base_rate'           => $base_rate,
     'base_area_cost'      => round($base_cost, 2),
     'services_total'      => round($services_total, 2),
     'package_multiplier'  => $package_multiplier,
@@ -164,6 +164,11 @@ $pricing = [
 
 $page_title = 'Quotation ' . htmlspecialchars($quote['quote_number']) . ' — Creative Touch Interiors';
 $st = getQuoteStatusInfo($quote['status']);
+$budgetEval = evaluateQuoteBudget($pricing['subtotal'], $quote['budget_range'], [
+    'package_type' => $package_type,
+    'package_multiplier' => $package_multiplier,
+    'final_payable' => $pricing['estimated_total']
+]);
 $waText = urlencode("Hello Creative Touch Interiors, I am viewing quotation " . $quote['quote_number'] . " for " . ucwords(str_replace('_', ' ', $quote['project_type'])) . ".");
 ?>
 <?php include 'includes/header.php'; ?>
@@ -554,9 +559,9 @@ body.has-announcement-bar .quote-view-hero {
                             <div class="spec-tile-icon">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h20M2 12l5-5M2 12l5 5M22 12l-5-5M22 12l5 5"></path></svg>
                             </div>
-                            <div style="font-size: 0.7rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;">Carpet Area</div>
+                            <div style="font-size: 0.7rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;">Carpet Area &amp; Rate</div>
                             <div style="font-size: 0.95rem; font-weight: 600; color: #0f172a; margin-top: 0.2rem;">
-                                <?php echo number_format($pricing['approx_area']); ?> sq. ft.
+                                <?php echo number_format($pricing['approx_area']); ?> sq.ft <span style="font-size: 0.8rem; color: #64748b; font-weight: 500;">(@ ₹<?php echo number_format($pricing['base_rate']); ?>/sq.ft)</span>
                             </div>
                         </div>
 
@@ -584,9 +589,9 @@ body.has-announcement-bar .quote-view-hero {
                             <div class="spec-tile-icon">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="6 2 18 2 22 7 12 22 2 7 6 2"></polygon></svg>
                             </div>
-                            <div style="font-size: 0.7rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;">Material Grade</div>
-                            <div style="font-size: 0.95rem; font-weight: 600; color: #0f172a; margin-top: 0.2rem; text-transform: capitalize;">
-                                <?php echo htmlspecialchars(ucwords($quote['material_preference'] ?? ($quote['material_quality'] ?? 'Premium'))); ?>
+                            <div style="font-size: 0.7rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;">Design Level</div>
+                            <div style="font-size: 0.95rem; font-weight: 600; color: #0f172a; margin-top: 0.2rem;">
+                                <?php echo htmlspecialchars(formatPackageTierDisplay($pricing['package_type'])); ?> (<?php echo number_format($pricing['package_multiplier'], 2); ?>×)
                             </div>
                         </div>
 
@@ -596,7 +601,20 @@ body.has-announcement-bar .quote-view-hero {
                             </div>
                             <div style="font-size: 0.7rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;">Estimated Budget</div>
                             <div style="font-size: 0.95rem; font-weight: 600; color: #0057FF; margin-top: 0.2rem;">
-                                <?php echo htmlspecialchars(formatBudgetDisplay($quote['budget_range'] ?? '')); ?>
+                                <div><?php echo htmlspecialchars(formatBudgetDisplay($quote['budget_range'] ?? '')); ?></div>
+                                <?php if ($budgetEval['status'] !== 'unspecified'): ?>
+                                    <div style="margin-top: 0.35rem;">
+                                        <span class="budget-status-pill" style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.18rem 0.55rem; border-radius: 9999px; font-size: 0.72rem; font-weight: 700; background: <?php echo htmlspecialchars($budgetEval['badge_bg']); ?>; color: <?php echo htmlspecialchars($budgetEval['badge_color']); ?>; border: 1px solid <?php echo htmlspecialchars($budgetEval['badge_border']); ?>;">
+                                            <span><?php echo ($budgetEval['status'] === 'within') ? '✓' : (($budgetEval['status'] === 'near') ? '⚠️' : '🔴'); ?></span>
+                                            <span><?php echo htmlspecialchars($budgetEval['status_label']); ?></span>
+                                        </span>
+                                        <?php if ($budgetEval['difference'] > 0): ?>
+                                            <div style="font-size: 0.7rem; color: #dc2626; font-weight: 600; margin-top: 0.15rem;">
+                                                (+<?php echo htmlspecialchars(formatLakhsDisplay($budgetEval['difference'])); ?> over)
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
 
@@ -610,6 +628,18 @@ body.has-announcement-bar .quote-view-hero {
                             </div>
                         </div>
                     </div>
+
+                    <?php if ($budgetEval['status'] === 'over' || $budgetEval['status'] === 'near'): ?>
+                        <div style="background: #fffbeb; border-left: 3px solid #f59e0b; border: 1px solid #fef3c7; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; font-weight: 700; color: #92400e; margin-bottom: 0.35rem;">
+                                <span>💡</span>
+                                <span>Budget-Aware Consultation Advisory</span>
+                            </div>
+                            <div style="font-size: 0.85rem; color: #78350f; line-height: 1.55;">
+                                Your pre-GST project cost calculates to <strong>₹<?php echo number_format($pricing['subtotal'], 2); ?></strong> (Final Payable incl. GST: <strong><?php echo formatIndianCurrency($pricing['estimated_total']); ?></strong>), which is <strong><?php echo htmlspecialchars(formatLakhsDisplay($budgetEval['difference'])); ?> above</strong> your selected target of <?php echo htmlspecialchars(formatBudgetDisplay($quote['budget_range'])); ?>. Our design team will collaborate with you during site survey and design review to optimize finish grades, evaluate design levels, and phase capability execution to align comfortably with your budget.
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
                     <?php if (!empty($quote['special_requirements'])): ?>
                         <div style="background: rgba(239, 246, 255, 0.7); border-left: 3px solid #0057FF; border-radius: 8px; padding: 1rem 1.25rem;">
@@ -815,21 +845,24 @@ body.has-announcement-bar .quote-view-hero {
                     <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.875rem; border-bottom: 1px solid rgba(0, 87, 255, 0.1); padding-bottom: 1.25rem; margin-bottom: 1.25rem;">
                         
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="color: #64748b;">Base Floor Work (<?php echo number_format($pricing['approx_area']); ?> sq.ft):</span>
+                            <span style="color: #64748b;">Base Spatial Execution (<?php echo number_format($pricing['approx_area']); ?> sq.ft × ₹<?php echo number_format($pricing['base_rate']); ?>/sq.ft):</span>
                             <span style="font-weight: 600; color: #0f172a; font-family: monospace;">₹<?php echo number_format($pricing['base_area_cost'], 2); ?></span>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: #64748b;">Design Level Multiplier (<?php echo htmlspecialchars(formatPackageTierDisplay($pricing['package_type'])); ?>):</span>
+                            <span style="font-weight: 600; color: #0f172a; font-family: monospace;"><?php echo number_format($pricing['package_multiplier'], 2); ?>×</span>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: #64748b;">Adjusted Spatial Cost:</span>
+                            <span style="font-weight: 600; color: #0f172a; font-family: monospace;">₹<?php echo number_format($adjusted_base_cost, 2); ?></span>
                         </div>
 
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span style="color: #64748b;">Selected Modules:</span>
                             <span style="font-weight: 600; color: #0f172a; font-family: monospace;">₹<?php echo number_format($pricing['services_total'], 2); ?></span>
                         </div>
-
-                        <?php if ($pricing['package_multiplier'] != 1.0): ?>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="color: #64748b;">Package Multiplier (<?php echo htmlspecialchars($pricing['package_type']); ?>):</span>
-                            <span style="font-weight: 600; color: #0f172a; font-family: monospace;"><?php echo number_format($pricing['package_multiplier'], 2); ?>x</span>
-                        </div>
-                        <?php endif; ?>
 
                         <?php if ($pricing['additional_cost'] > 0): ?>
                         <div style="display: flex; justify-content: space-between; align-items: center;">

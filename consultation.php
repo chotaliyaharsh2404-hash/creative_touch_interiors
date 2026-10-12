@@ -133,6 +133,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ];
                 }
             }
+
+            if ($approx_area <= 0 && empty($error)) {
+                $error = "Please specify valid positive room dimensions or floor carpet area (in sq.ft).";
+            }
         }
 
         // 3. Interior Requirements & Preferences
@@ -173,8 +177,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $is_budget_valid = in_array($raw_budget, $allowed_budgets, true);
         $budget_range = $is_budget_valid ? formatBudgetDisplay($raw_budget) : $raw_budget;
 
-        $package_type = sanitize($_POST['package_type'] ?? 'Standard');
-        $package_multiplier = getPackageMultiplier($package_type);
+        $raw_multiplier = isset($_POST['package_multiplier']) ? trim((string)$_POST['package_multiplier']) : '';
+        $raw_package_type = isset($_POST['package_type']) ? trim((string)$_POST['package_type']) : '';
+
+        // Strict server-side multiplier and design level validation
+        $pkgValidation = validatePackage($raw_multiplier ?: $raw_package_type);
+        $is_package_valid = $pkgValidation['valid'];
+        $package_multiplier = $pkgValidation['multiplier'];
+        $package_type = $pkgValidation['package'];
 
         $material_preference = sanitize($_POST['material_preference'] ?? 'Premium Solid Teakwood');
         $matMultiplier = 1.00;
@@ -202,6 +212,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = "Please enter a valid 10-digit mobile number.";
             } elseif (empty($city)) {
                 $error = "Please specify your project city.";
+            } elseif (empty($raw_multiplier) && empty($raw_package_type)) {
+                $error = "Please select a Design Level (Essential Economy 1.00×, Signature Premium 1.35×, or Ultra Palatial 1.75×).";
+            } elseif (!$is_package_valid || !in_array($package_multiplier, [1.00, 1.35, 1.75], true)) {
+                $error = "Invalid Design Level selected. Multiplier must be strictly 1.00×, 1.35×, or 1.75×.";
             } elseif (!$is_budget_valid || empty($raw_budget)) {
                 $error = "Please select a valid estimated budget range.";
             } elseif (!empty($selected_service_ids)) {
@@ -250,14 +264,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Authoritative Calculation & DB Insertion
         if (empty($error)) {
-            $base_rate_sqft = 1200.00;
-            if (stripos($design_style, 'luxury') !== false) {
-                $base_rate_sqft = 1800.00;
-            } elseif (stripos($design_style, 'minimalist') !== false) {
-                $base_rate_sqft = 1100.00;
-            }
-
-            $base_cost = ($measurement_status === 'unknown') ? 0.00 : round($approx_area * $base_rate_sqft, 2);
+            $base_rate_sqft = getBaseSpatialRate();
+            $base_cost = ($measurement_status === 'unknown') ? 0.00 : calculateBaseSpatialCost($approx_area, $base_rate_sqft);
 
             $service_cost = 0.00;
             $calculated_services = [];
@@ -367,6 +375,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'measurement_status' => $measurement_status,
                     'approx_area' => $approx_area,
                     'package_type' => $package_type,
+                    'package_multiplier' => $package_multiplier,
+                    'subtotal' => $subtotal,
+                    'tax_amount' => $tax_amount,
                     'budget_range' => $budget_range,
                     'estimated_total' => $estimated_total,
                     'rooms_count' => count($rooms_data),
@@ -428,21 +439,59 @@ include 'includes/header.php';
 
                     <!-- Summary Capsule -->
                     <div style="background: #f8fafc; border: 1px solid #bfdbfe; border-radius: var(--radius-xl); padding: 2rem; max-width: 580px; margin: 0 auto 2.5rem; text-align: left; box-shadow: 0 4px 16px rgba(37, 99, 235, 0.05);">
+                        <?php 
+                        $preGstSuccess = $success_quote['subtotal'] ?? max(0.0, (float)$success_quote['estimated_total'] - (float)($success_quote['tax_amount'] ?? 0));
+                        $budgetEval = evaluateQuoteBudget($preGstSuccess, $success_quote['budget_range'], [
+                            'tax_amount' => $success_quote['tax_amount'] ?? 0,
+                            'final_payable' => $success_quote['estimated_total']
+                        ]);
+                        ?>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; font-size: 0.9rem; color: #64748b;">
                             <div><strong style="color:#334155;">Project Scope:</strong> <span style="color:#0f172a; font-weight:600;"><?php echo htmlspecialchars($success_quote['project_type']); ?></span></div>
                             <div><strong style="color:#334155;">Property Typology:</strong> <span style="color:#0f172a; font-weight:600;"><?php echo htmlspecialchars($property_type ?? 'Villa'); ?></span></div>
                             <div><strong style="color:#334155;">Carpet Area:</strong> <span style="color:#0f172a; font-weight:600;"><?php echo number_format($success_quote['approx_area']); ?> sq.ft</span></div>
-                            <div><strong style="color:#334155;">Package Tier:</strong> <span style="color:#0f172a; font-weight:600;"><?php echo htmlspecialchars($success_quote['package_type']); ?></span></div>
+                            <div><strong style="color:#334155;">Design Level:</strong> <span style="color:#0f172a; font-weight:600;"><?php echo htmlspecialchars($success_quote['package_type']); ?> (<?php echo number_format((float)($success_quote['package_multiplier'] ?? 1.0), 2); ?>×)</span></div>
                             <div><strong style="color:#334155;">Itemized Services:</strong> <span style="color:#0f172a; font-weight:600;"><?php echo $success_quote['services_count']; ?> services</span></div>
                             <div><strong style="color:#334155;">Estimated Budget:</strong> <span style="color:#0f172a; font-weight:600;"><?php echo ($success_quote['budget_range'] === "I'm Not Sure Yet") ? 'Not decided yet' : htmlspecialchars($success_quote['budget_range']); ?></span></div>
                         </div>
 
-                        <?php if ($success_quote['estimated_total'] > 0): ?>
-                            <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: baseline;">
-                                <span style="font-size: 0.85rem; text-transform: uppercase; color: #64748b; font-weight: 600;">Estimated Turnkey Total:</span>
-                                <span style="font-family: var(--font-heading); font-size: 1.85rem; font-weight: 800; color: #1d4ed8;">
-                                    <?php echo formatIndianCurrency($success_quote['estimated_total']); ?>
+                        <?php if ($budgetEval['status'] !== 'unspecified'): ?>
+                            <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px dashed #cbd5e1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                                <span style="font-size: 0.85rem; font-weight: 600; color: #475569;">Budget Alignment (Pre-GST):</span>
+                                <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.85rem; border-radius: 9999px; font-size: 0.78rem; font-weight: 700; background: <?php echo htmlspecialchars($budgetEval['badge_bg']); ?>; color: <?php echo htmlspecialchars($budgetEval['badge_color']); ?>; border: 1px solid <?php echo htmlspecialchars($budgetEval['badge_border']); ?>;">
+                                    <span><?php echo ($budgetEval['status'] === 'within') ? '✓' : (($budgetEval['status'] === 'near') ? '⚠️' : '🔴'); ?></span>
+                                    <span><?php echo htmlspecialchars($budgetEval['status_label']); ?></span>
                                 </span>
+                            </div>
+                            <?php if ($budgetEval['difference'] > 0): ?>
+                                <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.4rem; text-align: right;">
+                                    <?php echo htmlspecialchars($budgetEval['difference_text']); ?>
+                                </div>
+                            <?php endif; ?>
+                        <?php endif; ?>
+
+                        <?php if ($success_quote['estimated_total'] > 0): ?>
+                            <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #64748b;">
+                                    <span>Project Cost Before GST:</span>
+                                    <strong style="color: #0f172a;"><?php echo formatIndianCurrency($preGstSuccess); ?></strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #64748b;">
+                                    <span>Statutory GST (18%):</span>
+                                    <strong style="color: #0f172a;"><?php echo formatIndianCurrency($success_quote['tax_amount'] ?? 0); ?></strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; padding-top: 0.5rem; border-top: 1px dashed #cbd5e1;">
+                                    <span style="font-size: 0.85rem; text-transform: uppercase; color: #64748b; font-weight: 700;">Final Payable Total:</span>
+                                    <span style="font-family: var(--font-heading); font-size: 1.85rem; font-weight: 800; color: #1d4ed8;">
+                                        <?php echo formatIndianCurrency($success_quote['estimated_total']); ?>
+                                    </span>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($budgetEval['status'] === 'over' || $budgetEval['status'] === 'near'): ?>
+                            <div style="margin-top: 1rem; padding: 0.85rem 1rem; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; font-size: 0.8rem; color: #92400e; line-height: 1.5;">
+                                💡 <strong>Budget-Aware Consultation Note:</strong> Our design director will review your chosen specifications and suggest targeted finish optimizations or module staging to bring execution closer to your <?php echo htmlspecialchars($success_quote['budget_range']); ?> target.
                             </div>
                         <?php endif; ?>
                     </div>
@@ -791,7 +840,8 @@ include 'includes/header.php';
                             </p>
 
                             <?php
-                            $selected_pkg = $_POST['package_type'] ?? 'Standard';
+                            $selected_pkg = $_POST['package_type'] ?? '';
+                            $selected_multiplier = $_POST['package_multiplier'] ?? '';
                             $selected_style = $_POST['design_style'] ?? 'Modern Luxury';
                             $selected_budget = $_POST['budget_range'] ?? '₹10L – ₹25L';
                             $budget_options = [
@@ -806,26 +856,70 @@ include 'includes/header.php';
                             ];
                             ?>
 
-                            <!-- Material Tiers Selection -->
-                            <div class="spatial-choice-grid" style="margin-bottom: 2rem;" role="radiogroup" aria-label="Material Tier Selection">
-                                <div class="spatial-choice-card <?php echo ($selected_pkg === 'Standard') ? 'selected' : ''; ?>" data-choice-group="pkg_type" role="radio" tabindex="0" aria-checked="<?php echo ($selected_pkg === 'Standard') ? 'true' : 'false'; ?>" aria-label="Standard Luxury - Great Value">
-                                    <span class="tier-badge tier-badge-value">Great Value</span>
-                                    <input type="radio" name="package_type" value="Standard" <?php echo ($selected_pkg === 'Standard') ? 'checked' : ''; ?> style="display:none;">
-                                    <h4 style="color:#0f172a; margin-bottom:0.25rem; font-weight: 700; margin-top: 0.4rem;">Standard Luxury</h4>
-                                    <p style="font-size:0.8rem; color:#64748b;">High-grade laminates, premium hardware &amp; ambient LED layers</p>
+                            <!-- Design Level & Multiplier Selection (User-Selectable, No Default Selection) -->
+                            <div class="spatial-form-group" style="margin-bottom: 2rem;" id="design_level_container">
+                                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.35rem;">
+                                    <label class="spatial-form-label" style="margin-bottom: 0;">
+                                        Design Level &amp; Finish Multiplier <span class="req">*</span>
+                                    </label>
+                                    <span id="multiplier_req_indicator" style="<?php echo (!empty($selected_multiplier) || !empty($selected_pkg)) ? 'display:none;' : ''; ?> font-size: 0.74rem; font-weight: 700; color: #dc2626; background: #fef2f2; border: 1px solid #fecaca; padding: 0.15rem 0.55rem; border-radius: 9999px;">
+                                        Selection Required
+                                    </span>
                                 </div>
-                                <div class="spatial-choice-card <?php echo ($selected_pkg === 'Premium') ? 'selected' : ''; ?>" data-choice-group="pkg_type" role="radio" tabindex="0" aria-checked="<?php echo ($selected_pkg === 'Premium') ? 'true' : 'false'; ?>" aria-label="Signature Premium - Most Popular">
-                                    <span class="tier-badge tier-badge-popular">Most Popular</span>
-                                    <input type="radio" name="package_type" value="Premium" <?php echo ($selected_pkg === 'Premium') ? 'checked' : ''; ?> style="display:none;">
-                                    <h4 style="color:#0f172a; margin-bottom:0.25rem; font-weight: 700; margin-top: 0.4rem;">Signature Premium</h4>
-                                    <p style="font-size:0.8rem; color:#64748b;">Natural veneers, premium fittings &amp; fluted acoustic panels</p>
+                                <span style="font-size: 0.82rem; color: #64748b; display: block; margin-bottom: 1rem;">
+                                    Select your project design specification tier. The chosen multiplier directly guides material grade, craftsmanship depth, and architectural execution.
+                                </span>
+
+                                <div class="spatial-choice-grid" role="radiogroup" aria-label="Design Level Selection" id="design_multiplier_grid">
+                                    <!-- 1. Essential Economy — 1.00× -->
+                                    <div class="spatial-choice-card <?php echo ($selected_multiplier === '1.00' || $selected_pkg === 'Essential Economy') ? 'selected' : ''; ?>" 
+                                         data-choice-group="package_multiplier" 
+                                         data-multiplier="1.00" 
+                                         data-package-name="Essential Economy"
+                                         role="radio" 
+                                         tabindex="0" 
+                                         aria-checked="<?php echo ($selected_multiplier === '1.00' || $selected_pkg === 'Essential Economy') ? 'true' : 'false'; ?>" 
+                                         aria-label="Essential Economy — 1.00×">
+                                        <span class="tier-badge tier-badge-value">1.00× Multiplier</span>
+                                        <input type="radio" name="package_multiplier" value="1.00" data-package-name="Essential Economy" <?php echo ($selected_multiplier === '1.00' || $selected_pkg === 'Essential Economy') ? 'checked' : ''; ?> required style="display:none;">
+                                        <h4 style="color:#0f172a; margin-bottom:0.25rem; font-weight: 700; margin-top: 0.4rem;">Essential Economy</h4>
+                                        <div style="font-size: 0.78rem; font-weight: 700; color: #0057FF; margin-bottom: 0.35rem;">1.00× Baseline Execution</div>
+                                        <p style="font-size:0.8rem; color:#64748b;">Clean contemporary finishes, commercial-grade laminates, precision modular millwork &amp; ambient illumination.</p>
+                                    </div>
+
+                                    <!-- 2. Signature Premium — 1.35× -->
+                                    <div class="spatial-choice-card <?php echo ($selected_multiplier === '1.35' || $selected_pkg === 'Signature Premium') ? 'selected' : ''; ?>" 
+                                         data-choice-group="package_multiplier" 
+                                         data-multiplier="1.35" 
+                                         data-package-name="Signature Premium"
+                                         role="radio" 
+                                         tabindex="0" 
+                                         aria-checked="<?php echo ($selected_multiplier === '1.35' || $selected_pkg === 'Signature Premium') ? 'true' : 'false'; ?>" 
+                                         aria-label="Signature Premium — 1.35×">
+                                        <span class="tier-badge tier-badge-popular">1.35× Multiplier</span>
+                                        <input type="radio" name="package_multiplier" value="1.35" data-package-name="Signature Premium" <?php echo ($selected_multiplier === '1.35' || $selected_pkg === 'Signature Premium') ? 'checked' : ''; ?> required style="display:none;">
+                                        <h4 style="color:#0f172a; margin-bottom:0.25rem; font-weight: 700; margin-top: 0.4rem;">Signature Premium</h4>
+                                        <div style="font-size: 0.78rem; font-weight: 700; color: #0057FF; margin-bottom: 0.35rem;">1.35× Architectural Craft</div>
+                                        <p style="font-size:0.8rem; color:#64748b;">Handcrafted natural veneers, acoustic fluted paneling, designer quartz surfaces &amp; architectural brass hardware.</p>
+                                    </div>
+
+                                    <!-- 3. Ultra Palatial — 1.75× -->
+                                    <div class="spatial-choice-card <?php echo ($selected_multiplier === '1.75' || $selected_pkg === 'Ultra Palatial') ? 'selected' : ''; ?>" 
+                                         data-choice-group="package_multiplier" 
+                                         data-multiplier="1.75" 
+                                         data-package-name="Ultra Palatial"
+                                         role="radio" 
+                                         tabindex="0" 
+                                         aria-checked="<?php echo ($selected_multiplier === '1.75' || $selected_pkg === 'Ultra Palatial') ? 'true' : 'false'; ?>" 
+                                         aria-label="Ultra Palatial — 1.75×">
+                                        <span class="tier-badge tier-badge-luxury">1.75× Multiplier</span>
+                                        <input type="radio" name="package_multiplier" value="1.75" data-package-name="Ultra Palatial" <?php echo ($selected_multiplier === '1.75' || $selected_pkg === 'Ultra Palatial') ? 'checked' : ''; ?> required style="display:none;">
+                                        <h4 style="color:#0f172a; margin-bottom:0.25rem; font-weight: 700; margin-top: 0.4rem;">Ultra Palatial</h4>
+                                        <div style="font-size: 0.78rem; font-weight: 700; color: #0057FF; margin-bottom: 0.35rem;">1.75× Bespoke Palatial</div>
+                                        <p style="font-size:0.8rem; color:#64748b;">Book-matched Italian marble, solid CP teakwood joinery, smart home automation &amp; bespoke artisan detailing.</p>
+                                    </div>
                                 </div>
-                                <div class="spatial-choice-card <?php echo ($selected_pkg === 'Luxury') ? 'selected' : ''; ?>" data-choice-group="pkg_type" role="radio" tabindex="0" aria-checked="<?php echo ($selected_pkg === 'Luxury') ? 'true' : 'false'; ?>" aria-label="Ultra Palatial - Luxury">
-                                    <span class="tier-badge tier-badge-luxury">Luxury</span>
-                                    <input type="radio" name="package_type" value="Luxury" <?php echo ($selected_pkg === 'Luxury') ? 'checked' : ''; ?> style="display:none;">
-                                    <h4 style="color:#0f172a; margin-bottom:0.25rem; font-weight: 700; margin-top: 0.4rem;">Ultra Palatial</h4>
-                                    <p style="font-size:0.8rem; color:#64748b;">Italian marble, solid CP teakwood &amp; smart-home integration</p>
-                                </div>
+                                <input type="hidden" name="package_type" id="hidden_package_type" value="<?php echo htmlspecialchars($selected_pkg); ?>">
                             </div>
 
                             <!-- Architectural Style Dropdown -->
@@ -846,7 +940,7 @@ include 'includes/header.php';
                                     Estimated Budget Range <span class="req">*</span>
                                 </label>
                                 <span style="font-size: 0.82rem; color: #64748b; display: block; margin-bottom: 0.85rem;">
-                                    This helps us recommend suitable materials and design solutions.
+                                    Your budget helps us tailor the project scope and recommendations. Final estimates depend on area, material tier, package, and selected capabilities.
                                 </span>
 
                                 <div class="spatial-budget-grid" role="radiogroup" aria-label="Estimated Budget Range">
@@ -963,6 +1057,10 @@ include 'includes/header.php';
                                          data-category="<?php echo htmlspecialchars($srvCat); ?>"
                                          data-title="<?php echo htmlspecialchars($srvTitle); ?>"
                                          data-price="<?php echo htmlspecialchars($indicativePrice); ?>"
+                                         data-service-type="<?php echo htmlspecialchars($srvItem['service_type'] ?? 'area_based'); ?>"
+                                         data-unit-rate="<?php echo (float)($srvItem['unit_rate'] > 0 ? $srvItem['unit_rate'] : ($srvItem['starting_price'] ?? 0)); ?>"
+                                         data-min-charge="<?php echo (float)($srvItem['min_charge'] ?? 0); ?>"
+                                         data-wastage="<?php echo (float)($srvItem['default_wastage_percent'] ?? 0); ?>"
                                          tabindex="0"
                                          role="checkbox"
                                          aria-checked="<?php echo $isPostSelected ? 'true' : 'false'; ?>">
@@ -1046,7 +1144,7 @@ include 'includes/header.php';
                                     <div><span style="color:#64748b;">Email:</span> <strong style="color:#0f172a;" id="rev_email">--</strong></div>
                                     <div><span style="color:#64748b;">Project Scope:</span> <strong style="color:#0f172a;" id="rev_type">--</strong></div>
                                     <div><span style="color:#64748b;">Specified Area:</span> <strong style="color:#0f172a;" id="rev_area">--</strong></div>
-                                    <div><span style="color:#64748b;">Material Tier:</span> <strong style="color:#0f172a;" id="rev_pkg">Standard Luxury</strong></div>
+                                    <div><span style="color:#64748b;">Design Level:</span> <strong style="color:#0f172a;" id="rev_pkg">Essential Economy (1.00×)</strong></div>
                                     <div><span style="color:#64748b;">Architectural Style:</span> <strong style="color:#0f172a;" id="rev_style">Modern Luxury</strong></div>
                                     <div><span style="color:#64748b;">Estimated Budget:</span> <strong style="color:#0f172a;" id="rev_budget">₹10L – ₹25L</strong></div>
                                 </div>
@@ -1059,6 +1157,97 @@ include 'includes/header.php';
                                     <div id="rev_capabilities" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                                         <span style="color: #64748b; font-style: italic; font-size: 0.88rem;">None selected (Base space turnkey execution only)</span>
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- LIVE ESTIMATION & BUDGET ALIGNMENT CARD (v2.5.0 / Pre-GST Budget Rule) -->
+                            <div class="budget-estimation-review-card" id="budget_estimation_review_card" style="background: #ffffff; border: 1.5px solid #bfdbfe; border-radius: var(--radius-xl); padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 20px rgba(37,99,235,0.06);">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid #e2e8f0;">
+                                    <div>
+                                        <span style="font-size: 0.75rem; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.25rem;">
+                                            ARCHITECTURAL ESTIMATION &amp; PRE-GST BUDGET ALIGNMENT
+                                        </span>
+                                        <h4 style="font-size: 1.25rem; color: #0f172a; margin: 0; font-weight: 800;">
+                                            Authoritative Cost Breakdown
+                                        </h4>
+                                    </div>
+                                    <div id="review_budget_badge_container">
+                                        <span class="budget-status-pill pill-within" id="rev_budget_status_pill" style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.95rem; border-radius: 9999px; font-size: 0.82rem; font-weight: 700; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;">
+                                            <span id="rev_budget_status_icon">✓</span>
+                                            <span id="rev_budget_status_text">Within Budget</span>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+                                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.1rem 1.25rem;">
+                                        <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Selected Budget Target</div>
+                                        <div id="rev_calc_budget_target" style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 800; color: #0f172a;">
+                                            ₹10L – ₹25L
+                                        </div>
+                                        <div style="font-size: 0.72rem; color: #64748b; margin-top: 0.2rem;">Pre-GST Project Target</div>
+                                    </div>
+                                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 1.1rem 1.25rem;">
+                                        <div style="font-size: 0.75rem; color: #1e40af; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Project Cost (Pre-GST)</div>
+                                        <div id="rev_calc_subtotal" style="font-family: var(--font-heading); font-size: 1.35rem; font-weight: 800; color: #0057FF;">
+                                            ₹0
+                                        </div>
+                                        <div style="font-size: 0.72rem; color: #1e40af; margin-top: 0.2rem;">Evaluated Against Budget</div>
+                                    </div>
+                                    <div id="rev_calc_diff_box" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.1rem 1.25rem;">
+                                        <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Target Variance (Pre-GST)</div>
+                                        <div id="rev_calc_diff_text" style="font-weight: 700; font-size: 1.05rem; color: #0f172a;">
+                                            Within Selected Range
+                                        </div>
+                                        <div style="font-size: 0.72rem; color: #64748b; margin-top: 0.2rem;">Pre-GST Cost vs Maximum</div>
+                                    </div>
+                                </div>
+
+                                <!-- Cost Components Breakdown -->
+                                <div style="display: flex; flex-direction: column; gap: 0.55rem; font-size: 0.88rem; color: #475569; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.15rem 1.25rem; margin-bottom: 1.5rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                                        <span>Base Spatial Execution (<span id="rev_breakdown_area">0 sq.ft</span> × Base rate: <span id="rev_breakdown_rate">₹500</span>/sq.ft):</span>
+                                        <strong style="color: #0f172a;" id="rev_breakdown_raw_base">₹0</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                                        <span>Design Level:</span>
+                                        <span style="color: #0f172a; font-weight: 600;" id="rev_breakdown_pkg">Essential Economy (1.00×)</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                                        <span>Adjusted Spatial Cost:</span>
+                                        <strong style="color: #0f172a;" id="rev_breakdown_base">₹0</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                                        <span>Selected Capability Modules (<span id="rev_breakdown_srv_count">0</span> items):</span>
+                                        <strong style="color: #0f172a;" id="rev_breakdown_services">₹0</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: baseline; padding-top: 0.5rem; border-top: 1px dashed #cbd5e1;">
+                                        <span style="font-weight: 700; color: #0f172a;">Project Cost Before GST:</span>
+                                        <strong style="color: #0057FF; font-size: 1rem; font-weight: 800;" id="rev_breakdown_subtotal">₹0</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                                        <span>Statutory GST (18%):</span>
+                                        <strong style="color: #0f172a;" id="rev_breakdown_tax">₹0</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; padding-top: 0.6rem; border-top: 1.5px solid #cbd5e1; align-items: baseline;">
+                                        <span style="font-weight: 800; color: #0f172a; text-transform: uppercase; font-size: 0.88rem;">Final Payable (Incl. GST):</span>
+                                        <strong style="color: #0057FF; font-size: 1.35rem; font-family: var(--font-heading); font-weight: 800;" id="rev_calc_grand_total">₹0</strong>
+                                    </div>
+                                </div>
+
+                                <!-- Scope Guidance & Recommendations Box -->
+                                <div id="rev_budget_guidance_container" style="display: none; background: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 10px; padding: 1.25rem; margin-top: 1rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                        <span style="font-size: 1.15rem;">💡</span>
+                                        <strong style="font-size: 0.92rem; color: #92400e;" id="rev_guidance_title">
+                                            Scope Optimization Guidance
+                                        </strong>
+                                    </div>
+                                    <p style="font-size: 0.85rem; color: #78350f; margin-bottom: 0.75rem; line-height: 1.5;" id="rev_guidance_desc">
+                                        Your selected project specifications exceed your targeted budget window. You can adjust the following parameters to align with your target:
+                                    </p>
+                                    <ul id="rev_guidance_list" style="margin: 0; padding-left: 1.25rem; font-size: 0.83rem; color: #78350f; line-height: 1.6;">
+                                    </ul>
                                 </div>
                             </div>
 
@@ -1087,6 +1276,8 @@ include 'includes/header.php';
     </section>
 
     <script>
+    window.BASE_SPATIAL_RATE = <?php echo json_encode(getBaseSpatialRate()); ?>;
+
     // Centralized Project Typology Configuration
     const projectTypologyOptions = {
         residential: {
@@ -1302,7 +1493,287 @@ include 'includes/header.php';
                 if (typeof window.__syncCapabilitySelections === 'function') {
                     window.__syncCapabilitySelections();
                 }
+
+                if (typeof window.updateStage6BudgetReview === 'function') {
+                    window.updateStage6BudgetReview();
+                }
             });
+        });
+
+        function formatIndianCurrencyJS(num) {
+            if (isNaN(num)) return '₹0';
+            num = Math.round(num);
+            const numStr = num.toString();
+            if (numStr.length <= 3) return '₹' + numStr;
+            const lastThree = numStr.substring(numStr.length - 3);
+            const otherNumbers = numStr.substring(0, numStr.length - 3);
+            const formatted = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + "," + lastThree;
+            return '₹' + formatted;
+        }
+
+        function formatLakhsJS(amount) {
+            if (amount <= 0) return '₹0';
+            if (amount >= 10000000) {
+                const cr = (amount / 10000000).toFixed(2);
+                return '₹' + (cr.endsWith('.00') ? parseInt(cr) : cr) + ' Cr';
+            }
+            const lk = (amount / 100000).toFixed(2);
+            return '₹' + (lk.endsWith('.00') ? parseInt(lk) : lk) + ' Lakhs';
+        }
+
+        function updateStage6BudgetReview() {
+            const areaInp = document.getElementById('approx_area');
+            const unknownMeasChk = document.getElementById('unknown_measurements') || document.querySelector('input[name="unknown_measurements"]');
+            const isUnknown = unknownMeasChk && (unknownMeasChk.checked || unknownMeasChk.value === '1');
+            const approxArea = isUnknown ? 0 : Math.max(0, parseFloat(areaInp ? areaInp.value : 0) || 0);
+
+            const baseRate = typeof window.BASE_SPATIAL_RATE !== 'undefined' ? Number(window.BASE_SPATIAL_RATE) : <?php echo (float)getBaseSpatialRate(); ?>;
+            const rawBaseCost = Math.round(approxArea * baseRate * 100) / 100;
+            const baseCost = rawBaseCost;
+
+            // Multiplier retrieval from selected Design Level
+            const multInp = document.querySelector('input[name="package_multiplier"]:checked, input[name="package_type"]:checked');
+            let pkgMultiplier = 1.00;
+            let pkgDisplayName = 'Essential Economy (1.00×)';
+            if (multInp) {
+                const rawVal = multInp.value.toString().trim().toLowerCase();
+                if (rawVal === '1.75' || rawVal.includes('palatial') || rawVal.includes('luxury')) {
+                    pkgMultiplier = 1.75;
+                    pkgDisplayName = 'Ultra Palatial (1.75×)';
+                } else if (rawVal === '1.35' || rawVal.includes('premium') || rawVal.includes('signature')) {
+                    pkgMultiplier = 1.35;
+                    pkgDisplayName = 'Signature Premium (1.35×)';
+                } else {
+                    pkgMultiplier = 1.00;
+                    pkgDisplayName = 'Essential Economy (1.00×)';
+                }
+            }
+
+            const revPkgEl = document.getElementById('rev_pkg');
+            if (revPkgEl) revPkgEl.textContent = pkgDisplayName;
+
+            const adjBaseCost = Math.round(baseCost * pkgMultiplier * 100) / 100;
+
+            let matMultiplier = 1.0;
+            const matCard = document.querySelector('.spatial-choice-card[data-choice-group="mat_pref"].selected');
+            const matText = matCard ? (matCard.getAttribute('data-value') || matCard.textContent).toLowerCase() : '';
+            if (matText.includes('luxury') || matText.includes('marble')) matMultiplier = 1.25;
+            else if (matText.includes('veneer') || matText.includes('teak')) matMultiplier = 1.15;
+
+            let srvCost = 0;
+            let srvCount = 0;
+            const chks = document.querySelectorAll('.capability-checkbox:checked, .capability-item-card.selected .capability-checkbox');
+            const countedIds = new Set();
+            chks.forEach(chk => {
+                const card = chk.closest('.capability-item-card');
+                if (!card) return;
+                const srvId = card.getAttribute('data-service-id') || chk.value;
+                if (countedIds.has(srvId)) return;
+                countedIds.add(srvId);
+
+                srvCount++;
+                const sType = card.getAttribute('data-service-type') || 'area_based';
+                const uRate = parseFloat(card.getAttribute('data-unit-rate') || 0);
+                const sMin = parseFloat(card.getAttribute('data-min-charge') || 0);
+                const sWastage = parseFloat(card.getAttribute('data-wastage') || 0);
+
+                let base = 0;
+                if (sType === 'fixed_fee' || sType === 'package_lump_sum') {
+                    base = uRate * 1.0;
+                } else {
+                    base = uRate * approxArea * matMultiplier;
+                }
+                const wastageAmt = base * (sWastage / 100);
+                const lineTotal = Math.max(sMin, base + wastageAmt);
+                srvCost += lineTotal;
+            });
+
+            srvCost = Math.round(srvCost * 100) / 100;
+            
+            // PRE-GST PROJECT COST = Adjusted Base Spatial Cost + Capabilities Subtotal
+            const subtotal = Math.round((adjBaseCost + srvCost) * 100) / 100;
+            const taxAmt = Math.round(subtotal * 0.18 * 100) / 100;
+            const grandTotal = Math.round((subtotal + taxAmt) * 100) / 100;
+
+            const bInp = document.querySelector('input[name="budget_range"]:checked');
+            const rawBudget = bInp ? bInp.value : '₹10L – ₹25L';
+
+            let minLimit = 0;
+            let maxLimit = null;
+            let isUnspecified = false;
+            let isUnbounded = false;
+            let normalizedTarget = '₹10L – ₹25L';
+
+            const bNorm = rawBudget.replace(/\s+/g, ' ').toLowerCase();
+            if (bNorm.includes('not sure') || bNorm.includes('not decided') || bNorm === 'budget_not_sure') {
+                isUnspecified = true;
+                normalizedTarget = 'Not Specified';
+            } else if (bNorm.includes('1cr+') || bNorm.includes('100_plus') || bNorm.includes('1 crore+')) {
+                minLimit = 10000000;
+                isUnbounded = true;
+                normalizedTarget = '₹1 Crore+';
+            } else if (bNorm.includes('50') && (bNorm.includes('1cr') || bNorm.includes('100') || bNorm.includes('1 crore'))) {
+                minLimit = 5000000; maxLimit = 10000000; normalizedTarget = '₹50L – ₹1 Crore';
+            } else if (bNorm.includes('25') && bNorm.includes('50')) {
+                minLimit = 2500000; maxLimit = 5000000; normalizedTarget = '₹25L – ₹50 Lakhs';
+            } else if (bNorm.includes('10') && bNorm.includes('25')) {
+                minLimit = 1000000; maxLimit = 2500000; normalizedTarget = '₹10L – ₹25 Lakhs';
+            } else if (bNorm.includes('5') && bNorm.includes('10')) {
+                minLimit = 500000; maxLimit = 1000000; normalizedTarget = '₹5L – ₹10 Lakhs';
+            } else if (bNorm.includes('3') && bNorm.includes('5')) {
+                minLimit = 300000; maxLimit = 500000; normalizedTarget = '₹3L – ₹5 Lakhs';
+            } else if (bNorm.includes('1') && bNorm.includes('3')) {
+                minLimit = 100000; maxLimit = 300000; normalizedTarget = '₹1L – ₹3 Lakhs';
+            }
+
+            let status = 'within';
+            let statusLabel = 'Within Budget';
+            let statusIcon = '✓';
+            let badgeBg = '#ecfdf5';
+            let badgeColor = '#065f46';
+            let badgeBorder = '#a7f3d0';
+            let diff = 0;
+            let diffText = 'Within Selected Range';
+
+            // BUDGET RULE: Evaluated against PRE-GST Project Cost (subtotal)
+            if (isUnspecified) {
+                status = 'unspecified';
+                statusLabel = 'Budget Not Specified';
+                statusIcon = 'ℹ️';
+                badgeBg = '#eff6ff';
+                badgeColor = '#1d4ed8';
+                badgeBorder = '#bfdbfe';
+                diffText = 'No constraint specified';
+            } else if (isUnbounded) {
+                if (subtotal >= minLimit) {
+                    status = 'within';
+                    statusLabel = 'Within Target Budget';
+                    diffText = 'Aligned with ₹1Cr+ luxury scope (Pre-GST)';
+                } else {
+                    status = 'below';
+                    statusLabel = 'Below Target Budget';
+                    diffText = formatLakhsJS(minLimit - subtotal) + ' below target (Pre-GST)';
+                }
+            } else if (maxLimit !== null) {
+                if (subtotal <= maxLimit) {
+                    status = 'within';
+                    statusLabel = 'Within Budget';
+                    diffText = formatLakhsJS(maxLimit - subtotal) + ' buffer remaining (Pre-GST)';
+                } else if (subtotal <= maxLimit * 1.15) {
+                    status = 'near';
+                    statusLabel = 'Slightly Above Budget';
+                    statusIcon = '⚠️';
+                    badgeBg = '#fffbeb';
+                    badgeColor = '#92400e';
+                    badgeBorder = '#fde68a';
+                    diff = subtotal - maxLimit;
+                    diffText = formatLakhsJS(diff) + ' above selected maximum (Pre-GST)';
+                } else {
+                    status = 'over';
+                    statusLabel = 'Over Selected Budget';
+                    statusIcon = '🔴';
+                    badgeBg = '#fef2f2';
+                    badgeColor = '#991b1b';
+                    badgeBorder = '#fecaca';
+                    diff = subtotal - maxLimit;
+                    diffText = formatLakhsJS(diff) + ' above selected maximum (Pre-GST)';
+                }
+            }
+
+            const targetEl = document.getElementById('rev_calc_budget_target');
+            if (targetEl) targetEl.textContent = normalizedTarget;
+
+            const subtotalEl = document.getElementById('rev_calc_subtotal');
+            if (subtotalEl) subtotalEl.textContent = formatIndianCurrencyJS(subtotal);
+
+            const grandTotalEl = document.getElementById('rev_calc_grand_total');
+            if (grandTotalEl) grandTotalEl.textContent = formatIndianCurrencyJS(grandTotal);
+
+            const diffTextEl = document.getElementById('rev_calc_diff_text');
+            if (diffTextEl) {
+                diffTextEl.textContent = diffText;
+                diffTextEl.style.color = (status === 'over') ? '#dc2626' : ((status === 'near') ? '#d97706' : '#16a34a');
+            }
+
+            const pill = document.getElementById('rev_budget_status_pill');
+            if (pill) {
+                pill.style.background = badgeBg;
+                pill.style.color = badgeColor;
+                pill.style.borderColor = badgeBorder;
+                const iconEl = document.getElementById('rev_budget_status_icon');
+                const textEl = document.getElementById('rev_budget_status_text');
+                if (iconEl) iconEl.textContent = statusIcon;
+                if (textEl) textEl.textContent = statusLabel;
+            }
+
+            const bkArea = document.getElementById('rev_breakdown_area');
+            if (bkArea) bkArea.textContent = approxArea + ' sq.ft';
+            const bkRate = document.getElementById('rev_breakdown_rate');
+            if (bkRate) bkRate.textContent = '₹' + Math.round(baseRate).toLocaleString('en-IN');
+            const bkRawBase = document.getElementById('rev_breakdown_raw_base');
+            if (bkRawBase) bkRawBase.textContent = formatIndianCurrencyJS(rawBaseCost);
+            const bkPkg = document.getElementById('rev_breakdown_pkg');
+            if (bkPkg) bkPkg.textContent = pkgDisplayName;
+            const bkBase = document.getElementById('rev_breakdown_base');
+            if (bkBase) bkBase.textContent = formatIndianCurrencyJS(adjBaseCost);
+            const bkSrvCount = document.getElementById('rev_breakdown_srv_count');
+            if (bkSrvCount) bkSrvCount.textContent = srvCount;
+            const bkSrvCost = document.getElementById('rev_breakdown_services');
+            if (bkSrvCost) bkSrvCost.textContent = formatIndianCurrencyJS(srvCost);
+            const bkSubtotal = document.getElementById('rev_breakdown_subtotal');
+            if (bkSubtotal) bkSubtotal.textContent = formatIndianCurrencyJS(subtotal);
+            const bkTax = document.getElementById('rev_breakdown_tax');
+            if (bkTax) bkTax.textContent = formatIndianCurrencyJS(taxAmt);
+
+            const guidanceBox = document.getElementById('rev_budget_guidance_container');
+            const guidanceList = document.getElementById('rev_guidance_list');
+            if (guidanceBox && guidanceList) {
+                if (status === 'over' || status === 'near') {
+                    const recommendations = [];
+                    if (pkgMultiplier === 1.75) {
+                        const premSubtotal = Math.round(((baseCost * 1.35) + srvCost) * 100) / 100;
+                        const stdSubtotal = Math.round(((baseCost * 1.00) + srvCost) * 100) / 100;
+                        const premSaving = subtotal - premSubtotal;
+                        const stdSaving = subtotal - stdSubtotal;
+                        if (premSaving > 0) {
+                            recommendations.push('<strong>Optimize Design Level:</strong> Selecting <em>Signature Premium (1.35×)</em> instead of <em>Ultra Palatial (1.75×)</em> would reduce your pre-GST project cost by approx ' + formatLakhsJS(premSaving) + '.');
+                        }
+                        if (stdSaving > 0) {
+                            recommendations.push('<strong>Value Baseline Alignment:</strong> Choosing <em>Essential Economy (1.00×)</em> specification would reduce your pre-GST project cost by approx ' + formatLakhsJS(stdSaving) + '.');
+                        }
+                    } else if (pkgMultiplier === 1.35) {
+                        const stdSubtotal = Math.round(((baseCost * 1.00) + srvCost) * 100) / 100;
+                        const stdSaving = subtotal - stdSubtotal;
+                        if (stdSaving > 0) {
+                            recommendations.push('<strong>Value Baseline Alignment:</strong> Selecting <em>Essential Economy (1.00×)</em> instead of <em>Signature Premium (1.35×)</em> can save up to ' + formatLakhsJS(stdSaving) + ' on pre-GST base execution.');
+                        }
+                    }
+
+                    if (srvCount > 0) {
+                        recommendations.push('<strong>Capability Phasing:</strong> Your ' + srvCount + ' selected capability module(s) contribute ' + formatIndianCurrencyJS(srvCost) + ' to the pre-GST subtotal. Reviewing or staging optional modules can help bring project costs within budget.');
+                    }
+
+                    if (approxArea > 0 && maxLimit !== null && baseCost > maxLimit) {
+                        recommendations.push('<strong>Spatial Staging:</strong> With ' + approxArea + ' sq.ft footprint, consider phasing execution room-by-room across milestones to spread capital investment.');
+                    }
+
+                    if (recommendations.length > 0) {
+                        guidanceList.innerHTML = recommendations.map(r => '<li style="margin-bottom: 0.4rem;">' + r + '</li>').join('');
+                        guidanceBox.style.display = 'block';
+                    } else {
+                        guidanceBox.style.display = 'none';
+                    }
+                    guidanceBox.style.display = 'none';
+                }
+            }
+        }
+        window.updateStage6BudgetReview = updateStage6BudgetReview;
+
+        // Auto-run when switching capabilities or entering step 6
+        document.addEventListener('change', function(e) {
+            if (e.target.matches('input[name="budget_range"], input[name="package_type"], #design_style, #approx_area, .capability-checkbox')) {
+                updateStage6BudgetReview();
+            }
         });
     });
     </script>
